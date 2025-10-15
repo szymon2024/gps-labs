@@ -2,7 +2,7 @@
 
 EN:
 =====================================================================
-       GPS SATELLITE POSITION AT EMISSION SIGNAL TIME OF SIGNAL
+       GPS SATELLITE POSITION AT SIGNAL EMISSION TIME OF SIGNAL
  BASED ON THE BROADCAST EPHEMERIS AND L1/L2 PSEUDORANGE OBSERVATIONS
 =====================================================================
 
