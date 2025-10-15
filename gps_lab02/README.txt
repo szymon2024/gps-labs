@@ -37,9 +37,9 @@ Satellite ECEF position at emission time : (-8854167.186785, 11687456.631190, 22
 PL:
 
 =====================================================================
-	    POZYCJA SATELITY GPS W MOMENCIE EMISJI SYGNAŁU
-		NA PODSTAWIE EFEMERYDY ROZGŁOSZENIOWEJ
-		 I OBSERWACJI PSEUDOODLEGŁOŚCI L1/L2
+	       POZYCJA SATELITY GPS W MOMENCIE EMISJI SYGNAŁU
+		       NA PODSTAWIE EFEMERYDY ROZGŁOSZENIOWEJ
+		        I OBSERWACJI PSEUDOODLEGŁOŚCI L1/L2
 =====================================================================
 
 W tym projekcie zaimplementowano algorytm oszacowania położenia satelity GPS w momencie emisji sygnału, na podstawie pojedynczej efemerydy rozgłoszeniowej i pomiaru pseudoodległości L1/L2.
