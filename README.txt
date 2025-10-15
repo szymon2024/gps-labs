@@ -6,7 +6,6 @@ gps_lab02.........GPS satellite position at emission signal time of signal
                   based on the broadcast ephemeris and L1/L2 pseudorange observations
 
 PL:
-
 Spis treści
 
 gps_lab01.........Pozycja satelity GPS
