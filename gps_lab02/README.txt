@@ -2,7 +2,7 @@
 
 EN:
 =====================================================================
-       GPS SATELLITE POSITION AT SIGNAL EMISSION TIME
+          GPS SATELLITE POSITION AT SIGNAL EMISSION TIME
  BASED ON THE BROADCAST EPHEMERIS AND P1/P2 PSEUDORANGE OBSERVATION
 =====================================================================
 
@@ -38,8 +38,8 @@ PL:
 
 =====================================================================
 	    POZYCJA SATELITY GPS W MOMENCIE EMISJI SYGNAŁU
-		NA PODSTAWIE EFEMERYDY ROZGŁOSZENIOWEJ
-		 I OBSERWACJI PSEUDOODLEGŁOŚCI P1/P2
+		   NA PODSTAWIE EFEMERYDY ROZGŁOSZENIOWEJ
+		     I OBSERWACJI PSEUDOODLEGŁOŚCI P1/P2
 =====================================================================
 
 W tym projekcie zaimplementowano algorytm oszacowania położenia satelity GPS w momencie emisji sygnału, na podstawie pojedynczej efemerydy rozgłoszeniowej i pomiaru pseudoodległości P1/P2.
