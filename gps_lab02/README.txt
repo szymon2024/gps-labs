@@ -7,7 +7,7 @@ EN:
 =====================================================================
 
 This project implements algorithm for estimating the position of a GPS satellite
-at the signal emission time, based on a single broadcast ephemeris and L1/L2 pseudorange  measurement.
+at the signal emission time, based on a single broadcast ephemeris and P1/P2 pseudorange  measurement.
 
 The implementation follows the specifications of IS-GPS-200H, in particular:
 - Section 20.3.3.4.3:   User Algorithm for Ephemeris-Based Satellite Position
@@ -42,7 +42,7 @@ PL:
 		 I OBSERWACJI PSEUDOODLEGŁOŚCI P1/P2
 =====================================================================
 
-W tym projekcie zaimplementowano algorytm oszacowania położenia satelity GPS w momencie emisji sygnału, na podstawie pojedynczej efemerydy rozgłoszeniowej i pomiaru pseudoodległości L1/L2.
+W tym projekcie zaimplementowano algorytm oszacowania położenia satelity GPS w momencie emisji sygnału, na podstawie pojedynczej efemerydy rozgłoszeniowej i pomiaru pseudoodległości P1/P2.
 
 Implementacja opiera się na specyfikacji IS-GPS-200H, w szczególności:
 - Section 20.3.3.4.3:   User Algorithm for Ephemeris-Based Satellite Position
