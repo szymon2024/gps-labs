@@ -3,7 +3,7 @@
 EN:
 Contents
 
-gps_lab01.........Gps Satellite Position
+gps_lab01.........Gps satellite position
 gps_lab02.........GPS satellite position at signal emission time
                   based on the broadcast ephemeris and P1/P2 pseudorange observation
 
