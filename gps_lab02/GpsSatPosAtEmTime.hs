@@ -277,9 +277,9 @@ main = do
          if isEphemerisValid trvw trv eph
          then do
            let (te, (x,y,z)) = satPosAtEmTime c1C c2X trv eph           -- result
-           printf "Receiver clock time of signal reception  : %6.10fs\n" trv
-           printf "Emission time                            : %6.10fs\n" te
-           printf "Satellite ECEF position at emission time : (%8.6f, %8.6f, %8.6f)\n"  x y z
+           printf "Receiver clock time of signal reception  : %17.10fs\n"                  trv
+           printf "Emission time                            : %17.10fs\n"                  te
+           printf "Satellite ECEF position at emission time : (%15.6f, %15.6f, %15.6f)\n"  x y z
          else printf "The ephemeris is out of date for the given time"
 
 
