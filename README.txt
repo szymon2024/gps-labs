@@ -1,0 +1,15 @@
+2025-10-16
+
+EN:
+Contents
+
+gps_lab01.........Gps Satellite Position
+gps_lab02.........GPS satellite position at emission signal time of signal
+                  based on the broadcast ephemeris and P1/P2 pseudorange observations
+
+PL:
+Spis treści
+
+gps_lab01.........Pozycja satelity GPS
+gps_lab02.........Pozycja satelity GPS w momencie emisji sygnału
+                  na podstawie efemerydy rozgłoszeniowej i obserwacji pseudoodległości P1/P2
