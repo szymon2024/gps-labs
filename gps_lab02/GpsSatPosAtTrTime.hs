@@ -68,6 +68,7 @@ data Ephemeris = Ephemeris
   , omegaDot :: Double            -- ^ rate of node's right ascension [rad/s]
   , iDot     :: Double            -- ^ rate of inclination angle [rad/s]
   , week     :: Double            -- ^ number of GPS week for toe and toc
+  , fitIntv  :: Double            -- ^ fit interval [h]
   } deriving (Show)
 
 -- | Constants
@@ -225,7 +226,7 @@ getField start len = BSC.take len . BSC.drop start
 -- | Parse a single navigation data record
 parseNavRecord :: BSC.ByteString -> Maybe Ephemeris
 parseNavRecord r = do
-  let (l1:l2:l3:l4:l5:l6:_) = BSC.lines r
+  let (l1:l2:l3:l4:l5:l6:_:l8:_) = BSC.lines r
 
   (sys, _) <- BSC.uncons l1                                
   guard (sys == 'G')
@@ -264,6 +265,8 @@ parseNavRecord r = do
                                                                
   (iDot    , _) <- readDouble $ getField  4 19 l6
   (week    , _) <- readDouble $ getField 42 19 l6
+
+  (fitIntv , _) <- readDouble $ getField 23 19 l8
                 
   return Ephemeris {..}
 
@@ -298,16 +301,20 @@ wrapWeekCrossover dt
   | otherwise      = dt                                      -- tow and toe in the same week
 
 
--- | Ephemeris validity check.
--- | Assumes that ephemeris is valid for a maximum of 4 hours.
+-- | Ephemeris validity check based on fitInterval ephemeris field
 isEphemerisValid
-  :: Integer                                                 -- difference in weeks
-  -> Double                                                  -- time difference
+  :: Integer                                                 -- GPS week number
+  -> Double                                                  -- GPS time-of-week
+  -> Ephemeris
   -> Bool
-isEphemerisValid dw dt
-    |     dw == 0  = abs dt <= 4 * 3600.0                    -- condition for the same week
-    | abs dw == 1  = abs dt >  4 * 3600.0                    -- condition for adjacent weeks
-    |     dw >  1  = False
+isEphemerisValid w trv Ephemeris{..}
+    | fitIntv == 0  = error "The ephemeris fit interval is 0"
+    |      dw == 0  = abs dt <= fitIntv * 3600.0             -- condition for the same week
+    |  abs dw == 1  = abs dt >  fitIntv * 3600.0             -- condition for adjacent weeks
+    |      dw >  1  = False
+    where
+      dw = w   - round week::Integer                         -- conversion is needed for equality comparisons
+      dt = trv -       toe
 
 
 -- | Main program:
@@ -315,7 +322,7 @@ isEphemerisValid dw dt
 -- |     to receiver week number and receiver second-of-week
 -- |   * reads broadcast ephemeris from one record file
 -- |     (to use a different navigation record, replace the file content), 
--- |   * checks ephemeris validity for the given epoch (receiver time ta),
+-- |   * checks ephemeris validity for the given epoch (receiver time tag),
 -- |   * calculates signal transmission GPS time and the satellite ECEF position at that time,
 -- |   * prints receiver clock time of signal reception, the transmission time, and satellite position.
 -- |   
@@ -333,11 +340,8 @@ main = do
   navRec <- BSC.readFile fn                                            -- navigation data record
   case parseNavRecord navRec of
     Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
-    Just eph -> do                                                     -- ephemeris
-       let
-           dw        = w   - round (week eph)::Integer                 -- conversion is needed for equality comparisons
-           dt        = trv - toe  eph
-       if isEphemerisValid dw dt
+    Just eph ->                                                        -- ephemeris
+       if isEphemerisValid w trv eph
        then do
          let (tTx, (x,y,z)) = satPosAtEmTime pr1 pr2 trv eph           -- result
          printf "Receiver clock time of signal reception        [w,s]: (%d, %17.10f)\n"             w trv

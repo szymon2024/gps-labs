@@ -15,6 +15,10 @@ Input
 - navigation data record in RINEX 3.04
   format provided in nav_record.txt file      (hand copied from a RINEX navigation file)
 
+Output
+------
+- signal transmission time by GPS clock [s]
+- satellite position in ECEF [m] at transmission time
 
 Run example
 -----------
@@ -40,6 +44,10 @@ Wejście
 - rekord danych nawigacyjnych w formacie
   RINEX 3.04 zawarty w pliku nav_record.txt   (skopiowany ręcznie z pliku nawigacyjnego RINEX)
 
+Wyjście
+------
+- czas transmisji sygnału według zegara GPS [s]
+- pozycja satelity w ECEF [m] w momencie transmisji
 
 Przykład uruchomienia
 ---------------------
