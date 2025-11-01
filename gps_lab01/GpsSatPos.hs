@@ -184,7 +184,7 @@ main = do
   let eph       = ephExample
       (w, tow)  = gpsTimeToWeekTow 2024 03 07 22 00 30.0     -- GPS week number, GPS time-of-week
       (x, y, z) = gpsSatellitePosition tow eph
-      weekI     = round (week eph)::Integer                  -- needed for equality comparisons
+      weekI     = round (week eph)::Integer                  -- conversion is needed for equality comparisons
       dw        = w   - weekI
       dt        = tow - toe  eph
   if entryConForWrap dw dt
