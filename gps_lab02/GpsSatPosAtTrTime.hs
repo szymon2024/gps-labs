@@ -285,7 +285,7 @@ gpsTimeToWeekTow y mo d h m s =
 -- | Formula based on IS-GPS-200N 20.3.3.4.3. page 106.
 -- | Takes into account cases where tows are in adjacent weeks.
 -- | Needs entry condition provided earlier in the program assuming that
--- | the absolute time difference parameter is less than 302400 s.
+-- | the absolute time difference is less than 302400 s.
 -- | In practice, this is satisfied by the condition of ephemeris validity.
 wrapWeekCrossover
     :: Double                                                -- ^ difference between two tows        [s]
