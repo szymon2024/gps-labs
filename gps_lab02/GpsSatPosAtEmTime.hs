@@ -180,15 +180,15 @@ clkCorr t Ephemeris{..} = af0 + af1*dt + af2*dt^2
             
 -- | Determination of the ECEF satellite position at transmission time from broadcast ephemeris
 satPosAtEmTime            
-  :: Double                                                  -- ^ pseudorange P1 [m]
-  -> Double                                                  -- ^ pseudorange P2 [m]
+  :: Double                                                  -- ^ pseudorange pr1 [m]
+  -> Double                                                  -- ^ pseudorange pr2 [m]
   -> Double                                                  -- ^ receiver time of signal reception [s]
   -> Ephemeris                                               -- ^ broadcast ephemeris
   -> (Double, (Double,Double,Double))                        -- ^ signal transmission time [s], satelite ECEF position [m]
-satPosAtEmTime c1 c2 trv eph = iterateTx tTx0 0
+satPosAtEmTime pr1 pr2 trv eph = iterateTx tTx0 0
     where
-      pr   = pseudorangeDF c1 c2
-      tsv  = trv - pr/c                                      -- satelite time of signal transmission
+      pr   = pseudorangeDF pr1 pr2
+      tsv  = trv - pr/c                                       -- satelite time of signal transmission
       tTx0 = tsv
       iterateTx tTx k
           | k >= 10                  = error "Number of time transmission iterations exceeded"
@@ -197,7 +197,7 @@ satPosAtEmTime c1 c2 trv eph = iterateTx tTx0 0
           where
             dtb  = clkCorr tTx eph
             dtr  = relCorr tTx eph
-            dtsv = dtb + dtr
+            dtsv = dtb  + dtr
             tTx' = tTx0 - dtsv
 
 -- | Function import: double strtod(const char *nptr, char **endptr)
