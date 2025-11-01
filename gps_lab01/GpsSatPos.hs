@@ -104,7 +104,7 @@ keplerSolve m e = go e0 0
 -- | Formula based on IS-GPS-200N 20.3.3.4.3. page 106.
 -- | Takes into account cases where tows are in adjacent weeks.
 -- | Needs entry condition provided earlier in the program assuming that
--- | the absolute time difference parameter is less than 302400 s.
+-- | the absolute time difference is less than 302400 s.
 -- | In practice, this is satisfied by the condition of ephemeris validity.
 wrapWeekCrossover
     :: Double                                                -- ^ difference between two tows        [s]
@@ -184,7 +184,7 @@ main = do
   let eph       = ephExample
       (w, tow)  = gpsTimeToWeekTow 2024 03 07 22 00 30.0     -- GPS week number, GPS time-of-week
       (x, y, z) = gpsSatellitePosition tow eph
-      weekI     = round (week eph)::Integer                  -- needed for comparisons
+      weekI     = round (week eph)::Integer                  -- needed for equality comparisons
       dw        = w   - weekI
       dt        = tow - toe  eph
   if entryConForWrap dw dt
