@@ -1,15 +1,22 @@
-2025-11-01
+2025-11-02
 
 EN:
-Contents
+CONTENTS
 
 gps_lab01 - GPS satellite position
+
 gps_lab02 - GPS satellite position at signal emission time
             using broadcast ephemeris and dual-frequency pseudorange observation
+	    
+gps_lab03 - Scentific notation rinex file converter
+
 
 PL:
-Spis treści
+SPIS TREŚCI
 
 gps_lab01 - Pozycja satelity GPS
+
 gps_lab02 - Pozycja satelity GPS w chwili emisji sygnału z wykorzystaniem
             efemerydy rozgłoszeniowej i dwuczęstotliwościowej obserwacji pseudoodległości
+	    
+gps_lab03 - Konwerter notacji naukowej pliku rinex
