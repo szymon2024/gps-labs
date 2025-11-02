@@ -25,9 +25,9 @@ import Data.Int (Int64)
 main :: IO ()
 main = do
   let
-      sN = "source.nav"                                      -- source file name     
-      dN = "destination.nav"                                 -- destination file name
-  convertRinex sN dN
+      sn = "source.nav"                                      -- source file name     
+      dn = "destination.nav"                                 -- destination file name
+  convertRinex sn dn
   putStrLn "Processing complete."
 
 -- | Convert a RINEX file by:
@@ -39,15 +39,15 @@ convertRinex
     :: FilePath                                              -- ^ source file name
     -> FilePath                                              -- ^ destination file name
     -> IO ()
-convertRinex sN dN = do
-    bs <- L8.readFile sN
+convertRinex sn dn = do
+    bs <- L8.readFile sn
     let (hdr, rest) = separateHeader bs
     if hdr==[]
     then error "Cannot detect rinex header."
     else do
         let rest' = L8.map replaceD rest
             bs'   = (L8.concat hdr) <> rest'
-        L8.writeFile dN bs'
+        L8.writeFile dn bs'
 
 -- | Separate the header from the data section.
 --   The header is assumed to end with a line containing the label
