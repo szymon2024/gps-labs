@@ -8,7 +8,7 @@ gps_lab01 - GPS satellite position
 gps_lab02 - GPS satellite position at signal emission time
             using broadcast ephemeris and dual-frequency pseudorange observation
 	    
-gps_lab03 - Scentific notation rinex file converter
+gps_lab03 - Scentific notation rinex 3.04 file converter
 
 
 PL:
