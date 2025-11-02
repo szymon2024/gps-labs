@@ -58,8 +58,8 @@ separateHeader bs = go [] bs
     where
       l = detectLineLength bs
       go acc rest
-          | L8.null rest  = ([], rest)
-          | otherwise   =
+          | L8.null rest = ([], rest)
+          | otherwise    =
               let
                   (line, rest') = L8.splitAt l rest
                   acc'      = line : acc
