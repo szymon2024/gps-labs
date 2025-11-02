@@ -2,7 +2,7 @@
 
 EN:
 ======================================================================
-               SCENTIFIC NOTATION RINEX FILE CONVERTER
+             SCENTIFIC NOTATION RINEX 3.04 FILE CONVERTER
 ======================================================================
 
 This programm replaces the letter 'D' or 'd' with 'E' in the RINEX file
@@ -23,7 +23,7 @@ Output
 
 PL:  
 ======================================================================
-                 KONWERTER NOTACJI NAUKOWEJ PLIKU RINEX
+              KONWERTER NOTACJI NAUKOWEJ PLIKU RINEX 3.04
 ======================================================================
 
 Ten program zastępuje literę „D” lub „d” literą „E” w sekcji danych

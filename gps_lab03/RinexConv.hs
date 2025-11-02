@@ -1,6 +1,6 @@
 -- 2025-11-02
 
-{- | RINEX Converter: Replace the letter 'D' with 'E' in the data section
+{- | RINEX 3.04 Converter: Replace the letter 'D' with 'E' in the data section
      so that scientific notation uses 'E' instead of Fortran-style 'D'.
      The header remains unchanged.
 
