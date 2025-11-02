@@ -62,8 +62,8 @@ separateHeader bs = go [] bs
           | otherwise    =
               let
                   (line, rest') = L8.splitAt l rest
-                  acc'      = line : acc
-                  label = trim $ getField 60 20 line
+                  acc'          = line : acc
+                  label         = trim $ getField 60 20 line
               in if label == "END OF HEADER"
                  then (reverse acc', rest')
                  else go acc' rest'
