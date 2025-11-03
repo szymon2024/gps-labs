@@ -1,4 +1,4 @@
-2025-11-01
+2025-11-03
 
 EN:
 =====================================================================
@@ -28,11 +28,10 @@ Satellite ECEF position at transmission time [m,m,m]: (-9559159.654009, 11235493
 
 
 PL:
-
 =====================================================================
   POZYCJA SATELITY GPS W CHWILI TRANSMISJI SYGNAŁU Z WYKORZYSTANIEM
-                    EFEMERYDY ROZGŁOSZENIOWEJ
-       I DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI PSEUDOODLEGŁOŚCI
+                      EFEMERYDY ROZGŁOSZENIOWEJ
+         I DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI PSEUDOODLEGŁOŚCI
 =====================================================================
 
 Implementacja opiera się na specyfikacji IS-GPS-200N.

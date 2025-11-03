@@ -1,9 +1,9 @@
--- 2025-11-01
+-- 2025-11-03
 
 {- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
    | for dual-frequency pseudorange measurement (observation).
    
-     NOTE1:
+     NOTE 1:
        Three different clocks must be considered:
          - GPS clock
          - satellite clock
@@ -14,19 +14,19 @@
        satellite time of signal transmission by satellite clock,
        receiver time of signal reception by receiver clock.
 
-     NOTE2:
+     NOTE 2:
        Checking the validity of the ephemeris is necessary for the accuracy of calculations
        and the correct operation of the wrap week crossover function, which works for a limited time period.
               
      Input:
-       * receiver time of signal reception          (hand copied from RINEX observation file)
-       * pseudoranges [m]                           (hand copied from RINEX observation file)
-       * navigation data record in RINEX 3.04
+       - receiver time of signal reception          (hand copied from RINEX observation file)
+       - pseudoranges [m]                           (hand copied from RINEX observation file)
+       - navigation data record in RINEX 3.04
          format provided in nav_record.txt file     (hand copied from a RINEX navigation file)
 
      Output:
-       * tTx     - signal transmission time by GPS clock [s]
-       * (x,y,z) - satellite position in ECEF [m] at transmission time
+       - tTx     - signal transmission time by GPS clock [s]
+       - (x,y,z) - satellite position in ECEF [m] at transmission time
 -}
 
 {-# LANGUAGE RecordWildCards #-}
