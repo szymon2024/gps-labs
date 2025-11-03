@@ -1,4 +1,4 @@
--- 2025-11-02
+-- 2025-11-03
 
 {- | RINEX 3.04 Converter: Replace the letter 'D' with 'E' in the data section
      so that scientific notation uses 'E' instead of Fortran-style 'D'.
@@ -9,11 +9,11 @@
        because someone can enter END OF HEADER in comment fields.
 
      Input:
-       * source RINEX file name (set in the code)
-       * destination RINEX file name (set in the code)
+       - source RINEX file name (set in the code)
+       - destination RINEX file name (set in the code)
 
      Output: 
-       * converted RINEX file with normalized scentific notation
+       - converted RINEX file with normalized scentific notation
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
