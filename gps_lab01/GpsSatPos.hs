@@ -1,4 +1,4 @@
--- 2025-11-01
+-- 2025-11-03
 
 {- | Determining the GPS satellite position in ECEF from the GPS ephemeris and a given GPS time.
    | Based on IS-GPS-200N.
@@ -8,14 +8,14 @@
    | used in receivers. This function has a limited time range of application.
 
      Input:
-       * GPS Ephemeris                       defined in the code as ephExample,
-       * GPS Time                            defined in the code in calendar format
+       - GPS Ephemeris                       defined in the code as ephExample,
+       - GPS Time                            defined in the code in calendar format
 
-     Output
-       * GPS Time                            (w   , tow)
-       * GPS Ephemeris Time                  (week, toe)
-       * Number of seconds since toe to tow
-       * ECEF satellite position             (x, y, z)
+     Output:
+       - GPS Time                            (w   , tow)
+       - GPS Ephemeris Time                  (week, toe)
+       - Number of seconds since toe to tow
+       - ECEF satellite position             (x, y, z)
 
 -}
 
