@@ -40,7 +40,6 @@ import Foreign                                 (Ptr, alloca, peek, minusPtr)
 import Foreign.C.Types                         (CChar, CDouble(CDouble))
 import Foreign.C.String                        (CString)
 import System.IO.Unsafe                        (unsafePerformIO)
-import Debug.Trace
     
 type Calendar = (Integer, Int, Int, Int, Int, Int)    
 
