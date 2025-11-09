@@ -1,4 +1,4 @@
--- 2025-11-03
+-- 2025-11-09
 
 {- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
    | for dual-frequency pseudorange measurement (observation).
@@ -91,7 +91,7 @@ gpsSatellitePosition  t Ephemeris{..} =
     a      = (sqrtA)*(sqrtA)                                    -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                                   -- computed mean motion [rad/sec]
     n      = n0 + deltaN                                        -- corrected mean motion [rad/s]
-    tk     = wrapWeekCrossover t                                -- time elapsed since toe [s]
+    tk     = wrapWeekCrossover (t - toe)                        -- time elapsed since toe [s]
     mk     = m0 + n*tk                                          -- mean anomaly [rad]
     ek     = keplerSolve mk e                                   -- eccentric anomaly [rad]
     vk     = atan2 (sqrt (1 - e*e) * sin ek) (cos ek - e)       -- true anomaly
