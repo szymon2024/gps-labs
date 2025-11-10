@@ -1,14 +1,16 @@
-2025-11-03
+2025-11-10
 
 EN:
 ======================================================================
-                         GPS SATELLITE POSITION
+    CALCULATION OF THE GPS SATELLITE POSITION FROM ORBIT PARAMETERS
 ======================================================================
 
-Program that computes the position of a GPS satellite from broadcast ephemeris data and a GPS date.
-The algorithm is based on the official specification IS-GPS-200N.
-The program outputs satellite coordinates in the ECEF (Earth-Centered, Earth-Fixed) frame.
-Other versions can be found under the names eph2xyz or eph2pos.
+This program calculates the position of a GPS satellite in the ECEF system based on the orbital parameters (ephemeris) transmitted by the satellite in its navigation message and GPS time.
+
+The algorithm was developed based on the IS-GPS-200N specification.
+
+This type of program can be found under the names eph2xyz or eph2pos.
+
 
 Input data in the program code
 ------------------------------
@@ -29,13 +31,15 @@ Z =  7260529.645377433
 
 PL:  
 ======================================================================
-                          POZYCJA SATELITY GPS
+      OBLICZENIE POZYCJI SATELITY GPS WEDŁUG PARAMETRÓW ORBITY
 ======================================================================
 
-Program obliczający pozycję satelity GPS na podstawie efemerydy nadanej przez satelitę oraz daty GPS.
+Program wyznaczający pozycję satelity GPS w układzie ECEF na podstawie parametrów orbity tzw. efemerydy nadanej przez satelitę w wiadomości nawigacyjnej oraz czasu GPS.
+
 Algorytm opracowano na podstawie specyfikacji IS-GPS-200N.
-Program wyznacza współrzędne satelity w układzie ECEF (Earth-Centered, Earth-Fixed).
-Inne wersje można znaleźć pod nazwami eph2xyz albo eph2pos.
+
+Tego typu program można znaleźć pod nazwami eph2xyz albo eph2pos.
+
 
 Dane wejściowe w kodzie programu
 --------------------------------

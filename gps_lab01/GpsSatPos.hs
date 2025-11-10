@@ -1,11 +1,13 @@
--- 2025-11-03
+-- 2025-11-10
 
 {- | Determining the GPS satellite position in ECEF from the GPS ephemeris and a given GPS time.
-   | Based on IS-GPS-200N.
-   | It does not calculate the time difference as absolute time difference using the formula dw*604800+dt,
-   | where dw is the week difference and dt is time of week difference.
-   | The time difference is calculated using the wrap week crossover function
-   | used in receivers. This function has a limited time range of application.
+     Based on IS-GPS-200N.
+
+     NOTE:
+     It does not calculate the time difference as absolute time difference using the formula dw*604800+dt,
+     where dw is the week difference and dt is time of week difference.
+     The time difference is calculated using the wrap week crossover function
+     used in receivers. This function has a limited time range of application.
 
      Input:
        - GPS Ephemeris                       defined in the code as ephExample,
@@ -51,34 +53,39 @@ mu        = 3.986005e14           -- WGS 84 value of earth's universal gravitati
 omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [rad/s]
 
 -- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for a GPS time-of-week
--- | based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
+--   based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
 gpsSatellitePosition         
     :: Double                                                -- ^ GPS time-of-week [s]
     -> Ephemeris                                             -- ^ ephemeris
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-gpsSatellitePosition  t Ephemeris{..} =
+gpsSatellitePosition  t eph =
   let
-    a    = (sqrtA)*(sqrtA)                                   -- semi-major axis [m]                  
-    n0   = sqrt(mu/(a*a*a))                                  -- computed mean motion [rad/sec]       
-    n    = n0 + deltaN                                       -- corrected mean motion [rad/s]        
-    tk   = wrapWeekCrossover (t - toe)                       -- time elapsed since toe [s]           
-    mk   = m0 + n*tk                                         -- mean anomaly at tk [rad]             
-    ek   = keplerSolve mk e                                  -- eccentric anomaly [rad]              
-    vk   = atan2 (sqrt (1 - e*e) * sin ek) (cos ek - e)      -- true anomaly                         
-    phik = vk + omega                                        -- argument of latitude                 
-    duk  = cus * sin (2*phik) + cuc * cos (2*phik)           -- argument of latitude correction      
-    drk  = crs * sin (2*phik) + crc * cos (2*phik)           -- radius correction                    
-    dik  = cis * sin (2*phik) + cic * cos (2*phik)           -- inclination correction               
-    uk   = phik + duk                                        -- corrected argument of latitude       
-    rk   = a * (1 - e*cos ek) + drk                          -- corrected radius                     
-    ik   = i0 + dik + iDot*tk                                -- corrected inclination                
-    xk'  = rk * cos uk                                       -- xk' in the orbital plane             
-    yk'  = rk * sin uk                                       -- yk' in the orbital plane             
-    omegak = omega0                                                                                  
-           + (omegaDot - omegaEDot)*tk - omegaEDot*toe       -- corrected longitude of ascending node
-    xk   = xk' * cos omegak - yk' * cos ik * sin omegak      -- transformation to ECEF               
-    yk   = xk' * sin omegak + yk' * cos ik * cos omegak      -- transformation to ECEF               
-    zk   =                    yk' * sin ik                   -- transformation to ECEF
+    a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
+    n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
+    n      = n0 + deltaN eph                                 -- corrected mean motion [rad/s]        
+    tk     = wrapWeekCrossover (t - toe eph)                 -- time elapsed since toe [s]           
+    mk     = m0 eph + n*tk                                   -- mean anomaly at tk [rad]             
+    ek     = keplerSolve mk (e eph)                          -- eccentric anomaly [rad]              
+    vk     = atan2 (sqrt (1 - e eph *e eph ) * sin ek)
+                   (cos ek - e eph)                          -- true anomaly                         
+    phik   = vk + omega eph                                  -- argument of latitude                 
+    duk    = cus eph * sin (2*phik)
+           + cuc eph * cos (2*phik)                          -- argument of latitude correction      
+    drk    = crs eph * sin (2*phik)
+           + crc eph * cos (2*phik)                          -- radius correction                    
+    dik    = cis eph * sin (2*phik)
+           + cic eph * cos (2*phik)                          -- inclination correction               
+    uk     = phik + duk                                      -- corrected argument of latitude       
+    rk     = a * (1 - e eph * cos ek) + drk                  -- corrected radius                     
+    ik     = i0 eph + dik + iDot eph * tk                    -- corrected inclination                
+    xk'    = rk * cos uk                                     -- xk' in the orbital plane             
+    yk'    = rk * sin uk                                     -- yk' in the orbital plane             
+    omegak = omega0 eph                                                                                 
+           + (omegaDot eph - omegaEDot)*tk
+           - omegaEDot * toe eph                             -- corrected longitude of ascending node
+    xk     = xk' * cos omegak - yk' * cos ik * sin omegak    -- transformation to ECEF               
+    yk     = xk' * sin omegak + yk' * cos ik * cos omegak    -- transformation to ECEF               
+    zk     =                    yk' * sin ik                 -- transformation to ECEF
   in (xk,yk,zk)
 
 
@@ -97,15 +104,15 @@ keplerSolve m e = go e0 0
       | otherwise = go eN' (k+1)
           where    
             f     = eN - e * sin eN - m  
-            fDot  = 1 - e * cos eN                           -- derivative of the function f
+            fDot  =  1 - e * cos eN                          -- derivative of the function f
             eN'   = eN - f/fDot                              -- iterative formula
 
 -- | Calculates the correct number of seconds between two GPS tows without week numbers.
--- | Formula based on IS-GPS-200N 20.3.3.4.3. page 106.
--- | Takes into account cases where tows are in adjacent weeks.
--- | Needs entry condition provided earlier in the program assuming that
--- | the absolute time difference is less than 302400 s.
--- | In practice, this is satisfied by the condition of ephemeris validity.
+--   Formula based on IS-GPS-200N 20.3.3.4.3. page 106.
+--   Takes into account cases where tows are in adjacent weeks.
+--   Needs entry condition provided earlier in the program assuming that
+--   the absolute time difference is less than 302400 s.
+--   In practice, this is satisfied by the condition of ephemeris validity.
 wrapWeekCrossover
     :: Double                                                -- ^ difference between two tows        [s]
     -> Double                                                -- ^ number of seconds between two tows [s]
