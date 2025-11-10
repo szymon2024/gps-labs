@@ -1,4 +1,4 @@
--- 2025-11-09
+-- 2025-11-10
 
 {- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
    | for dual-frequency pseudorange measurement (observation).
@@ -79,38 +79,41 @@ fRel      = -4.442807633e-10      -- constant F in the relativistic correction [
 f1        = 1575.42e6             -- L1 frequency [Hz]
 f2        = 1227.60e6             -- L2 frequency [Hz]
 
-
--- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for GPS time in second-of-week
--- | based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
+-- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for a GPS time-of-week
+--   based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
 gpsSatellitePosition         
-    :: Double                                                  -- ^ GPS time in second-of-week (sow) [s]
-    -> Ephemeris                                               -- ^ ephemeris
-    -> (Double, Double, Double)                                -- ^ satellite position in ECEF [m]
-gpsSatellitePosition  t Ephemeris{..} =
+    :: Double                                                -- ^ GPS time-of-week [s]
+    -> Ephemeris                                             -- ^ ephemeris
+    -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
+gpsSatellitePosition  t eph =
   let
-    a      = (sqrtA)*(sqrtA)                                    -- semi-major axis [m]
-    n0     = sqrt(mu/(a*a*a))                                   -- computed mean motion [rad/sec]
-    n      = n0 + deltaN                                        -- corrected mean motion [rad/s]
-    tk     = wrapWeekCrossover (t - toe)                        -- time elapsed since toe [s]
-    mk     = m0 + n*tk                                          -- mean anomaly [rad]
-    ek     = keplerSolve mk e                                   -- eccentric anomaly [rad]
-    vk     = atan2 (sqrt (1 - e*e) * sin ek) (cos ek - e)       -- true anomaly
-    phik   = vk + omega                                         -- argument of latitude
-    duk    = cus * sin (2*phik) + cuc * cos (2*phik)            -- argument of latitude correction
-    drk    = crs * sin (2*phik) + crc * cos (2*phik)            -- radius correction
-    dik    = cis * sin (2*phik) + cic * cos (2*phik)            -- inclination correction
-    uk     = phik + duk                                         -- corrected argument of latitude
-    rk     = a * (1 - e*cos ek) + drk                           -- corrected radius
-    ik     = i0 + dik + iDot*tk                                 -- corrected inclination
-    xk'    = rk * cos uk                                        -- xk' in the orbital plane
-    yk'    = rk * sin uk                                        -- yk' in the orbital plane
-    omegak = omega0
-           + (omegaDot - omegaEDot)*tk - omegaEDot*toe          -- corrected longitude of ascending node
-    xk     = xk' * cos omegak - yk' * cos ik * sin omegak       -- transformation to ECEF
-    yk     = xk' * sin omegak + yk' * cos ik * cos omegak       -- transformation to ECEF
-    zk     =                    yk' * sin ik                    -- transformation to ECEF
+    a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
+    n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
+    n      = n0 + deltaN eph                                 -- corrected mean motion [rad/s]        
+    tk     = wrapWeekCrossover (t - toe eph)                 -- time elapsed since toe [s]           
+    mk     = m0 eph + n*tk                                   -- mean anomaly at tk [rad]             
+    ek     = keplerSolve mk (e eph)                          -- eccentric anomaly [rad]              
+    vk     = atan2 (sqrt (1 - e eph *e eph ) * sin ek)
+                   (cos ek - e eph)                          -- true anomaly                         
+    phik   = vk + omega eph                                  -- argument of latitude                 
+    duk    = cus eph * sin (2*phik)
+           + cuc eph * cos (2*phik)                          -- argument of latitude correction      
+    drk    = crs eph * sin (2*phik)
+           + crc eph * cos (2*phik)                          -- radius correction                    
+    dik    = cis eph * sin (2*phik)
+           + cic eph * cos (2*phik)                          -- inclination correction               
+    uk     = phik + duk                                      -- corrected argument of latitude       
+    rk     = a * (1 - e eph * cos ek) + drk                  -- corrected radius                     
+    ik     = i0 eph + dik + iDot eph * tk                    -- corrected inclination                
+    xk'    = rk * cos uk                                     -- xk' in the orbital plane             
+    yk'    = rk * sin uk                                     -- yk' in the orbital plane             
+    omegak = omega0 eph                                                                                 
+           + (omegaDot eph - omegaEDot)*tk
+           - omegaEDot * toe eph                             -- corrected longitude of ascending node
+    xk     = xk' * cos omegak - yk' * cos ik * sin omegak    -- transformation to ECEF               
+    yk     = xk' * sin omegak + yk' * cos ik * cos omegak    -- transformation to ECEF               
+    zk     =                    yk' * sin ik                 -- transformation to ECEF
   in (xk,yk,zk)
-
 
 -- | Iterative solution of Kepler's equation ek = m + e sin ek (Metoda Newtona-Raphsona)
 keplerSolve    
@@ -306,22 +309,22 @@ isEphemerisValid
   -> Double                                                  -- GPS time-of-week
   -> Ephemeris
   -> Bool
-isEphemerisValid w trv Ephemeris{..}
-    | fitIntv == 0  = error "The ephemeris fit interval is 0"
-    |      dw == 0  = abs dt <= fitIntv * 3600.0             -- condition for the same week
-    |  abs dw == 1  = abs dt >  fitIntv * 3600.0             -- condition for adjacent weeks
-    |      dw >  1  = False
+isEphemerisValid w trv eph
+    | fitIntv eph == 0  = error "The ephemeris fit interval is 0"
+    |      dw     == 0  = abs dt <= fitIntv eph * 3600.0         -- condition for the same week
+    |  abs dw     == 1  = abs dt >  fitIntv eph * 3600.0         -- condition for adjacent weeks
+    |      dw     >  1  = False
     where
-      dw = w   - round week::Integer                         -- conversion is needed for equality comparisons
-      dt = trv -       toe
+      dw = w   - round (week eph)::Integer                   -- conversion is needed for equality comparisons
+      dt = trv -        toe  eph
 
 
 -- | Main program:
--- |   * Converts receiver time of signal reception in calendar format (receiver time tag)
--- |     to receiver week number and receiver second-of-week
+-- |   * Converts receiver time of signal reception in calendar format (epoch, receiver time tag, receiver time stamp)
+-- |     to receiver week number and receiver time-of-week,
 -- |   * reads broadcast ephemeris from one record file
 -- |     (to use a different navigation record, replace the file content), 
--- |   * checks ephemeris validity for the given epoch (receiver time tag),
+-- |   * checks ephemeris validity for the given epoch (receiver time tag, receiver time stamp),
 -- |   * calculates signal transmission GPS time and the satellite ECEF position at that time,
 -- |   * prints receiver clock time of signal reception, the transmission time, and satellite position.
 -- |   
@@ -332,9 +335,9 @@ main = do
   let -- Most of the calculations are time-of-week callculations
       -- and time names refer to time-of-week (tow)
       -- which is enabled by wrapWeekCrossover function.
-      (w, trv) = gpsTimeToWeekTow 2025 08 03 00 00 51.0000000          -- receiver week number, receiver sow
-      pr1      = 23628069.060                                          -- pseudorange for f1 e.g. C1C
-      pr2      = 23628076.120                                          -- pseudorange for f2 e.g. C2X
+      (w, trv) = gpsTimeToWeekTow 2024 03 07 00 53 01.0000000          -- receiver week number, receiver tow
+      pr1      = 21548635.724                                          -- pseudorange for f1 e.g. C1C
+      pr2      = 21548628.027                                          -- pseudorange for f2 e.g. C2X
       fn       = "nav_record.txt"                                      -- file name
   navRec <- BSC.readFile fn                                            -- navigation data record
   case parseNavRecord navRec of

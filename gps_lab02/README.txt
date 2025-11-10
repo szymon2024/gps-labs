@@ -1,4 +1,4 @@
-2025-11-09
+2025-11-10
 
 EN:
 =====================================================================
@@ -22,9 +22,9 @@ Output
 
 Run example
 -----------
-Receiver clock time of signal reception        [w,s]: (2378,     51.0000000000)
-Transmission time                              [w,s]: (2378,     50.9216586382)
-Satellite ECEF position at transmission time [m,m,m]: (-9559159.654009, 11235493.230926, 22158573.199144)
+Receiver clock time of signal reception        [w,s]: (2304, 348781.0000000000)
+Transmission time                              [w,s]: (2304, 348780.9278127141)
+Satellite ECEF position at transmission time [m,m,m]: ( 4460302.794945, 17049812.692290, 19845264.366251)
 
 
 PL:
@@ -50,7 +50,8 @@ Wyjście
 
 Przykład uruchomienia
 ---------------------
-Receiver clock time of signal reception        [w,s]: (2378,     51.0000000000)
-Transmission time                              [w,s]: (2378,     50.9216586382)
-Satellite ECEF position at transmission time [m,m,m]: (-9559159.654009, 11235493.230926, 22158573.199144)
+Receiver clock time of signal reception        [w,s]: (2304, 348781.0000000000)
+Transmission time                              [w,s]: (2304, 348780.9278127141)
+Satellite ECEF position at transmission time [m,m,m]: ( 4460302.794945, 17049812.692290, 19845264.366251)
+
 
