@@ -21,8 +21,6 @@
 
 -}
 
-{-# LANGUAGE RecordWildCards #-}
-
 import Data.Time.Calendar  (fromGregorian, diffDays)
 import Text.Printf         (printf)
 
