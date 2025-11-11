@@ -32,9 +32,6 @@
 import Data.Time.Calendar  (fromGregorian, diffDays)
 import Text.Printf         (printf)
 
-import Test.QuickCheck
-    
-
 -- | GPS ephemeris (a subset of fields)
 data Ephemeris = Ephemeris
   { crs      :: Double                                       -- ^ orbital radius correction [m]
