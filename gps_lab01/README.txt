@@ -23,9 +23,9 @@ Output
 
 Print of run
 ------------
-Entered GPS time             (w   , tow) = (2304, 424830.0000000000)
-Ephemeris reference GPS time (week, toe) = (2304, 424800.0000000000)
-Number of seconds since toe              =            30.0000000000
+Entered GPS time             (w   , tow) = (2304, 424830.000000000000)
+Ephemeris reference GPS time (week, toe) = (2304, 424800.000000000000)
+Number of seconds since toe              =            30.000000000000
 
 ECEF satellite position [m]:
 X = 22151566.575334515
@@ -56,9 +56,9 @@ Wyjście
 
 Wydruk uruchomienia
 -------------------
-Entered GPS time             (w   , tow) = (2304, 424830.0000000000)
-Ephemeris reference GPS time (week, toe) = (2304, 424800.0000000000)
-Number of seconds since toe              =            30.0000000000
+Entered GPS time             (w   , tow) = (2304, 424830.000000000000)
+Ephemeris reference GPS time (week, toe) = (2304, 424800.000000000000)
+Number of seconds since toe              =            30.000000000000
 
 ECEF satellite position [m]:
 X = 22151566.575334515

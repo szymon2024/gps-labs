@@ -18,9 +18,9 @@
        - ECEF satellite position             (x, y, z)
 
      Print of run:
-     Entered GPS time             (w   , tow) = (2304, 424830.0000000000)
-     Ephemeris reference GPS time (week, toe) = (2304, 424800.0000000000)
-     Number of seconds since toe              =            30.0000000000
+     Entered GPS time             (w   , tow) = (2304, 424830.000000000000)
+     Ephemeris reference GPS time (week, toe) = (2304, 424800.000000000000)
+     Number of seconds since toe              =            30.000000000000
 
      ECEF satellite position [m]:
      X = 22151566.575334515
@@ -214,9 +214,9 @@ main = do
   if entryConForWrap dw dt
   then if isEphemerisValid dw dt
        then do
-         printf "Entered GPS time             (w   , tow) = (%d, %17.10f)\n" w      tow
-         printf "Ephemeris reference GPS time (week, toe) = (%d, %17.10f)\n" weekI (toe eph)
-         printf "Number of seconds since toe              =      %19.10f\n"  (wrapWeekCrossover (tow-toe eph))
+         printf "Entered GPS time             (w   , tow) = (%d, %19.12f)\n" w      tow
+         printf "Ephemeris reference GPS time (week, toe) = (%d, %19.12f)\n" weekI (toe eph)
+         printf "Number of seconds since toe              =      %21.12f\n"  (wrapWeekCrossover (tow-toe eph))
          printf "\n"
          printf "ECEF satellite position [m]:\n"
          printf "X = %18.9f\n" x
