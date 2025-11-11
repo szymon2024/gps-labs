@@ -196,7 +196,7 @@ entryConForWrap
 entryConForWrap dw dt
     |     dw == 0  = abs dt <= 302400.0                      -- condition for the same week
     | abs dw == 1  = abs dt >  302400.0                      -- condition for adjacent weeks
-    |     dw >  1  = False
+    | otherwise    = False
       
 
 -- Calculates GPS satelite position for example GPS ephemeris and GPS time.
