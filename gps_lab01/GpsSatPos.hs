@@ -1,4 +1,5 @@
--- 2025-11-10
+{-# LANGUAGE RecordWildCards #-}
+-- 2025-11-12
 
 {- | Determining the GPS satellite position in ECEF from the GPS ephemeris and a given GPS time.
      Based on IS-GPS-200N.
@@ -11,18 +12,28 @@
 
      Input:
        - GPS Ephemeris                       defined in the code as ephExample,
-       - GPS Time                            defined in the code in calendar format
+       - GPS Time in calendar format         defined in the code as gpsTime
 
      Output:
-       - GPS Time                            (w   , tow)
-       - GPS Ephemeris Time                  (week, toe)
-       - Number of seconds since toe to tow
        - ECEF satellite position             (x, y, z)
+
+     Print of run:
+     Entered GPS time             (w   , tow) = (2304, 424830.0000000000)
+     Ephemeris reference GPS time (week, toe) = (2304, 424800.0000000000)
+     Number of seconds since toe              =            30.0000000000
+
+     ECEF satellite position [m]:
+     X = 22151566.575334515
+     Y = 13275548.286060918
+     Z =  7260529.645377433
 
 -}
 
 import Data.Time.Calendar  (fromGregorian, diffDays)
 import Text.Printf         (printf)
+
+import Test.QuickCheck
+    
 
 -- | GPS ephemeris (a subset of fields)
 data Ephemeris = Ephemeris
@@ -32,17 +43,27 @@ data Ephemeris = Ephemeris
   , cuc      :: Double                                       -- ^ latitude argument correction [rad]
   , e        :: Double                                       -- ^ eccentricity []
   , cus      :: Double                                       -- ^ latitude argument correction [rad]
-  , sqrtA    :: Double                                       -- ^ sqare root of semi-major axis [m^0.5]
+  , sqrtA    :: Double                                       -- ^ square root of semi-major axis [m^0.5]
   , toe      :: Double                                       -- ^ time of ephemeris in GPS week [s]
   , cic      :: Double                                       -- ^ inclination correction [rad]
   , omega0   :: Double                                       -- ^ longitude of ascending node at toe epoch [rad]
   , cis      :: Double                                       -- ^ inclination correction [rad]
   , i0       :: Double                                       -- ^ inclination at reference epoch [rad]
-  , crc      :: Double                                       -- ^ orbital radius corrcetion [m]
+  , crc      :: Double                                       -- ^ orbital radius correction [m]
   , omega    :: Double                                       -- ^ argument of perigee [rad]
   , omegaDot :: Double                                       -- ^ rate of node's right ascension [rad/s]
   , iDot     :: Double                                       -- ^ rate of inclination angle [rad/s]
   , week     :: Double                                       -- ^ number of GPS week for toe
+  } deriving (Show)
+
+-- | GPS time in calendar format               
+data GpsTime = GpsTime
+  { year  :: Integer
+  , month :: Int
+  , day   :: Int
+  , h     :: Int
+  , m     :: Int
+  , s     :: Double
   } deriving (Show)
 
 -- | Constants
@@ -52,7 +73,7 @@ omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [
 
 -- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for a GPS time-of-week
 --   based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
-gpsSatellitePosition         
+gpsSatellitePosition       
     :: Double                                                -- ^ GPS time-of-week [s]
     -> Ephemeris                                             -- ^ ephemeris
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
@@ -121,20 +142,20 @@ wrapWeekCrossover dt
   | dt < -302400.0 = dt + 604800.0                           -- tow in adjacent week and later then toe
   | otherwise      = dt                                      -- tow and toe in the same week
 
--- | GPS time to GPS week number and GPS second-of-week
+-- | GPS time in calendar format to GPS week number and GPS time-of-week
 gpsTimeToWeekTow
-    :: Integer -> Int -> Int -> Int -> Int -> Double
+    :: GpsTime                                               -- ^ GPS time in calendar format
     -> (Integer, Double)                                     -- ^ GPS week no, GPS time-of-week
-gpsTimeToWeekTow y mo d h m s =
-    let day         = fromGregorian    y mo  d
-        gpsEpochDay = fromGregorian 1980  1  6              
-        daysDiff    = diffDays day gpsEpochDay
-        w           = daysDiff `div` 7                                     -- GPS week number
-        dow         = daysDiff `mod` 7                                     -- GPS day-of-week
-        tow         = fromIntegral ( dow * 86400
-                                   + fromIntegral (h * 3600 + m * 60))
-                    + s
-    in (w, tow)     
+gpsTimeToWeekTow (GpsTime year month day h m s) =
+    let date         = fromGregorian year month  day
+        gpsEpochDate = fromGregorian 1980     1    6              
+        daysDiff     = diffDays date gpsEpochDate
+        w            = daysDiff `div` 7                                     -- GPS week number
+        dow          = daysDiff `mod` 7                                     -- GPS day-of-week
+        tow          = fromIntegral ( dow * 86400
+                                    + fromIntegral (h * 3600 + m * 60))
+                     + s
+    in (w, tow)
 
 -- | Ephemeris example
 ephExample :: Ephemeris
@@ -159,7 +180,7 @@ ephExample = Ephemeris
           }
 
 -- | Ephemeris validity check.
--- | Assumes that ephemeris is valid for a maximum of 4 hours.
+--   Assumes that ephemeris is valid for a maximum of 4 hours.
 isEphemerisValid
   :: Integer                                                 -- difference in weeks
   -> Double                                                  -- time difference
@@ -167,10 +188,10 @@ isEphemerisValid
 isEphemerisValid dw dt
     |     dw == 0  = abs dt <= 4 * 3600.0                    -- condition for the same week
     | abs dw == 1  = abs dt >  4 * 3600.0                    -- condition for adjacent weeks
-    |     dw >  1  = False
+    | otherwise    = False
 
 -- | Entry condition for the wrapWeekCrossover function.
--- | Checking if the absolute time difference is less than 302400 s.
+--   Checking if the ABSOLUTE time difference is less than 302400 s.
 entryConForWrap
   :: Integer                                                 -- difference in weeks
   -> Double                                                  -- time difference
@@ -181,23 +202,24 @@ entryConForWrap dw dt
     |     dw >  1  = False
       
 
--- | Calculates GPS satelite position for example GPS ephemeris and GPS date.
--- | Before doing so, it checks the possibility of using the wrapWeekCrossover function
--- | and the validity of the ephemeris.
+-- Calculates GPS satelite position for example GPS ephemeris and GPS time.
+-- Before doing so, it checks the possibility of using the wrapWeekCrossover function
+-- and the validity of the ephemeris.
 main :: IO ()
 main = do
-  let eph       = ephExample
-      (w, tow)  = gpsTimeToWeekTow 2024 03 07 22 00 30.0     -- GPS week number, GPS time-of-week
-      (x, y, z) = gpsSatellitePosition tow eph
+  let eph       = ephExample                                 -- Input: GPS Ephemeris
+      gpsTime   = GpsTime 2024 03 07 22 00 30.0              -- Input: GPS Time in calendar format
+      (w, tow)  = gpsTimeToWeekTow gpsTime                   -- GPS week number, GPS time-of-week
+      (x, y, z) = gpsSatellitePosition tow eph               -- Output: ECEF satellite position
       weekI     = round (week eph)::Integer                  -- conversion is needed for equality comparisons
       dw        = w   - weekI
       dt        = tow - toe  eph
   if entryConForWrap dw dt
   then if isEphemerisValid dw dt
        then do
-         printf "                 (w   , tow) = (%d, %17.10f)\n" w      tow
-         printf "                 (week, toe) = (%d, %17.10f)\n" weekI (toe eph)
-         printf "Number of seconds since toe  =      %19.10f\n"  (wrapWeekCrossover (tow-toe eph))
+         printf "Entered GPS time             (w   , tow) = (%d, %17.10f)\n" w      tow
+         printf "Ephemeris reference GPS time (week, toe) = (%d, %17.10f)\n" weekI (toe eph)
+         printf "Number of seconds since toe              =      %19.10f\n"  (wrapWeekCrossover (tow-toe eph))
          printf "\n"
          printf "ECEF satellite position [m]:\n"
          printf "X = %18.9f\n" x
