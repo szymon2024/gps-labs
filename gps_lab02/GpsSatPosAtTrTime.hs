@@ -233,6 +233,17 @@ readDouble bs = unsafePerformIO $
             let offset = end `minusPtr` cstr
             let rest   = BSC.drop offset bs
             return (Just (realToFrac val, rest))
+
+-- | Reads Double value from ByteString field.
+--   Its purpose is to stop reading if it cannot read the entire field.
+--   After reading, the rest may be empty or consist only of spaces.
+readDoubleField :: BSC.ByteString -> Maybe Double
+readDoubleField bs = do
+  (val, rest) <- readDouble bs
+  case BSC.uncons rest of
+    Just (c, _) | c=='D' || c=='d' ->
+      error $ "Unsupported number format with 'D': " ++ BSC.unpack bs
+    _ -> guard (BSC.all (== ' ') rest) >> return val                  
                    
 getField :: Int -> Int -> BSC.ByteString -> BSC.ByteString
 getField start len = BSC.take len . BSC.drop start
@@ -254,33 +265,33 @@ parseNavRecord r = do
   
   let calToc = GpsTime year month day h m (fromIntegral s)
 
-  (af0     , _) <- readDouble $ getField 23 19 l1
-  (af1     , _) <- readDouble $ getField 42 19 l1
-  (af2     , _) <- readDouble $ getField 61 19 l1
+  af0      <- readDoubleField $ getField 23 19 l1
+  af1      <- readDoubleField $ getField 42 19 l1
+  af2      <- readDoubleField $ getField 61 19 l1
 
-  (crs     , _) <- readDouble $ getField 23 19 l2
-  (deltaN  , _) <- readDouble $ getField 42 19 l2
-  (m0      , _) <- readDouble $ getField 61 19 l2
+  crs      <- readDoubleField $ getField 23 19 l2
+  deltaN   <- readDoubleField $ getField 42 19 l2
+  m0       <- readDoubleField $ getField 61 19 l2
 
-  (cuc     , _) <- readDouble $ getField  4 19 l3
-  (e       , _) <- readDouble $ getField 23 19 l3
-  (cus     , _) <- readDouble $ getField 42 19 l3
-  (sqrtA   , _) <- readDouble $ getField 61 19 l3
+  cuc      <- readDoubleField $ getField  4 19 l3
+  e        <- readDoubleField $ getField 23 19 l3
+  cus      <- readDoubleField $ getField 42 19 l3
+  sqrtA    <- readDoubleField $ getField 61 19 l3
 
-  (toe     , _) <- readDouble $ getField  4 19 l4
-  (cic     , _) <- readDouble $ getField 23 19 l4
-  (omega0  , _) <- readDouble $ getField 42 19 l4
-  (cis     , _) <- readDouble $ getField 61 19 l4
+  toe      <- readDoubleField $ getField  4 19 l4
+  cic      <- readDoubleField $ getField 23 19 l4
+  omega0   <- readDoubleField $ getField 42 19 l4
+  cis      <- readDoubleField $ getField 61 19 l4
 
-  (i0      , _) <- readDouble $ getField  4 19 l5
-  (crc     , _) <- readDouble $ getField 23 19 l5
-  (omega   , _) <- readDouble $ getField 42 19 l5
-  (omegaDot, _) <- readDouble $ getField 61 19 l5                 
+  i0       <- readDoubleField $ getField  4 19 l5
+  crc      <- readDoubleField $ getField 23 19 l5
+  omega    <- readDoubleField $ getField 42 19 l5
+  omegaDot <- readDoubleField $ getField 61 19 l5                 
                                                                
-  (iDot    , _) <- readDouble $ getField  4 19 l6
-  (week    , _) <- readDouble $ getField 42 19 l6
+  iDot     <- readDoubleField $ getField  4 19 l6
+  week     <- readDoubleField $ getField 42 19 l6
 
-  (fitIntv , _) <- readDouble $ getField 23 19 l8
+  fitIntv  <- readDoubleField $ getField 23 19 l8
                 
   return Ephemeris {..}
 
