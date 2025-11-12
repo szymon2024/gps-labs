@@ -1,7 +1,7 @@
 -- 2025-11-12
 
 {- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
-   | for dual-frequency pseudorange measurement (observation).
+     for dual-frequency pseudorange measurement (observation).
    
      NOTE 1:
        Three different clocks must be considered:
@@ -172,7 +172,7 @@ eAnom t Ephemeris{..} =
     in keplerSolve mk e                                      -- eccentric anomaly [rad]
 
 -- | Compute relativistic correction
--- | based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
+--   based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
 relCorr
     :: Double                                                -- ^ tow [s]
     -> Ephemeris                                             -- ^ ephemeris
@@ -183,7 +183,7 @@ relCorr t Ephemeris{..} = fRel * e * sqrtA * sin ek
 
 
 -- | Compute broadcast satellite clock correction
--- | based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
+--   based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
 clkCorr
     :: Double                                                -- ^ tow [s]
     -> Ephemeris                                             -- ^ ephemeris                                 
@@ -220,7 +220,7 @@ foreign import ccall unsafe "stdlib.h strtod"
     c_strtod :: CString -> Ptr (Ptr CChar) -> IO CDouble
 
 -- | 2025-11-01 Data.ByteString.Char8 does not have a readDouble function.
--- | Reads Double value from Char8 ByteString.
+--   Reads Double value from Char8 ByteString.
 readDouble :: BSC.ByteString -> Maybe (Double, BSC.ByteString)
 readDouble bs = unsafePerformIO $
     BSU.unsafeUseAsCString bs $ \cstr -> 
