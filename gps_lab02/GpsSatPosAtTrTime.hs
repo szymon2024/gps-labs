@@ -17,6 +17,12 @@
      NOTE 2:
        Checking the validity of the ephemeris is necessary for the accuracy of calculations
        and the correct operation of the wrap week crossover function, which works for a limited time period.
+
+     NOTE 3:
+       Why is transmission time calculated?
+       The transmission time is calculated to calculate the satellite position for the pseudorange.
+       It's irrelevant that transmission times vary for different satellites for the selected observation time.
+       What matters is that the satellite's position corresponds to the satellite-receiver distance.
               
      Input:
        - receiver time of signal reception          obsTime        (hand copied from RINEX observation file)
