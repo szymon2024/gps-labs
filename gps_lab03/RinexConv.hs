@@ -1,6 +1,6 @@
--- 2025-11-03
+-- 2025-11-12
 
-{- | RINEX 3.04 Converter: Replace the letter 'D' with 'E' in the data section
+{- | Replace the letter 'D' with 'E' in the data section of RINEX 3.04 file
      so that scientific notation uses 'E' instead of Fortran-style 'D'.
      The header remains unchanged.
 
@@ -9,11 +9,11 @@
        because someone can enter END OF HEADER in comment fields.
 
      Input:
-       - source RINEX file name (set in the code)
+       - source RINEX file name      (set in the code)
        - destination RINEX file name (set in the code)
 
      Output: 
-       - converted RINEX file with normalized scentific notation
+       - destination RINEX file with normalized scentific notation with letter 'E'
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -25,8 +25,8 @@ import Data.Int (Int64)
 main :: IO ()
 main = do
   let
-      sn = "source.nav"                                      -- source file name     
-      dn = "destination.nav"                                 -- destination file name
+      sn = "source.nav"                                      -- Input: source file name     
+      dn = "destination.nav"                                 -- Input: destination file name
   convertRinex sn dn
   putStrLn "Processing complete."
 
