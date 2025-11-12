@@ -31,8 +31,8 @@ pliku RINEX 3.04, dzięki czemu w notacji naukowej używane jest 'E'
 zamiast 'D' w stylu Fortran. Nagłówek pozostaje niezmieniony.
 
 
-Dane wejściowe
---------------
+Wejście
+-------
 - nazwa pliku źródłowego RINEX
 - nazwa pliku docelowego RINEX
 
