@@ -306,18 +306,18 @@ parseNavRecord r = do
 -- | GPS time in calendar format to GPS week number and GPS time-of-week
 gpsTimeToWeekTow
     :: GpsTime                                               -- ^ GPS time in calendar format
-    -> (Integer, Double)                                     -- ^ GPS week no, GPS time-of-week
+    -> (Integer, Double)                                     -- ^ GPS week number, GPS time-of-week
 gpsTimeToWeekTow (GpsTime year month day h m s) =
     let date         = fromGregorian year month  day
-        gpsEpochDate = fromGregorian 1980     1    6              
-        daysDiff     = diffDays date gpsEpochDate
-        w            = daysDiff `div` 7                                     -- GPS week number
-        dow          = daysDiff `mod` 7                                     -- GPS day-of-week
+        gpsStartDate = fromGregorian 1980     1    6         -- The date from which the GPS time is counted
+        days         = diffDays date gpsStartDate            -- Number of days since GPS start date
+        w            = days `div` 7                          -- GPS week number
+        dow          = days `mod` 7                          -- GPS day-of-week
         tow          = fromIntegral ( dow * 86400
                                     + fromIntegral (h * 3600 + m * 60))
                      + s
-    in (w, tow) 
-
+    in (w, tow)
+    
 -- | Calculates the correct number of seconds between two GPS tows without week numbers.
 --   Formula based on IS-GPS-200N 20.3.3.4.3. page 106.
 --   Takes into account cases where tows are in adjacent weeks.
