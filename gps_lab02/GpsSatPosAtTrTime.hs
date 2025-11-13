@@ -54,11 +54,12 @@ import Foreign                                 (Ptr, alloca, peek, minusPtr)
 import Foreign.C.Types                         (CChar, CDouble(CDouble))
 import Foreign.C.String                        (CString)
 import System.IO.Unsafe                        (unsafePerformIO)
+
     
 -- | GPS ephemeris (a subset of fields from RINEX 3.04 navigation file)
 data Ephemeris = Ephemeris
   { prn      :: Int               -- ^ satellite number
-  , calToc   :: GpsTime           -- ^ toc as calendar date - clock data reference time
+  , calToc   :: GpsTime           -- ^ toc as calendar time - clock data reference time
   , af0      :: Double            -- ^ SV clock bias correction coefficient [s]
   , af1      :: Double            -- ^ SV clock drift correction coefficient [s/s]
   , af2      :: Double            -- ^ SV clock drift rate correction coefficient [s/s^2]
@@ -263,15 +264,15 @@ parseNavRecord r = do
 
   (sys, _) <- BSC.uncons l1                                
   guard (sys == 'G')
-  (prn  , _) <- BSC.readInt     $ getField  1 2 l1     
-  (year , _) <- BSC.readInteger $ getField  4 4 l1
-  (month, _) <- BSC.readInt     $ getField  9 2 l1
-  (day  , _) <- BSC.readInt     $ getField 12 2 l1
-  (h    , _) <- BSC.readInt     $ getField 15 2 l1
-  (m    , _) <- BSC.readInt     $ getField 18 2 l1
-  (s    , _) <- BSC.readInt     $ getField 21 2 l1
+  (prn  , _) <- BSC.readInt $ getField  1 2 l1     
+  (year , _) <- BSC.readInt $ getField  4 4 l1
+  (month, _) <- BSC.readInt $ getField  9 2 l1
+  (day  , _) <- BSC.readInt $ getField 12 2 l1
+  (h    , _) <- BSC.readInt $ getField 15 2 l1
+  (m    , _) <- BSC.readInt $ getField 18 2 l1
+  (s    , _) <- BSC.readInt $ getField 21 2 l1
   
-  let calToc = GpsTime year month day h m (fromIntegral s)
+  let calToc = GpsTime (toInteger year) month day h m (fromIntegral s)
 
   af0      <- readDoubleField $ getField 23 19 l1
   af1      <- readDoubleField $ getField 42 19 l1
