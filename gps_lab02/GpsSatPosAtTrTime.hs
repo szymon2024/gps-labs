@@ -1,7 +1,9 @@
--- 2025-11-12
+-- 2025-11-13
 
 {- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
      for dual-frequency pseudorange measurement (observation).
+     The calculated position is of low precision because the pseudorange code is of low precision
+     and the orbital parameters (ephemeris) are of low quality.
    
      NOTE 1:
        Three different clocks must be considered:
