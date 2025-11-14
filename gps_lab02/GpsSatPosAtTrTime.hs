@@ -1,4 +1,4 @@
--- 2025-11-13
+-- 2025-11-15
 
 {- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
      for dual-frequency pseudorange measurement (observation).
@@ -19,6 +19,9 @@
      NOTE 2:
        Checking the validity of the ephemeris is necessary for the accuracy of calculations
        and the correct operation of the wrap week crossover function, which works for a limited time period.
+       The program can check the validity of the ephemeris only for normal satellite operations
+       when the value of the Fit Interval field is zero, which means that the ephemeris
+       is valid within a 4-hour interval.
 
      NOTE 3:
        Why is transmission time calculated?
@@ -80,7 +83,7 @@ data Ephemeris = Ephemeris
   , omegaDot :: Double            -- ^ rate of node's right ascension [rad/s]
   , iDot     :: Double            -- ^ rate of inclination angle [rad/s]
   , week     :: Double            -- ^ number of GPS week for toe and toc
-  , fitIntv  :: Double            -- ^ fit interval [h]
+  , fitIntv  :: Double            -- ^ fit interval flag, in normal SV operations is 0
   } deriving (Show)
 
 -- | GPS time in calendar format               
@@ -337,19 +340,25 @@ wrapWeekCrossover dt
 
 
 -- | Ephemeris validity check based on fitInterval ephemeris field
+--   The program can check the validity of the ephemeris only for Normal SV Operations
+--   when the value of the Fit Interval field is zero, which means that the ephemeris
+--   is valid within a 4-hour interval.
+--   Based on IS-GPS-200N 20.3.3.4.3.1 Curve Fit Intervals.
 isEphemerisValid
   :: Integer                                                 -- GPS week number
   -> Double                                                  -- GPS time-of-week
   -> Ephemeris
   -> Bool
-isEphemerisValid w trv eph
-    | fitIntv eph == 0  = error "The ephemeris fit interval is 0"
-    |      dw     == 0  = abs dt <= fitIntv eph * 3600.0         -- condition for the same week
-    |  abs dw     == 1  = abs dt >  fitIntv eph * 3600.0         -- condition for adjacent weeks
-    | otherwise         = False
+isEphemerisValid w trv eph =
+    case round (fitIntv eph) of
+      0 |     dw == 0  -> abs dt <= twoHours    -- condition for the same week
+        | abs dw == 1  -> abs dt >  twoHours    -- condition for adjacent weeks
+        | otherwise    -> False
+      _                -> error "Ephemeris validity not implemented for non-zero Fit Interval"
     where
-      dw = w   - round (week eph)::Integer                   -- conversion is needed for equality comparisons
-      dt = trv -        toe  eph
+      dw       = w   - round (week eph)::Integer                   -- conversion is needed for equality comparisons
+      dt       = trv -        toe  eph
+      twoHours = 2 * 3600.0
 
 
 -- Main program:
