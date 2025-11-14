@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
--- 2025-11-13
+-- 2025-11-14
 
 {- | Determining the GPS satellite position in ECEF from the GPS ephemeris and a given GPS time.
      Based on IS-GPS-200N.
@@ -177,14 +177,14 @@ ephExample = Ephemeris
           }
 
 -- | Ephemeris validity check.
---   Assumes that ephemeris is valid for a maximum of 4 hours.
+--   Assumes that ephemeris is valid within 4 hours.
 isEphemerisValid
   :: Integer                                                 -- difference in weeks
   -> Double                                                  -- time difference
   -> Bool
 isEphemerisValid dw dt
-    |     dw == 0  = abs dt <= 4 * 3600.0                    -- condition for the same week
-    | abs dw == 1  = abs dt >  4 * 3600.0                    -- condition for adjacent weeks
+    |     dw == 0  = abs dt <= 2 * 3600.0                    -- condition for the same week
+    | abs dw == 1  = abs dt >  2 * 3600.0                    -- condition for adjacent weeks
     | otherwise    = False
 
 -- | Entry condition for the wrapWeekCrossover function.
