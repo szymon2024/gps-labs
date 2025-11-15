@@ -104,11 +104,11 @@ f2        = 1227.60e6             -- L2 frequency [Hz]
 
 -- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for a GPS time-of-week
 --   based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
-gpsSatellitePosition         
+satPosition         
     :: Double                                                -- ^ GPS time-of-week [s]
     -> Ephemeris                                             -- ^ ephemeris
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-gpsSatellitePosition  t eph =
+satPosition  t eph =
   let
     a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
@@ -215,7 +215,7 @@ satPosAtTrTime pr1 pr2 trv eph = iterateTx tTx0 0
       tTx0 = tsv
       iterateTx tTx k
           | k >= 10                  = error "Number of time transmission iterations exceeded"
-          | abs (tTx' - tTx) < 1e-12 = (tTx', gpsSatellitePosition tTx' eph)
+          | abs (tTx' - tTx) < 1e-12 = (tTx', satPosition tTx' eph)
           | otherwise                = iterateTx tTx' (k+1)
           where
             dtb  = clkCorr tTx eph
