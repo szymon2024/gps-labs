@@ -202,13 +202,13 @@ clkCorr t Ephemeris{..} = af0 + af1*dt + af2*dt^2
       (_, toc) = gpsTimeToWeekTow calToc
             
 -- | Determination of the ECEF satellite position at transmission time from broadcast ephemeris
-satPosAtEmTime            
+satPosAtTrTime            
   :: Double                                                  -- ^ pseudorange pr1 [m]
   -> Double                                                  -- ^ pseudorange pr2 [m]
   -> Double                                                  -- ^ receiver time of signal reception [s]
   -> Ephemeris                                               -- ^ broadcast ephemeris
   -> (Double, (Double,Double,Double))                        -- ^ signal transmission time [s], satelite ECEF position [m]
-satPosAtEmTime pr1 pr2 trv eph = iterateTx tTx0 0
+satPosAtTrTime pr1 pr2 trv eph = iterateTx tTx0 0
     where
       pr   = pseudorangeDF pr1 pr2
       tsv  = trv - pr/c                                       -- satelite time of signal transmission
@@ -376,7 +376,7 @@ main = do
     Just eph ->                                                        -- ephemeris
        if isEphemerisValid w trv eph
        then do
-         let (tTx, (x,y,z)) = satPosAtEmTime pr1 pr2 trv eph           -- Output: signal transmission time by GPS clock [s]
+         let (tTx, (x,y,z)) = satPosAtTrTime pr1 pr2 trv eph           -- Output: signal transmission time by GPS clock [s]
                                                                        --         satellite position in ECEF [m] at transmission time
          printf "Receiver clock time of signal reception        [w,s]: (%d, %19.12f)\n"             w trv
          printf "Transmission time                              [w,s]: (%d, %19.12f)\n"             w tTx
