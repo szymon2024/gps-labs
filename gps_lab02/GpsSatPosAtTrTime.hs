@@ -80,7 +80,7 @@ data Ephemeris = Ephemeris
   , omegaDot :: Double            -- ^ rate of node's right ascension [rad/s]
   , iDot     :: Double            -- ^ rate of inclination angle [rad/s]
   , week     :: Double            -- ^ number of GPS week for toe and toc
-  , fitIntv  :: Double            -- ^ fit interval h
+  , fitIntv  :: Double            -- ^ fit interval, ephemeris validity interval [h]
   } deriving (Show)
 
 -- | GPS time in calendar format               
