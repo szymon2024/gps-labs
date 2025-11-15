@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
--- 2025-11-14
+-- 2025-11-15
 
 {- | Determining the GPS satellite position in ECEF from the GPS ephemeris and a given GPS time.
      Based on IS-GPS-200N.
@@ -70,11 +70,11 @@ omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [
 
 -- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for a GPS time-of-week
 --   based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
-gpsSatellitePosition       
+satPosition       
     :: Double                                                -- ^ GPS time-of-week [s]
     -> Ephemeris                                             -- ^ ephemeris
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-gpsSatellitePosition  t eph =
+satPosition  t eph =
   let
     a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
@@ -207,7 +207,7 @@ main = do
   let eph       = ephExample                                 -- Input: GPS Ephemeris
       gpsTime   = GpsTime 2024 03 07 22 00 30.0              -- Input: GPS Time in calendar format
       (w, tow)  = gpsTimeToWeekTow gpsTime                   -- GPS week number, GPS time-of-week
-      (x, y, z) = gpsSatellitePosition tow eph               -- Output: ECEF satellite position
+      (x, y, z) = satPosition tow eph                        -- Output: ECEF satellite position
       weekI     = round (week eph)::Integer                  -- conversion is needed for equality comparisons
       dw        = w   - weekI
       dt        = tow - toe  eph
