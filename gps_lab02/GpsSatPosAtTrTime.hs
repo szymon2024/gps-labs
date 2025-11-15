@@ -341,13 +341,13 @@ isEphemerisValid
   -> Double                                                  -- GPS time-of-week
   -> Ephemeris
   -> Bool
-isEphemerisValid w trv eph 
+isEphemerisValid w tow eph 
     |     dw == 0  = abs dt <= ((fitIntv eph) / 2) * 3600    -- condition for the same week
     | abs dw == 1  = abs dt >  ((fitIntv eph) / 2) * 3600    -- condition for adjacent weeks
     | otherwise    = False
     where
       dw = w   - round (week eph)::Integer                   -- conversion is needed for equality comparisons
-      dt = trv -        toe  eph
+      dt = tow -        toe  eph
 
 -- Main program:
 --   * Converts receiver time of signal reception in calendar format (observation time, observation epoch,
