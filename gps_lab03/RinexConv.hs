@@ -27,7 +27,7 @@ main = do
   let
       sn = "source.nav"                                      -- Input: source file name     
       dn = "destination.nav"                                 -- Input: destination file name
-
+           
   convertRinex sn dn
   putStrLn "Processing complete."
 
