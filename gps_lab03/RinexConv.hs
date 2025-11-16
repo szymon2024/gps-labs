@@ -1,4 +1,4 @@
--- 2025-11-12
+-- 2025-11-16
 
 {- | Replace the letter 'D' with 'E' in the data section of RINEX 3.04 file
      so that scientific notation uses 'E' instead of Fortran-style 'D'.
@@ -27,6 +27,7 @@ main = do
   let
       sn = "source.nav"                                      -- Input: source file name     
       dn = "destination.nav"                                 -- Input: destination file name
+
   convertRinex sn dn
   putStrLn "Processing complete."
 
@@ -42,12 +43,14 @@ convertRinex
 convertRinex sn dn = do
     bs <- L8.readFile sn
     let (hdr, rest) = separateHeader bs
-    if hdr==[]
-    then error "Cannot detect rinex header."
-    else do
-        let rest' = L8.map replaceD rest
-            bs'   = (L8.concat hdr) <> rest'
-        L8.writeFile dn bs'
+    case hdr of                      
+      []     -> error "Cannot detect rinex header."
+      (l1:_) ->
+          let formatVer = trim $ getField 0 9 l1             -- finex version
+          in case formatVer of
+               "3.04"    -> L8.writeFile dn $ L8.concat hdr <> L8.map replaceD rest
+               otherwise ->  error $ "RINEX version " ++ L8.unpack formatVer
+                                  ++ " found. Expected version 3.04."
 
 -- | Separate the header from the data section.
 --   The header is assumed to end with a line containing the label
