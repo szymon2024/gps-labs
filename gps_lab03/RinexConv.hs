@@ -46,10 +46,10 @@ convertRinex sn dn = do
     case hdr of                      
       []     -> error "Cannot detect rinex header."
       (l1:_) ->
-          let formatVer = trim $ getField 0 9 l1             -- rinex version
-          in case formatVer of
+          let rinexVer = trim $ getField 0 9 l1             -- rinex version
+          in case rinexVer of
                "3.04"    -> L8.writeFile dn $ L8.concat hdr <> L8.map replaceD rest
-               otherwise ->  error $ "RINEX version " ++ L8.unpack formatVer
+               otherwise ->  error $ "RINEX version " ++ L8.unpack rinexVer
                                   ++ " found. Expected version 3.04."
 
 -- | Separate the header from the data section.
