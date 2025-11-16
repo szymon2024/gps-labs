@@ -28,8 +28,8 @@
               
      Input:
        - receiver time of signal reception          obsTime        (hand copied from RINEX observation file)
-       - code pseudorange for f1 [m]                pr1            (hand copied from RINEX observation file)
-       - code pseudorange for f2 [m]                pr2            (hand copied from RINEX observation file)
+       - pseudorange for f1 [m]                     pr1            (hand copied from RINEX observation file)
+       - pseudorange for f2 [m]                     pr2            (hand copied from RINEX observation file)
        - navigation data record in RINEX 3.04
          format                                     nav_record.txt (hand copied from a RINEX navigation file)
 
@@ -159,9 +159,9 @@ keplerSolve m e = iterate e0 0
 -- | Pseudorange for dual-frequency receiver (pseudorange corrected for ionospheric effects)
 --   based on IS-GPS-200N 20.3.3.3.3.3 ready-made formulas.
 pseudorangeDF
-    :: Double                                                -- ^ code pseudorange for f1    [m]
-    -> Double                                                -- ^ code pseudorange for f2    [m]
-    -> Double                                                -- ^ code pseudorange corrected [m]
+    :: Double                                                -- ^ pseudorange for f1    [m]
+    -> Double                                                -- ^ pseudorange for f2    [m]
+    -> Double                                                -- ^ pseudorange corrected [m]
 pseudorangeDF pr1 pr2 = (pr2 - g*pr1)/(1 - g)
     where
       g = (f1/f2)^2
@@ -366,8 +366,8 @@ main = do
       -- and time names refer to time-of-week (tow)
       -- which is enabled by wrapWeekCrossover function.
       obsTime  = GpsTime 2024 03 07 00 53 01.0000000                   -- Input: receiver time of signal reception
-      pr1      = 21548635.724                                          -- Input: code pseudorange for f1 e.g. C1C
-      pr2      = 21548628.027                                          -- Input: code pseudorange for f2 e.g. C2X
+      pr1      = 21548635.724                                          -- Input: pseudorange for f1 e.g. C1C
+      pr2      = 21548628.027                                          -- Input: pseudorange for f2 e.g. C2X
       fn       = "nav_record.txt"                                      -- Input: file name
       (w, trv) = gpsTimeToWeekTow obsTime                              -- receiver week number, receiver tow
   navRec <- BSC.readFile fn                                            -- navigation data record
