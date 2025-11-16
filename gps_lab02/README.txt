@@ -1,4 +1,4 @@
-2025-11-15
+2025-11-16
 
 EN:
 =====================================================================
@@ -13,8 +13,8 @@ and the orbital parameters (ephemeris) are of low quality.
 Input
 -----
 - receiver clock time of signal reception     (hand copied from a RINEX observation file)
-- pseudorange for L1 [m]                      (hand copied from a RINEX observation file)
-- pseudorange for L2 [m]                      (hand copied from a RINEX observation file)
+- code pseudorange for f1 [m]                 (hand copied from a RINEX observation file)
+- code pseudorange for f2 [m]                 (hand copied from a RINEX observation file)
 - navigation data record in RINEX 3.04
   format provided in nav_record.txt file      (hand copied from a RINEX navigation file)
 
@@ -44,8 +44,8 @@ a parametry orbitalne (efemeryda) są niskiej jakości.
 Wejście
 -------
 - czas odbiornika odbioru sygnału             (skopiowany ręcznie z pliku obserwacyjnego RINEX)
-- pseudoodległość dla L1 [m]                  (skopiowana ręcznie z pliku obserwacyjnego RINEX)
-- pseudoodległość dla L2 [m]                  (skopiowana ręcznie z pliku obserwacyjnego RINEX)
+- pseudoodległość kodowa dla f1 [m]           (skopiowana ręcznie z pliku obserwacyjnego RINEX)
+- pseudoodległość kodowa dla f2 [m]           (skopiowana ręcznie z pliku obserwacyjnego RINEX)
 - rekord danych nawigacyjnych w formacie
   RINEX 3.04 zawarty w pliku nav_record.txt   (skopiowany ręcznie z pliku nawigacyjnego RINEX)
 
