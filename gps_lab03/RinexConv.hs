@@ -1,4 +1,4 @@
--- 2025-11-16
+-- 2025-11-18
 
 {- | Replace the letter 'D' with 'E' in the data section of RINEX 3.04 file
      so that scientific notation uses 'E' instead of Fortran-style 'D'.
@@ -6,7 +6,7 @@
 
      NOTE:
        It is important to detect END OF HEADER from column 60,
-       because someone can enter END OF HEADER in comment fields.
+       because there can be END OF HEADER in comment fields.
 
      Input:
        - source RINEX file name      (set in the code)
@@ -19,18 +19,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import qualified Data.ByteString.Lazy.Char8 as L8    
-import Data.Char (isSpace)
-import Data.Int (Int64)
+import Data.Char                                  (isSpace)
+import Data.Int                                   (Int64)
 
 main :: IO ()
 main = do
   let
       sn = "source.nav"                                      -- Input: source file name     
       dn = "destination.nav"                                 -- Input: destination file name
-           
+
+  putStrLn "Start processing"
   convertRinex sn dn
   putStrLn "Processing complete."
-
+           
 -- | Convert a RINEX file by:
 --   * separating the header (up to the line containing "END OF HEADER"),
 --   * copying the header unchanged,
@@ -42,44 +43,27 @@ convertRinex
     -> IO ()
 convertRinex sn dn = do
     bs <- L8.readFile sn
-    let (hdr, rest) = separateHeader bs
-    case hdr of                      
-      []     -> error "Cannot detect rinex header."
-      (l1:_) ->
-          let rinexVer = trim $ getField 0 9 l1             -- rinex version
-          in case rinexVer of
-               "3.04"    -> L8.writeFile dn $ L8.concat hdr <> L8.map replaceD rest
-               otherwise ->  error $ "RINEX version " ++ L8.unpack rinexVer
-                                  ++ " found. Expected version 3.04."
+    let ls     = L8.lines bs                                 -- Only header lines will be read
+        hdrLen = headerLength ls                             
+    case ls of
+      []     -> error "Empty file"
+      (l1:_) -> do
+              let rinexVer = trim $ getField 0 9 l1
+              if rinexVer == "3.04"
+              then do
+                let hdr     = L8.take hdrLen bs
+                    dataSec = L8.drop hdrLen bs
+                L8.writeFile dn (hdr <> (L8.map replaceD dataSec))
+              else error "This is not RINEX 3.04 file"
 
--- | Separate the header from the data section.
---   The header is assumed to end with a line containing the label
---   "END OF HEADER" in columns 61–80 (as per RINEX specification).
---   Returns a tuple: (list of header lines, remainder of the file).
-separateHeader :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-separateHeader bs = go [] bs
+-- | Compute RINEX header length                       
+headerLength :: [L8.ByteString] -> Int64
+headerLength ls = case dataSec of
+                    []     -> error "Cannot detect rinex header."
+                    (l1:_) -> sum (map L8.length hdr) + L8.length l1
     where
-      l = detectLineLength bs
-      go acc rest
-          | L8.null rest = ([], rest)
-          | otherwise    =
-              let
-                  (line, rest') = L8.splitAt l rest
-                  acc'          = line : acc
-                  label         = trim $ getField 60 20 line
-              in if label == "END OF HEADER"
-                 then (reverse acc', rest')
-                 else go acc' rest'
-
--- | Detect the line length of the RINEX file:
---   * 81 characters (80 + LF)
---   * 82 characters (80 + CRLF)
---   Throws an error if no valid line ending is detected.
-detectLineLength :: L8.ByteString -> Int64
-detectLineLength bs
-    | bs L8.!? 81 == Just '\n' = 82
-    | bs L8.!? 80 == Just '\n' = 81
-    | otherwise                = error "Cannot detect end of line"
+      (hdr, dataSec)     = break isEndOfHeader ls
+      isEndOfHeader line = trim (L8.drop 60 line) == L8.pack "END OF HEADER"
 
 -- | Replace 'D' or 'd' with 'E'.
 --   In RINEX, floating-point numbers may use Fortran-style
