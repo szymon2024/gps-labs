@@ -46,7 +46,7 @@ import Data.Time.LocalTime (LocalTime (..), TimeOfDay(..))
 import Text.Printf         (printf)
 import Data.Fixed          (Pico)
 
--- | GPS ephemeris (a subset of fields)
+-- | GPS ephemeris
 data Ephemeris = Ephemeris
   { crs      :: Double                                      -- ^ orbital radius correction [m]
   , deltaN   :: Double                                      -- ^ mean motion difference [rad/s]
@@ -80,12 +80,12 @@ satPosition
     :: Pico                                                  -- ^ GPS time-of-week [s]
     -> Ephemeris                                             -- ^ ephemeris
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-satPosition  t eph =
+satPosition tow eph =
   let
     a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
     n      = n0 + deltaN eph                                 -- corrected mean motion [rad/s]        
-    tk     = realToFrac $ wrapWeekCrossover (t - toe eph)    -- time elapsed since toe [s]           
+    tk     = realToFrac $ wrapWeekCrossover (tow - toe eph)  -- time elapsed since toe [s]           
     mk     = m0 eph + n*tk                                   -- mean anomaly at tk [rad]             
     ek     = keplerSolve mk (e eph)                          -- eccentric anomaly [rad]              
     vk     = atan2 (sqrt (1 - e eph *e eph ) * sin ek)
@@ -222,10 +222,10 @@ main = do
   if entryConForWrap dw dt
   then if isEphemerisValid dw dt
        then do
-         printf "Entered GPS time             (w   , tow) = (%d, %19.12f)\n"  w         (realToFrac tow::Double)
-         printf "Ephemeris reference GPS time (week, toe) = (%d, %19.12f)\n" (week eph) (realToFrac (toe eph)::Double)
-         printf "Number of seconds since toe              =      %21.12f\n"             (realToFrac (wrapWeekCrossover (tow-toe eph))::Double)
-         printf "\n"
+         putStrLn $ "Entered GPS time             (w   , tow) = " ++ show (w       , tow)
+         putStrLn $ "Ephemeris reference GPS time (week, toe) = " ++ show (week eph, toe eph)
+         putStrLn $ "Number of seconds since toe              =           " ++ show  (wrapWeekCrossover (tow-toe eph))
+         putStrLn ""
          printf "ECEF satellite position [m]:\n"
          printf "X = %18.9f\n" x
          printf "Y = %18.9f\n" y
