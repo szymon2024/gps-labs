@@ -1,11 +1,13 @@
-2025-11-15
+2025-11-17
 
 EN:
 ======================================================================
     CALCULATION OF THE GPS SATELLITE POSITION FROM ORBIT PARAMETERS
 ======================================================================
 
-This program calculates GPS satellite position in ECEF system based on the example orbital parameters (ephemeris) transmitted by the satellite in its navigation message and GPS time.
+This program calculates GPS satellite position in ECEF system
+based on the example orbital parameters (ephemeris) transmitted
+by the satellite in its navigation message and GPS time.
 
 The algorithm was developed based on the IS-GPS-200N specification.
 
@@ -38,7 +40,9 @@ PL:
       OBLICZENIE POZYCJI SATELITY GPS WEDŁUG PARAMETRÓW ORBITY
 ======================================================================
 
-Program wyznaczający pozycję satelity GPS w układzie ECEF na podstawie przykładowych parametrów orbity tzw. efemerydy nadawanej przez satelitę w wiadomości nawigacyjnej oraz czasu GPS.
+Program wyznaczający pozycję satelity GPS w układzie ECEF na podstawie
+przykładowych parametrów orbity tzw. efemerydy nadawanej przez satelitę
+w wiadomości nawigacyjnej oraz czasu GPS.
 
 Algorytm opracowano na podstawie specyfikacji IS-GPS-200N.
 
