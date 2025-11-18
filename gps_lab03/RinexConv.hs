@@ -59,8 +59,8 @@ convertRinex sn dn = do
 -- | Compute RINEX header length including END OF HEADER line
 headerLength :: [L8.ByteString] -> Int64
 headerLength ls = case break isEndOfHeader ls of
-                    (_  , []  ) -> error "Cannot detect rinex header."
-                    (hdr, l1:_) -> sum (map L8.length hdr) + L8.length l1
+                    (_   , []  ) -> error "Cannot detect rinex header."
+                    (part, l1:_) -> sum (map L8.length part) + L8.length l1
     where
       isEndOfHeader line = trim (L8.drop 60 line) == L8.pack "END OF HEADER"
 
