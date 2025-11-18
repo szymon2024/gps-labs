@@ -44,6 +44,7 @@ convertRinex
 convertRinex sn dn = do
     bs <- L8.readFile sn
     let pieces = L8.split '\n' bs                            -- Only header pieces will be read
+                                                             -- Don't use L8.lines because it works differently
         hdrLen = headerLength pieces
     case pieces of
       []     -> error "Empty file"
