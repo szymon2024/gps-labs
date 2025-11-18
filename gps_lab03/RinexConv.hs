@@ -1,4 +1,4 @@
--- 2025-11-18
+-- 2025-11-19
 
 {- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
      in the data section so that scientific notation uses 'E'
@@ -43,9 +43,9 @@ convertRinex
     -> IO ()
 convertRinex sn dn = do
     bs <- L8.readFile sn
-    let ls     = L8.lines bs                                 -- Only header lines will be read
-        hdrLen = headerLength ls
-    case ls of
+    let pieces = L8.split '\n' bs                            -- Only header pieces will be read
+        hdrLen = headerLength pieces
+    case pieces of
       []     -> error "Empty file"
       (l1:_) -> do
               let rinexVer = trim $ getField 0 9 l1
@@ -59,8 +59,9 @@ convertRinex sn dn = do
 -- | Compute RINEX header length including END OF HEADER line
 headerLength :: [L8.ByteString] -> Int64
 headerLength ls = case break isEndOfHeader ls of
-                    (_   , []  ) -> error "Cannot detect rinex header."
-                    (part, l1:_) -> sum (map ((+1) . L8.length) part) + (L8.length l1 + 1) -- +1 to count '\n'
+                    (_   , []  )  -> error "Cannot detect rinex header."
+                    (part, l1:[]) -> sum (map ((+1) . L8.length) part) + L8.length l1       -- +1 to count '\n'
+                    (part, l1:_)  -> sum (map ((+1) . L8.length) part) + (L8.length l1 + 1) -- +1 to count '\n'
     where
       isEndOfHeader line = trim (L8.drop 60 line) == L8.pack "END OF HEADER"
 
