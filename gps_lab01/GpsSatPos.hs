@@ -194,7 +194,7 @@ isEphemerisValid dw dt
     | otherwise    = False
 
 -- | Entry condition for the wrapWeekCrossover function.
---   Checking if the ABSOLUTE time difference is less than 302400 s (half week).
+--   Checking if the ABSOLUTE (real) time difference is less than 302400 s (half week).
 entryConForWrap
   :: Integer                                                 -- difference in weeks
   -> Pico                                                    -- time-of-week difference
