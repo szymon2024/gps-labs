@@ -1,4 +1,4 @@
-2025-11-17
+2025-11-19
 
 EN:
 ======================================================================
@@ -16,7 +16,7 @@ This type of program can be found under the names eph2xyz or eph2pos.
 
 Input
 -----
-- GPS Ephemeris,
+- GPS Ephemeris
 - GPS Time
 
 Output
@@ -51,7 +51,7 @@ Tego typu program można znaleźć pod nazwami eph2xyz albo eph2pos.
 
 Wejście
 -------
-- efemeryda GPS,
+- efemeryda GPS
 - czas GPS
 
 Wyjście

@@ -1,4 +1,4 @@
--- 2025-11-17
+-- 2025-11-19
 
 {- | This program calculates GPS satellite position in ECEF system
      based on the example orbital parameters (ephemeris) transmitted
@@ -194,7 +194,7 @@ isEphemerisValid dw dt
     | otherwise    = False
 
 -- | Entry condition for the wrapWeekCrossover function.
---   Checking if the ABSOLUTE (real) time difference is less than 302400 s (half week).
+--   Checking if the ABSOLUTE time difference is less than 302400 s (half week).
 entryConForWrap
   :: Integer                                                 -- difference in weeks
   -> Pico                                                    -- time-of-week difference
@@ -216,12 +216,12 @@ main = do
   let eph       = ephExample                                 -- Input: GPS Ephemeris
       gpsTime   = mkGpsTime 2024 03 07 22 00 30.0            -- Input: calendar GPS Time
       (w, tow)  = gpsTimeToWeekTow gpsTime                   -- GPS week number, GPS time-of-week
-      (x, y, z) = satPosition tow eph                        -- Output: ECEF satellite position
       dw        = w   - week eph
       dt        = tow - toe  eph
   if entryConForWrap dw dt
   then if isEphemerisValid dw dt
        then do
+         let (x, y, z) = satPosition tow eph                 -- Output: ECEF satellite position
          putStrLn $ "Entered GPS time             (w   , tow) = " ++ show (w       , tow)
          putStrLn $ "Ephemeris reference GPS time (week, toe) = " ++ show (week eph, toe eph)
          putStrLn $ "Number of seconds since toe              =           " ++ show  (wrapWeekCrossover (tow-toe eph))
