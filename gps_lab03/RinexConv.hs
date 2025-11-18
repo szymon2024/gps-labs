@@ -1,8 +1,8 @@
 -- 2025-11-18
 
-{- | Replace the letter 'D' with 'E' in the data section of RINEX 3.04 file
-     so that scientific notation uses 'E' instead of Fortran-style 'D'.
-     The header remains unchanged.
+{- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
+     in the data section so that scientific notation uses 'E'
+     instead of Fortran-style 'D'. The header remains unchanged.
 
      NOTE:
        It is important to detect END OF HEADER from column 60,
@@ -44,7 +44,7 @@ convertRinex
 convertRinex sn dn = do
     bs <- L8.readFile sn
     let ls     = L8.lines bs                                 -- Only header lines will be read
-        hdrLen = headerLength ls                             
+        hdrLen = headerLength ls
     case ls of
       []     -> error "Empty file"
       (l1:_) -> do
