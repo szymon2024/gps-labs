@@ -9,8 +9,8 @@
        because there can be END OF HEADER in comment fields.
 
      Input:
-       - source RINEX file name      (set in the code)
-       - destination RINEX file name (set in the code)
+       - source RINEX file name      (to set in the code)
+       - destination RINEX file name (to set in the code)
 
      Output: 
        - destination RINEX file with normalized scentific notation with letter 'E'

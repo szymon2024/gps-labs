@@ -12,8 +12,8 @@ uses 'E' instead of Fortran-style 'D'. The header remains unchanged.
 
 Input
 -----
-- source RINEX file name
-- destination RINEX file name
+- source RINEX file name                (to set in the code)
+- destination RINEX file name           (to set in the code)
 
 
 Output
@@ -34,8 +34,8 @@ niezmieniony.
 
 Wejście
 -------
-- nazwa pliku źródłowego RINEX
-- nazwa pliku docelowego RINEX
+- nazwa pliku źródłowego RINEX          (do wpisania w kodzie)
+- nazwa pliku docelowego RINEX          (do wpisania w kodzie)
 
 
 Wyjście
