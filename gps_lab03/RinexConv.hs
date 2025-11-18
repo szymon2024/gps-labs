@@ -56,13 +56,13 @@ convertRinex sn dn = do
                 L8.writeFile dn (hdr <> (L8.map replaceD dataSec))
               else error "This is not RINEX 3.04 file"
 
--- | Compute RINEX header length                       
+-- | Compute RINEX header length including END OF HEADER line
 headerLength :: [L8.ByteString] -> Int64
-headerLength ls = case dataSec of
+headerLength ls = case rest of
                     []     -> error "Cannot detect rinex header."
                     (l1:_) -> sum (map L8.length hdr) + L8.length l1
     where
-      (hdr, dataSec)     = break isEndOfHeader ls
+      (hdr, rest)        = break isEndOfHeader ls
       isEndOfHeader line = trim (L8.drop 60 line) == L8.pack "END OF HEADER"
 
 -- | Replace 'D' or 'd' with 'E'.
