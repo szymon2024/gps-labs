@@ -1,4 +1,4 @@
--- 2025-11-19
+-- 2025-11-20
 
 {- | This program calculates GPS satellite position in ECEF system
      based on the example orbital parameters (ephemeris) transmitted
@@ -7,11 +7,11 @@
      The algorithm follows the IS-GPS-200N specification, which provides ready-made formulas
      for satellite position. These formulas use only the time of week without the week number.
      To make it possible they apply the wrapWeekCrossover function, which operates within a limited
-     absolute time interval of 302400 s. In practice, the limited time interval is ensured
+     time interval of 302400 s. In practice, the limited time interval is ensured
      by checking the validity of the ephemeris. For demonstration purposes, this program
      assumes an ephemeris validity interval 4h.
 
-     In summary, the programm does not compute time differences as absolute time difference
+     In summary, the programm does not compute time differences as real time difference
      using the formula dw*604800+dt, where dw is the week difference and dt is time-of-week difference.
      Instead, it applies the wrapWeekCrossover function, which has a limited range of applicability.
 
@@ -194,7 +194,7 @@ isEphemerisValid dw dt
     | otherwise    = False
 
 -- | Entry condition for the wrapWeekCrossover function.
---   Checking if the ABSOLUTE time difference is less than 302400 s (half week).
+--   Checking if the time difference is less than 302400 s (half week).
 entryConForWrap
   :: Integer                                                 -- difference in weeks
   -> Pico                                                    -- time-of-week difference
