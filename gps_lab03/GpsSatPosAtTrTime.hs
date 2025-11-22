@@ -1,9 +1,11 @@
--- 2025-11-17
+-- 2025-11-22
 
-{- | Estimate ECEF satellite position at GPS transmission time [s] from broadcast ephemeris
-     for dual-frequency pseudorange measurement (observation).
-     The calculated position is of low precision because the code pseudorange is of low precision
-     and the orbital parameters (ephemeris) are of low quality.
+{- | Estimate ECEF satellite position at GPS transmission time [s] from
+     broadcast ephemeris for dual-frequency pseudorange measurement
+     (observation).  The calculated position is of low precision
+     because the code pseudorange is of low precision and the orbital
+     parameters (ephemeris) are approximate.
+     
    
      NOTE 1:
        Three different clocks must be considered:
@@ -17,10 +19,6 @@
        receiver time of signal reception by receiver clock.
 
      NOTE 2:
-       Checking the validity of the ephemeris is necessary for the accuracy of calculations
-       and the correct operation of the wrap week crossover function, which works for a limited time period.
-
-     NOTE 3:
        Why is transmission time calculated?
        The transmission time is calculated to calculate the satellite position for the pseudorange.
        It's irrelevant that transmission times vary for different satellites for the selected observation time.
@@ -50,6 +48,8 @@
 
 {-# LANGUAGE RecordWildCards #-}
 
+module GpsSatPosAtTrTime where
+
 import Data.Time.Calendar                      (fromGregorian, diffDays)
 import Data.Time.LocalTime                     (LocalTime (..), TimeOfDay(..))
 import Data.Fixed                              (Pico)    
@@ -66,23 +66,23 @@ import System.IO.Unsafe                        (unsafePerformIO)
 -- | GPS navigation data (a subset of fields from RINEX 3.04 navigation file)
 data NavRecord = NavRecord
   { prn      :: Int               -- ^ satellite number
-  , calToc   :: GpsTime           -- ^ toc as calendar time - clock data reference time
-  , af0      :: Double            -- ^ SV clock bias correction coefficient [s]
-  , af1      :: Double            -- ^ SV clock drift correction coefficient [s/s]
-  , af2      :: Double            -- ^ SV clock drift rate correction coefficient [s/s^2]
+  , calToc   :: GpsCalendarTime   -- ^ toc as calendar time - clock data reference time
+  , af0      :: Double            -- ^ satellite clock bias correction coefficient [s]
+  , af1      :: Double            -- ^ satellite clock drift correction coefficient [s/s]
+  , af2      :: Double            -- ^ satellite clock drift rate correction coefficient [s/s^2]
   , crs      :: Double            -- ^ orbital radius correction [m]
   , deltaN   :: Double            -- ^ mean motion difference [rad/s]
   , m0       :: Double            -- ^ mean anomaly at toe epoch [rad]
-  , cuc      :: Double            -- ^ latitude argument correction [rad]
+  , cuc      :: Double            -- ^ cosine correction to argument of latitude [rad]
   , e        :: Double            -- ^ eccentricity []
-  , cus      :: Double            -- ^ latitude argument correction [rad]
+  , cus      :: Double            -- ^ sine correction to argument of latitude [rad]
   , sqrtA    :: Double            -- ^ square root of semi-major axis [m^0.5]
   , toe      :: Pico              -- ^ time of ephemeris in GPS week [s]
-  , cic      :: Double            -- ^ inclination correction [rad]
-  , omega0   :: Double            -- ^ longitude of ascending node at toe epoch [rad]
-  , cis      :: Double            -- ^ inclination correction [rad]
-  , i0       :: Double            -- ^ inclination at reference epoch [rad]
-  , crc      :: Double            -- ^ orbital radius correction [m]
+  , cic      :: Double            -- ^ cosine correction to inclination [rad]
+  , omega0   :: Double            -- ^ longitude of ascending node at toe [rad]
+  , cis      :: Double            -- ^ sine correction to inclination [rad]
+  , i0       :: Double            -- ^ inclination angle at reference epoch [rad]
+  , crc      :: Double            -- ^ cosine correction to orbital radius [m]
   , omega    :: Double            -- ^ argument of perigee [rad]
   , omegaDot :: Double            -- ^ rate of node's right ascension [rad/s]
   , iDot     :: Double            -- ^ rate of inclination angle [rad/s]
@@ -90,7 +90,7 @@ data NavRecord = NavRecord
   , fitIntv  :: Int               -- ^ fit interval, ephemeris validity interval related to toe [h]
   } deriving (Show)
 
-type GpsTime = LocalTime
+type GpsCalendarTime = LocalTime
 
 -- | Constants
 mu, omegaEDot, c, fRel, f1, f2 :: Double
@@ -101,18 +101,18 @@ fRel      = -4.442807633e-10      -- constant F in the relativistic correction [
 f1        = 1575.42e6             -- L1 frequency [Hz]
 f2        = 1227.60e6             -- L2 frequency [Hz]
 
--- | Determining the GPS satellite position in ECEF from the GPS ephemeris and for a GPS time-of-week
---   based on IS-GPS-200N 20.3.3.4.3 ready-made mathematical formulas.
+-- | Compute satellite position in ECEF coordinates at given GPS time
 satPosition         
-    :: Pico                                                  -- ^ GPS time-of-week [s]
-    -> NavRecord                                             -- ^ ephemeris
+    :: (Integer, Pico)                                       -- ^ GPS week, time-of-week
+    -> NavRecord                                             -- ^ ephemeris parameters
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-satPosition  t eph =
+satPosition (w, tow) eph =
   let
     a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
     n      = n0 + deltaN eph                                 -- corrected mean motion [rad/s]        
-    tk     = realToFrac $ wrapWeekCrossover (t - toe eph)    -- time elapsed since toe [s]           
+    tk     = realToFrac $
+             diffGpsTime (w, tow) (week eph, toe eph)        -- time elapsed since toe [s]           
     mk     = m0 eph + n*tk                                   -- mean anomaly at tk [rad]             
     ek     = keplerSolve mk (e eph)                          -- eccentric anomaly [rad]              
     vk     = atan2 (sqrt (1 - e eph *e eph ) * sin ek)
@@ -137,7 +137,7 @@ satPosition  t eph =
     zk     =                    yk' * sin ik                 -- transformation to ECEF
   in (xk,yk,zk)
 
--- | Iterative solution of Kepler's equation ek = m + e sin ek (Metoda Newtona-Raphsona)
+-- | Iterative solution of Kepler's equation ek = m + e sin ek (Newtona-Raphsona method)
 keplerSolve    
     :: Double                                                   -- ^ mean anomaly
     -> Double                                                   -- ^ eccentricity
@@ -165,62 +165,89 @@ pseudorangeDF pr1 pr2 = (pr2 - g*pr1)/(1 - g)
     where
       g = (f1/f2)^2
 
--- | Euclidean distance between two positions
+-- | Euclidean distance between two 3D positions
 range :: (Double,Double,Double) -> (Double,Double,Double) -> Double
 range (x1,y1,z1) (x2,y2,z2) = sqrt ((x1-x2)^2 + (y1-y2)^2 + (z1-z2)^2)
 
 -- | Iterative calculation eccentric anomaly
-eAnom :: Pico -> NavRecord -> Double
-eAnom t NavRecord{..} =                              
+eAnom
+    :: (Integer, Pico)                                       -- ^ week, time-of-week
+    -> NavRecord
+    -> Double                                                -- ^ eccentric anomaly [rad]
+eAnom (w, tow) NavRecord{..} =                              
     let a  = (sqrtA)*(sqrtA)                                 -- semi-major axis
         n0 = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]
         n  = n0 + deltaN                                     -- corrected mean motion [rad/s]
-        tk = realToFrac $ wrapWeekCrossover (t - toe)        -- time elapsed since toe [s]
+        tk = realToFrac $
+             diffGpsTime (w, tow) (week, toe)                -- time elapsed since toe [s]
         mk = m0 + n*tk                                       -- mean anomaly for tk
     in keplerSolve mk e                                      -- eccentric anomaly [rad]
 
--- | Compute relativistic correction
+-- | Compute relativistic correction for satellite clock
 --   based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
 relCorr
-    :: Pico                                                  -- ^ tow [s]
+    :: (Integer, Pico)                                       -- ^ week, time-of-week
     -> NavRecord                                             -- ^ ephemeris
     -> Pico                                                  -- ^ dtr - relativistic correction [s]
-relCorr t NavRecord{..} = realToFrac (fRel * e * sqrtA * sin ek)
+relCorr (w, tow) NavRecord{..} = realToFrac (fRel * e * sqrtA * sin ek)
     where
-      ek = eAnom t NavRecord{..}                             -- eccentric anomaly [rad]
+      ek = eAnom (w, tow) NavRecord{..}                      -- eccentric anomaly [rad]
 
--- | Compute broadcast satellite clock correction
+-- | Compute satellite clock correction
 --   based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
 clkCorr
-    :: Pico                                                  -- ^ tow [s]
+    :: (Integer, Pico)                                       -- ^ week, time-of-week
     -> NavRecord                                             -- ^ ephemeris                                 
     -> Pico                                                  -- ^ dtsv - satellite clock correction [s]
-clkCorr t NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^2)
+clkCorr (w, tow) NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^2)
     where
-      dt  = realToFrac $ wrapWeekCrossover (t - toc)
-      (_, toc) = gpsTimeToWeekTow calToc
+      dt  = realToFrac $ diffGpsTime (w, tow) (week, toc)
+      (_, toc) = gpsCalTimeToWeekTow calToc
             
--- | Determination of the ECEF satellite position at transmission time from broadcast ephemeris
-satPosAtTrTime            
+-- | Compute signal transmission time
+transTime            
   :: Double                                                  -- ^ pseudorange pr1 [m]
   -> Double                                                  -- ^ pseudorange pr2 [m]
-  -> Pico                                                    -- ^ receiver time of signal reception [s]
+  -> (Integer, Pico)                                         -- ^ receiver time of signal reception [s]
   -> NavRecord                                               -- ^ broadcast ephemeris
-  -> (Pico, (Double,Double,Double))                          -- ^ signal transmission time [s], satelite ECEF position [m]
-satPosAtTrTime pr1 pr2 trv eph = iterateTx tTx0 0
+  -> (Integer, Pico)                                         -- ^ signal transmission time [s]
+transTime pr1 pr2 (w, trv) eph = iterate tTx0 0
     where
       pr   = pseudorangeDF pr1 pr2
-      tsv  = trv - realToFrac (pr/c)                           -- satelite time of signal transmission
+      tsv  = subSeconds (w, trv)  (realToFrac (pr/c))    -- satelite time of signal transmission
       tTx0 = tsv
-      iterateTx tTx k
+      iterate tTx k
           | k >= 10                  = error "Number of time transmission iterations exceeded"
-          | abs (tTx' - tTx) < 1e-12 = (tTx', satPosition tTx' eph)
-          | otherwise                = iterateTx tTx' (k+1)
+          | abs (diffGpsTime tTx' tTx) < 1e-12 = tTx'
+          | otherwise                           = iterate tTx' (k+1)
           where
             dtb  = clkCorr tTx eph
             dtr  = relCorr tTx eph
             dtsv = dtb  + dtr
-            tTx' = tTx0 - dtsv
+            tTx' = subSeconds tTx0 dtsv
+
+-- | Calculates the number of seconds between two GPS times.
+diffGpsTime
+    :: (Integer, Pico)                                       -- ^ week, time-of-week [s]
+    -> (Integer, Pico)                                       -- ^ week, time-of-week [s]
+    -> Pico                                                  -- ^ time difference [s]
+diffGpsTime (w2,tow2) (w1,tow1) =
+    fromInteger (dw * 604800) + dtow
+    where
+      dw   = w2   - w1
+      dtow = tow2 - tow1
+
+-- | Substract seconds from GPS time.             
+subSeconds
+    :: (Integer, Pico)                                       -- ^ week, time-of-week [s]
+    -> Pico                                                  -- ^ seconds [s]
+    -> (Integer, Pico)                                       -- ^ week, time-of-week [s]
+subSeconds (w, tow) t
+   | t <= 604800 = if tow - t >=0
+                   then (w  ,          tow - t)
+                   else (w-1, 604800 - tow - t)
+   | otherwise   = error "Cannot substract more than 604800 s"
+
 
 -- | Function import: double strtod(const char *nptr, char **endptr)
 foreign import ccall unsafe "stdlib.h strtod"
@@ -256,8 +283,8 @@ getField :: Int -> Int -> BSC.ByteString -> BSC.ByteString
 getField start len = BSC.take len . BSC.drop start
 
 -- | Makes GpsTime from numbers.
-mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
-mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
+mkGpsCalendarTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsCalendarTime
+mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
 -- | Parse a single navigation data record
 parseNavRecord :: BSC.ByteString -> Maybe NavRecord
@@ -274,7 +301,7 @@ parseNavRecord r = do
   (m  , _) <- BSC.readInt $ getField 18 2 l1
   (s  , _) <- BSC.readInt $ getField 21 2 l1
   
-  let calToc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
+  let calToc = mkGpsCalendarTime (toInteger y) mon d h m (fromIntegral s)
 
   af0      <- readDoubleField $ getField 23 19 l1
   af1      <- readDoubleField $ getField 42 19 l1
@@ -310,14 +337,14 @@ parseNavRecord r = do
                 
   return NavRecord {..}
 
--- | GPS time to GPS week number and GPS time-of-week
-gpsTimeToWeekTow
-    :: GpsTime                                               -- ^ GPS time
-    -> (Integer, Pico)                                       -- ^ GPS week number, GPS time-of-week
-gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
+-- | GPS calendar time to GPS week and time-of-week
+gpsCalTimeToWeekTow
+    :: GpsCalendarTime                                       -- ^ GPS calendar time
+    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week
+gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     let gpsStartDate = fromGregorian 1980 1 6                -- The date from which the GPS time is counted
         days         = diffDays date gpsStartDate            -- Number of days since GPS start date
-        w            = days `div` 7                          -- GPS week number
+        w            = days `div` 7                          -- GPS week
         dow          = days `mod` 7                          -- GPS day-of-week
         tow          = fromIntegral ( dow * 86400
                                     + toInteger (h * 3600 + m * 60)
@@ -325,72 +352,54 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
                      + s
     in (w, tow)
     
--- | Calculates the correct number of seconds between two GPS tows without week numbers.
---   Formula based on IS-GPS-200N 20.3.3.4.3. page 106.
---   Takes into account cases where tows are in adjacent weeks.
---   Needs entry condition provided earlier in the program assuming that
---   the absolute time difference is less than 302400 s.
---   In practice, this is satisfied by the condition of ephemeris validity.
-wrapWeekCrossover
-    :: Pico                                                  -- ^ difference between two tows        [s]
-    -> Pico                                                  -- ^ number of seconds between two tows [s]
-wrapWeekCrossover dt
-  -- 604800.0 is number of seconds of full week
-  -- 302400.0 is number of seconds of half week
-  | dt >  302400.0 = dt - 604800.0                           -- tow in adjacent week and earlier then toe
-  | dt < -302400.0 = dt + 604800.0                           -- tow in adjacent week and later then toe
-  | otherwise      = dt                                      -- tow and toe in the same week
-
-
--- | Ephemeris validity check based on fitInterval ephemeris field
+-- | Ephemeris validity check based on fitInterval ephemeris field for given observation time
 isEphemerisValid
-  :: Integer                                                 -- GPS week number
-  -> Pico                                                    -- GPS time-of-week
+  :: (Integer, Pico)                                         -- GPS week number, time-of-week
   -> NavRecord
   -> Bool
-isEphemerisValid w tow eph 
-    |     dw == 0  = abs dt <= halfFitIntv                  -- condition for the same week
-    | abs dw == 1  = abs dt >  halfFitIntv                  -- condition for adjacent weeks
+isEphemerisValid (w, tow) eph 
+    |     dw == 0  = abs dtow <= halfFitIntv                -- condition for the same week
+    | abs dw == 1  = abs dtow >  halfFitIntv                -- condition for adjacent weeks
     | otherwise    = False
     where
-      dw = w   - week eph                                   -- conversion is needed for equality comparisons
-      dt = tow - toe  eph
+      dw   =   w - week eph                                 -- conversion is needed for equality comparisons
+      dtow = tow - toe  eph
       halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)
 
 -- Main program:
---   * Converts receiver time of signal reception in calendar format (observation time, observation epoch,
---     receiver time tag, receiver time stamp, measurement time) to receiver week number and receiver time-of-week,
+--   * Converts receiver time of signal reception in calendar format
+--     (observation time,
+--      observation epoch,
+--      receiver time tag,
+--      receiver time stamp,
+--      measurement time)
+--     to receiver week number and receiver time-of-week,
 --   * reads broadcast ephemeris from one record file
 --     (to use a different navigation record, replace the file content), 
 --   * checks ephemeris validity for the given epoch (observation time),
 --   * calculates signal transmission GPS time and the satellite ECEF position at that time,
 --   * prints receiver clock time of signal reception, the transmission time, and satellite position.
---   
--- NOTE: Transmission time can be negative number. It means transmission time is in previous week e.g.
---       transmission time: (2378, -0.0783413625) = (2378-1, 604800-0.0783413625).
 main :: IO ()
 main = do
-  let -- Most of the calculations are time-of-week callculations
-      -- and time names refer to time-of-week (tow)
-      -- which is enabled by wrapWeekCrossover function.
-      obsTime  = mkGpsTime 2024 03 07 00 53 01.0000000                 -- Input: receiver time of signal reception
+  let obsTime  = mkGpsCalendarTime 2024 03 07 00 53 01.0000000         -- Input: receiver time of signal reception
       pr1      = 21548635.724                                          -- Input: pseudorange for f1 e.g. C1C
       pr2      = 21548628.027                                          -- Input: pseudorange for f2 e.g. C2X
       fn       = "nav_record.txt"                                      -- Input: file name
-      (w, trv) = gpsTimeToWeekTow obsTime                              -- receiver week number, receiver tow
+      (w, trv) = gpsCalTimeToWeekTow obsTime                              -- receiver week number, receiver tow
   navRec <- BSC.readFile fn                                            -- navigation data record
   case parseNavRecord navRec of
     Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
     Just eph ->                                                        -- ephemeris
-       if isEphemerisValid w trv eph
+       if isEphemerisValid (w,trv) eph
        then do
-         let (tTx, (x,y,z)) = satPosAtTrTime pr1 pr2 trv eph           -- Output: signal transmission time by GPS clock [s]
-                                                                       --         satellite position in ECEF [m] at transmission time
+         let tTx     = transTime pr1 pr2 (w, trv) eph                  -- Output: signal transmission time by GPS clock [s]
+             (x,y,z) = satPosition tTx eph                             -- Output: satelite ECEF position [m]
          putStrLn $ "Receiver clock time of signal reception [w,s]: " ++ show (w, trv)
-         putStrLn $ "Transmission time                       [w,s]: " ++ show (w, tTx)
+         putStrLn $ "Transmission time                       [w,s]: " ++ show tTx
          putStrLn ""
          printf "ECEF satellite position [m]:\n"
          printf "X = %18.9f\n" x
          printf "Y = %18.9f\n" y
          printf "Z = %18.9f\n" z
        else printf "The ephemeris is out of date for the given time\n"
+
