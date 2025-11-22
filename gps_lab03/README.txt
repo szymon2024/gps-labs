@@ -7,8 +7,9 @@ EN:
 =====================================================================
 
 The implementation follows the specifications of IS-GPS-200N.
-The calculated position is of low precision because the pseudorange code is of low precision
-and the orbital parameters (ephemeris) are approximate.
+The calculated position is of low precision because the pseudorange
+code is of low precision and the orbital parameters (ephemeris) are
+approximate.
 
 Input
 -----
@@ -41,9 +42,9 @@ PL:
          I DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI PSEUDOODLEGŁOŚCI
 =====================================================================
 
-Implementacja opiera się na specyfikacji IS-GPS-200N.
-Obliczona pozycja jest niskiej precyzji ponieważ pseudoodległość kodowa jest niskiej precyzji
-a parametry orbitalne (efemeryda) są przybliżeniem.
+Implementacja opiera się na specyfikacji IS-GPS-200N. Obliczona
+pozycja jest niskiej precyzji ponieważ pseudoodległość kodowa jest
+niskiej precyzji a parametry orbitalne (efemeryda) są przybliżeniem.
 
 Wejście
 -------
