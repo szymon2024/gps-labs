@@ -11,8 +11,9 @@ gps_lab01 - Computation of GPS Satellite Position by The Receiver
 gps_lab02 - Computation of GPS Satellite Position Based on Broadcast
             Orbital Parameters
 
-gps_lab03 - GPS Satellite Position at Signal Transmission Time
-            using Broadcast Ephemeris and Dual-Frequency Pseudorange Observation
+gps_lab03 - GPS Satellite Position at Signal Transmission Time using
+            Broadcast Ephemeris and Dual-Frequency Pseudorange
+            Observation
 	    
 gps_lab04 - Scentific Notation Rinex 3.04 File Converter
 
