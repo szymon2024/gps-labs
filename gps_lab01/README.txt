@@ -2,8 +2,9 @@
 
 EN:
 ======================================================================
-COMPUTATION OF GPS SATELLITE POSITION BY THE RECEIVER BASED ON ORBITAL
-      PARAMETERS IN ACCORDANCE WITH THE IS‑GPS‑200 SPECIFICATION
+        COMPUTATION OF GPS SATELLITE POSITION BY THE RECEIVER
+                BASED ON BROADCAST ORBITAL PARAMETERS
+           IN ACCORDANCE WITH THE IS‑GPS‑200 SPECIFICATION
 ======================================================================
 
 A program for computing the position of a GPS satellite in the ECEF
@@ -33,10 +34,11 @@ Y = 13275548.286060918
 Z =  7260529.645377433
 
 
-PL:  
+PL:
 ======================================================================
-    OBLICZANIE POZYCJI SATELITY GPS PRZEZ ODBIORNIK NA PODSTAWIE
-        PARAMETRÓW ORBITY ZGODNIE ZE SPECYFIKACJĄ IS‑GPS‑200
+           OBLICZANIE POZYCJI SATELITY GPS PRZEZ ODBIORNIK
+           NA PODSTAWIE ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
+                  ZGODNIE ZE SPECYFIKACJĄ IS‑GPS‑200
 ======================================================================
 
 Program do wyznaczania pozycji satelity GPS w układzie ECEF na podstawie
