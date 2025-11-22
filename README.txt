@@ -4,18 +4,18 @@ EN:
 CONTENTS
 --------
 
-gps_lab01 - Computation of GPS Satellite Position by the receiver
-            Based on Broadcast Orbital Parameters in Accordance with
-            the IS‑GPS‑200 Specification
+gps_lab01 - Computation of GPS satellite position by the receiver
+            based on broadcast orbital parameters in accordance with
+            the IS‑GPS‑200 specification
 
-gps_lab02 - Computation of GPS Satellite Position Based on Broadcast
-            Orbital Parameters
+gps_lab02 - Computation of GPS satellite position based on broadcast
+            orbital parameters
 
-gps_lab03 - GPS Satellite Position at Signal Transmission Time using
-            Broadcast Ephemeris and Dual-Frequency Pseudorange
-            Observation
+gps_lab03 - GPS satellite position at signal transmission time using
+            broadcast ephemeris and dual-frequency pseudorange
+            observation
             
-gps_lab04 - Scientific Notation RINEX 3.04 File Converter
+gps_lab04 - Scientific notation RINEX 3.04 file converter
 
 
 PL:
