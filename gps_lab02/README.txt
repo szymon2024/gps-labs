@@ -2,7 +2,8 @@
 
 EN:
 ======================================================================
-  COMPUTATION OF GPS SATELLITE POSITION BASED ON ORBITAL PARAMETERS
+                COMPUTATION OF GPS SATELLITE POSITION
+                BASED ON BROADCAST ORBITAL PARAMETERS
 ======================================================================
 
 A program for computing the position of a GPS satellite in the ECEF
@@ -34,8 +35,9 @@ Z =  7260529.645377433
 
 PL:
 ======================================================================
-    OBLICZANIE POZYCJI SATELITY GPS NA PODSTAWIE PARAMETRÓW ORBITY
-======================================================================
+                   OBLICZANIE POZYCJI SATELITY GPS
+            NA PODSTAWIE ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
+=======================================================================
 
 Program do wyznaczania pozycji satelity GPS w układzie ECEF na
 podstawie przykładowych parametrów orbity tzw. efemerydy nadawanej
