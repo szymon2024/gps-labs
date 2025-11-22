@@ -6,7 +6,7 @@ CONTENTS
 
 gps_lab01 - Computation of GPS Satellite Position by The Receiver
             Based on Broadcast Orbital Parameters in Accordance with
-            The IS‑GPS‑200 Specification
+            the IS‑GPS‑200 Specification
 
 gps_lab02 - Computation of GPS Satellite Position Based on Broadcast
             Orbital Parameters
