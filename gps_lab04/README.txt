@@ -1,8 +1,8 @@
-2025-11-19
+2025-11-22
 
 EN:
 ======================================================================
-             SCENTIFIC NOTATION RINEX 3.04 FILE CONVERTER
+            SCIENTIFIC NOTATION RINEX 3.04 FILE CONVERTER
 ======================================================================
 
 This programm creates copy of a RINEX 3.04 file, replacing the letter
@@ -18,7 +18,7 @@ Input
 
 Output
 ------
-- new RINEX file with E scentific notation
+- new RINEX file with E scientific notation
 
 
 PL:  
