@@ -20,10 +20,10 @@ SPIS TREŚCI
 -----------
 
 gps_lab01 - Obliczanie pozycji satelity GPS przez odbiornik na podstawie
-	    parametrów orbity zgodnie ze specyfikacją IS‑GPS‑200
+            parametrów orbity zgodnie ze specyfikacją IS‑GPS‑200
 
 gps_lab02 - Obliczanie pozycji satelity GPS na podstawie
-	    parametrów orbity
+            parametrów orbity
 
 gps_lab03 - Pozycja satelity GPS w chwili transmisji sygnału z wykorzystaniem
             efemerydy rozgłoszeniowej i dwuczęstotliwościowej obserwacji pseudoodległości
