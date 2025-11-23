@@ -253,7 +253,7 @@ isEphemerisValid (w, tow) eph
     | abs dw == 1  = abs dtow >  halfFitIntv                -- condition for adjacent weeks
     | otherwise    = False
     where
-      dw   =   w - week eph                                 -- conversion is needed for equality comparisons
+      dw   =   w - week eph
       dtow = tow - toe  eph
       halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)       
                
