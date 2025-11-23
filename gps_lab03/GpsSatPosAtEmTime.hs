@@ -1,4 +1,4 @@
--- 2025-11-23
+-- 2025-11-24
 
 {- | Estimate ECEF satellite position at GPS emission time [s] from
      broadcast ephemeris for dual-frequency pseudorange measurement
@@ -336,7 +336,7 @@ parseNavRecord r = do
   fitIntvD <- readDoubleField $ getField 23 19 l8
 
   let toe     = realToFrac toeD
-      week    = round weekD
+      week    = round weekD                                 -- conversion is needed for equality comparisons
       fitIntv = round fitIntvD
                 
   return NavRecord {..}
@@ -366,7 +366,7 @@ isEphemerisValid (w, tow) eph
     | abs dw == 1  = abs dtow >  halfFitIntv                -- condition for adjacent weeks
     | otherwise    = False
     where
-      dw   =   w - week eph                                 -- conversion is needed for equality comparisons
+      dw   =   w - week eph
       dtow = tow - toe  eph
       halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)
 
