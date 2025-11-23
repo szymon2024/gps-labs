@@ -243,7 +243,6 @@ gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
 
 -- | Checks whether an ephemeris record is valid for a given observation time.
 --   Compares GPS week and time-of-week with the record’s toe and fitIntv.
---   Ensures the observation time falls within the validity interval.
 isEphemerisValid
   :: (Integer, Pico)                                         -- GPS week number, time-of-week
   -> NavRecord
