@@ -286,7 +286,7 @@ readDoubleField bs = do
 getField :: Int -> Int -> BSC.ByteString -> BSC.ByteString
 getField start len = BSC.take len . BSC.drop start
 
--- | Makes GpsTime from numbers.
+-- | Makes GpsCalendarTime from numbers.
 mkGpsCalendarTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsCalendarTime
 mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
