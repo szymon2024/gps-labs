@@ -19,11 +19,11 @@
      program terminates.
      
      5. The program then checks whether the selected record lies
-     within the fitInterval relative to toe.
-     If the record satisfies this condition, it is printed and the
-     program terminates.
-     If the record does not satisfy the condition, the algorithm
-     returns to step 4 and attempts to select another record.
+     within the fitInterval relative to toe.  If the record satisfies
+     this condition, it is printed and the program terminates.  If the
+     record does not satisfy the condition it is deleted and
+     the algorithm returns to step 4 and attempts to select another
+     record.
 
      Input:
        - RINEX 3.04 navigation file name
