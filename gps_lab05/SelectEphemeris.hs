@@ -351,7 +351,7 @@ parseGPSNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
 
   let iode     = round      iodeD
       toe      = realToFrac toeD
-      week     = round      weekD
+      week     = round      weekD                           -- conversion is needed for equality comparisons
       svHealth = round      svHealthD
       iodc     = round      iodcD
       fitIntv  = round      fitIntvD
