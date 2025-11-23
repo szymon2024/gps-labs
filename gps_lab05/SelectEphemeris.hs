@@ -1,7 +1,7 @@
 -- 2025-11-24
 
-{- | The program selects the ephemeris from a RINEX 3.04 navigation file
-     for a given observation time.
+{- | The program selects the ephemeris (orbital parameters) from a RINEX
+     3.04 navigation file for a given observation time.
 
      Main steps of the algorithm:
      
