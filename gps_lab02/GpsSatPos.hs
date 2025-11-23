@@ -1,4 +1,4 @@
--- 2025-11-22
+-- 2025-11-23
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -79,38 +79,38 @@ omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [
 --   ephemeris and for a GPS time-of-week based on IS-GPS-200N
 --   20.3.3.4.3 ready-made mathematical formulas.
 satPosition       
-    :: (Integer, Pico)                                       -- ^ week, time-of-week [s]
-    -> Ephemeris                                             -- ^ ephemeris
-    -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
+    :: (Integer, Pico)                                      -- ^ GPS week, time-of-week [s]
+    -> Ephemeris                                            -- ^ ephemeris
+    -> (Double, Double, Double)                             -- ^ satellite position in ECEF [m]
 satPosition (w, tow) eph =
   let
-    a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
-    n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
-    n      = n0 + deltaN eph                                 -- corrected mean motion [rad/s]        
+    a      = sqrtA eph * sqrtA eph                          -- semi-major axis [m]
+    n0     = sqrt(mu/(a*a*a))                               -- computed mean motion [rad/sec]       
+    n      = n0 + deltaN eph                                -- corrected mean motion [rad/s]        
     tk     = realToFrac $
-             diffGpsTime (w, tow) (week eph, toe eph)        -- time elapsed since toe [s]
-    mk     = m0 eph + n*tk                                   -- mean anomaly at tk [rad]             
-    ek     = keplerSolve mk (e eph)                          -- eccentric anomaly [rad]              
+             diffGpsTime (w, tow) (week eph, toe eph)       -- time elapsed since toe [s]
+    mk     = m0 eph + n*tk                                  -- mean anomaly at tk [rad]             
+    ek     = keplerSolve mk (e eph)                         -- eccentric anomaly [rad]              
     vk     = atan2 (sqrt (1 - e eph *e eph ) * sin ek)
-                   (cos ek - e eph)                          -- true anomaly                         
-    phik   = vk + omega eph                                  -- argument of latitude                 
+                   (cos ek - e eph)                         -- true anomaly                         
+    phik   = vk + omega eph                                 -- argument of latitude                 
     duk    = cus eph * sin (2*phik)
-           + cuc eph * cos (2*phik)                          -- argument of latitude correction      
+           + cuc eph * cos (2*phik)                         -- argument of latitude correction      
     drk    = crs eph * sin (2*phik)
-           + crc eph * cos (2*phik)                          -- radius correction                    
+           + crc eph * cos (2*phik)                         -- radius correction                    
     dik    = cis eph * sin (2*phik)
-           + cic eph * cos (2*phik)                          -- inclination correction               
-    uk     = phik + duk                                      -- corrected argument of latitude       
-    rk     = a * (1 - e eph * cos ek) + drk                  -- corrected radius                     
-    ik     = i0 eph + dik + iDot eph * tk                    -- corrected inclination                
-    xk'    = rk * cos uk                                     -- xk' in the orbital plane             
-    yk'    = rk * sin uk                                     -- yk' in the orbital plane             
+           + cic eph * cos (2*phik)                         -- inclination correction               
+    uk     = phik + duk                                     -- corrected argument of latitude       
+    rk     = a * (1 - e eph * cos ek) + drk                 -- corrected radius                     
+    ik     = i0 eph + dik + iDot eph * tk                   -- corrected inclination                
+    xk'    = rk * cos uk                                    -- xk' in the orbital plane             
+    yk'    = rk * sin uk                                    -- yk' in the orbital plane             
     omegak = omega0 eph                                                                                 
            + (omegaDot eph - omegaEDot)*tk
-           - omegaEDot * realToFrac (toe eph)                -- corrected longitude of ascending node
-    xk     = xk' * cos omegak - yk' * cos ik * sin omegak    -- transformation to ECEF               
-    yk     = xk' * sin omegak + yk' * cos ik * cos omegak    -- transformation to ECEF               
-    zk     =                    yk' * sin ik                 -- transformation to ECEF
+           - omegaEDot * realToFrac (toe eph)               -- corrected longitude of ascending node
+    xk     = xk' * cos omegak - yk' * cos ik * sin omegak   -- transformation to ECEF               
+    yk     = xk' * sin omegak + yk' * cos ik * cos omegak   -- transformation to ECEF               
+    zk     =                    yk' * sin ik                -- transformation to ECEF
   in (xk,yk,zk)
 
 -- | Iterative solution of Kepler's equation ek = m + e sin ek
@@ -136,7 +136,7 @@ keplerSolve m e = iterate e0 0
 -- | GPS time to GPS week number and GPS time-of-week
 gpsCalTimeToWeekTow
     :: GpsCalendarTime                                       -- ^ GPS calendar time
-    -> (Integer, Pico)                                       -- ^ week number, time-of-week
+    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week
 gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     let gpsStartDate = fromGregorian 1980 1 6                -- The date from which the GPS time is counted
         days         = diffDays date gpsStartDate            -- Number of days since GPS start date
@@ -172,8 +172,8 @@ ephExample = Ephemeris
 
 -- | Calculates the number of seconds between two GPS times.
 diffGpsTime
-    :: (Integer, Pico)                                       -- ^ week, time-of-week [s]
-    -> (Integer, Pico)                                       -- ^ week, time-of-week [s]
+    :: (Integer, Pico)                                       -- ^ GPS week, time-of-week [s]
+    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week [s]
     -> Pico                                                  -- ^ time difference [s]
 diffGpsTime (w2,tow2) (w1,tow1) =
     fromInteger (dw * 604800) + dtow
@@ -188,14 +188,14 @@ isEphemerisValid
   -> (Integer, Pico)                                         -- ephemeris week, time-of-ephemeris
   -> Bool
 isEphemerisValid (w, tow) (week, toe)
-    |     dw == 0  = abs dtow <= 2 * 3600.0                    -- condition for the same week
-    | abs dw == 1  = abs dtow >  2 * 3600.0                    -- condition for adjacent weeks
+    |     dw == 0  = abs dtow <= 2 * 3600.0                 -- condition for the same week
+    | abs dw == 1  = abs dtow >  2 * 3600.0                 -- condition for adjacent weeks
     | otherwise    = False
     where
       dw        = w   - week
       dtow      = tow - toe
 
--- | Makes GpsTime from numbers.
+-- | Makes GpsCalendarTime from numbers.
 mkGpsCalendarTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsCalendarTime
 mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
@@ -205,8 +205,8 @@ mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h
 main :: IO ()
 main = do
   let eph        = ephExample                                -- Input: GPS Ephemeris
-      gpsCalTime = mkGpsCalendarTime 2024 03 07 22 00 30.0   -- Input: calendar GPS Time
-      (w, tow)   = gpsCalTimeToWeekTow gpsCalTime            -- week number, time-of-week
+      gpsCalTime = mkGpsCalendarTime 2024 03 07 22 00 30.0   -- Input: GPS calendar Time
+      (w, tow)   = gpsCalTimeToWeekTow gpsCalTime            -- GPS week number, time-of-week
   if isEphemerisValid (w, tow) (week eph, toe eph)
   then do
     let (x, y, z) = satPosition (w, tow) eph                 -- Output: ECEF satellite position
