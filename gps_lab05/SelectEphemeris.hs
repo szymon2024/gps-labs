@@ -27,7 +27,7 @@
 
      Input:
        - RINEX 3.04 navigation file name
-       - receiver time of signal reception
+       - receiver time of signal reception (observation time)
        - satellite number
 
      Output:

@@ -10,7 +10,7 @@ for a given observation time.
 
 Input:				         
   - RINEX 3.04 navigation file name         
-  - receiver time of signal reception       
+  - receiver time of signal reception (observation time)
   - satellite number		         
                                        
 Output:				         
@@ -56,7 +56,7 @@ czasu obserwacji.
 
 Wejście:				         
   - nazwa pliku nawigacyjnego RINEX 3.04
-  - czas odbiornika odioru sygnału
+  - czas odbiornika odioru sygnału (czas obserwacji)
   - numer satelity GPS		         
                                        
 Output:				         
