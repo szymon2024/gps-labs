@@ -1,4 +1,4 @@
--- 2025-11-22
+-- 2025-11-23
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -164,12 +164,12 @@ wrapWeekCrossover dt
 
 -- | GPS time to GPS week number and GPS time-of-week
 gpsCalTimeToWeekTow
-    :: GpsCalendarTime                                       -- ^ GPS time
-    -> (Integer, Pico)                                       -- ^ GPS week number, GPS time-of-week
+    :: GpsCalendarTime                                       -- ^ GPS calendar time
+    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week
 gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     let gpsStartDate = fromGregorian 1980 1 6                -- The date from which the GPS time is counted
         days         = diffDays date gpsStartDate            -- Number of days since GPS start date
-        w            = days `div` 7                          -- GPS week number
+        w            = days `div` 7                          -- GPS week
         dow          = days `mod` 7                          -- GPS day-of-week
         tow          = fromIntegral ( dow * 86400
                                     + toInteger (h * 3600 + m * 60)
@@ -202,12 +202,12 @@ ephExample = Ephemeris
 -- | Ephemeris validity check.  Assumes that ephemeris is valid within
 --   4 hours.
 isEphemerisValid
-  :: (Integer, Pico)                                         --           week, time-of-week
-  -> (Integer, Pico)                                         -- ephemeris week, time-of-ephemeris
+  :: (Integer, Pico)                                        --           week, time-of-week
+  -> (Integer, Pico)                                        -- ephemeris week, time-of-ephemeris
   -> Bool
 isEphemerisValid (w, tow) (week, toe)
-    |     dw == 0  = abs dtow <= 2 * 3600.0                    -- condition for the same week
-    | abs dw == 1  = abs dtow >  2 * 3600.0                    -- condition for adjacent weeks
+    |     dw == 0  = abs dtow <= 2 * 3600.0                 -- condition for the same week
+    | abs dw == 1  = abs dtow >  2 * 3600.0                 -- condition for adjacent weeks
     | otherwise    = False
     where
       dw        = w   - week
@@ -216,12 +216,12 @@ isEphemerisValid (w, tow) (week, toe)
 -- | Entry condition for the wrapWeekCrossover function.  Checking if
 --   the time difference is less than 302400 s (half week).
 entryConForWrap
-  :: (Integer, Pico)                                         --           week, time-of-week
-  -> (Integer, Pico)                                         -- ephemeris week, time-of-ephemeris
+  :: (Integer, Pico)                                        --           week, time-of-week
+  -> (Integer, Pico)                                        -- ephemeris week, time-of-ephemeris
   -> Bool
 entryConForWrap (w, tow) (week, toe)
-    |     dw == 0  = abs dtow <= 302400.0                      -- condition for the same week
-    | abs dw == 1  = abs dtow >  302400.0                      -- condition for adjacent weeks
+    |     dw == 0  = abs dtow <= 302400.0                   -- condition for the same week
+    | abs dw == 1  = abs dtow >  302400.0                   -- condition for adjacent weeks
     | otherwise    = False
     where
       dw        = w   - week
@@ -237,8 +237,8 @@ mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h
 main :: IO ()
 main = do
   let eph        = ephExample                                 -- Input: GPS Ephemeris
-      gpsCalTime = mkGpsCalendarTime 2024 03 07 22 00 30.0    -- Input: calendar GPS Time
-      (w, tow)   = gpsCalTimeToWeekTow gpsCalTime             -- GPS week number, GPS time-of-week
+      gpsCalTime = mkGpsCalendarTime 2024 03 07 22 00 30.0    -- Input: GPS calendar Time
+      (w, tow)   = gpsCalTimeToWeekTow gpsCalTime             -- GPS week, time-of-week
   if entryConForWrap (w, tow) (week eph, toe eph)
   then if isEphemerisValid (w, tow) (week eph, toe eph)
        then do
