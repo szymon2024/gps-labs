@@ -1,4 +1,4 @@
-2025-11-22
+2025-11-23
 
 EN:
 CONTENTS
@@ -11,7 +11,7 @@ gps_lab01 - Computation of GPS satellite position by the receiver
 gps_lab02 - Computation of GPS satellite position based on broadcast
             orbital parameters
 
-gps_lab03 - GPS satellite position at signal transmission time using
+gps_lab03 - GPS satellite position at signal emission time using
             broadcast ephemeris and dual-frequency pseudorange
             observation
             
@@ -29,7 +29,7 @@ gps_lab01 - Obliczanie pozycji satelity GPS przez odbiornik
 gps_lab02 - Obliczanie pozycji satelity GPS na podstawie
             rozgłoszeniowych parametrów orbity
 
-gps_lab03 - Pozycja satelity GPS w chwili transmisji sygnału
+gps_lab03 - Pozycja satelity GPS w chwili emisji sygnału
             z wykorzystaniem efemerydy rozgłoszeniowej
             i dwuczęstotliwościowej obserwacji pseudoodległości
             
