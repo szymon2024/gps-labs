@@ -2,11 +2,11 @@
 
 EN:
 ======================================================================
-      SELECTION OF BROADCAST EPHEMERIS FOR THE OBSERVATION TIME
+    SELECTION OF GPS BROADCAST EPHEMERIS FOR THE OBSERVATION TIME
 ======================================================================
 
 The program selects the ephemeris from a RINEX 3.04 navigation file
-for a given observation time.
+for a given observation time and a GPS satellite.
 
 Input:				         
   - RINEX 3.04 navigation file name         
@@ -48,11 +48,11 @@ fitIntv:  4
 
 PL:
 ======================================================================
-         WYBÓR EFEMERYDY ROZGŁOSZENIOWEJ DLA CZASU OBSERWACJI
+       WYBÓR EFEMERYDY ROZGŁOSZENIOWEJ GPS DLA CZASU OBSERWACJI
 ======================================================================
 
 Program wybiera efemerydę z pliku nawigacyjnego RINEX 3.04 dla danego
-czasu obserwacji.
+czasu obserwacji i satelity GPS.
 
 Wejście:				         
   - nazwa pliku nawigacyjnego RINEX 3.04
