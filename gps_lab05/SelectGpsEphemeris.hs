@@ -1,4 +1,4 @@
--- 2025-11-24
+-- 2025-11-25
 
 {- | The program selects the ephemeris (orbital parameters) from a RINEX
      3.04 navigation file for a given observation time and a GPS
@@ -7,24 +7,18 @@
      Main steps of the algorithm:
      
      1. The navigation file (RINEX 3.04) is read, excluding the
-     header, and stored in a map keyed by (PRN, calendar toc).
+     header, and records with svHealth == 0 are stored in a map.
      
-     2. Records are filtered so that only those with svHealth == 0 for
-     a single satellite remain.
+     2. The submap containing records for the given PRN is
+     selected. If the submap does not exists program terminates.
      
-     3. From the filtered records, a new map is created using calendar
-     toc as the key.
+     3. The navigation record with the nearest (week, toe) to the
+     specified observation time is selected. If no record can be
+     selected, the program terminates.
      
-     4. The record with the closest calendar toc to the specified
-     observation time is selected. If no record can be selected, the
-     program terminates.
-     
-     5. The program then checks whether the selected record lies
+     4. The program then checks whether the selected record lies
      within the fitInterval relative to toe.  If the record satisfies
-     this condition, it is printed and the program terminates.  If the
-     record does not satisfy the condition it is deleted and
-     the algorithm returns to step 4 and attempts to select another
-     record.
+     this condition, it is printed. Otherwise the program terminates.
 
      Input:
        - RINEX 3.04 navigation file name
@@ -36,6 +30,7 @@
 
      Print of run:
      Observation time: 2025-08-02 01:00:01.5
+               calToe: 2025-08-02 02:00:00
      PRN: 6    calToc: 2025-08-02 02:00:00
      af0:      -4.722196608782e-4         
      af1:      -1.432454155292e-11        
@@ -70,12 +65,12 @@
 {-# LANGUAGE RecordWildCards   #-}
 
 import           Data.Map.Strict                   (Map)
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict as MS
 import Data.Char                                   (isSpace)
 import Data.Int                                    (Int64)
 import Control.Monad                               (guard, when)
 import qualified Data.ByteString.Lazy.Char8 as L8
-import Data.Time.Calendar                          (Day, fromGregorian, diffDays)
+import Data.Time.Calendar                          (Day, fromGregorian, diffDays, addDays)
 import Data.Time.LocalTime                         (LocalTime (..), TimeOfDay(..), diffLocalTime)
 import Data.Time.Format                            (formatTime, defaultTimeLocale)
 import Data.Fixed                                  (Pico)
@@ -92,9 +87,10 @@ import Data.Maybe                                  (catMaybes)
 -- For NavMap printing
 import Data.ByteString.Builder
 import System.IO                                   (stdout)
-
+    
 type GpsCalendarTime  = LocalTime
-type NavMap           = Map (Int, GpsCalendarTime) NavRecord           -- key: prn, calToc
+type GpsTime          = (Integer, Pico)                     -- ^ GPS week, time-of-week
+type NavMap           = Map Int (Map GpsTime NavRecord)     -- ^ key1: prn, key2: (week r, toe r)
 
 
 -- | GPS navigation data record from RINEX 3.04 navigation file.
@@ -129,30 +125,27 @@ data NavRecord = NavRecord
   } deriving (Show)
 
 -- Entry point of the program.
--- Reads a RINEX 3.04 navigation file.
--- Constructs a navigation map (NavMap).
--- Filters records for a given satellite (prn) with svHealth == 0.
--- Finds a valid ephemeris for the specified observation time.
--- Prints the selected record or an error message if none is found.               
 main = do
-  let fn = "source.rnx"                                     -- Input: RINEX 3.04 navigation file name
+  let fn = "source.rnx"                                        -- Input: RINEX 3.04 navigation file name
   bs <- L8.readFile fn               
-
-  let navMap  = readNavRinex304 bs
-      obsTime = mkGpsCalendarTime 2025 08 02 01 00 01.5     -- Input: receiver time of signal reception
-      prn     = 6                                           -- Input: satellite number
-      prnMap  =  Map.mapKeysMonotonic snd $
-                 Map.filterWithKey (\(prnK, _) r -> prnK == prn && svHealth r == 0)  navMap 
-  case findValidEphemeris obsTime prnMap of
-    Nothing    -> putStrLn "Cannot find valid ephemeris for given prn and observation time"
-    Just (k,r) ->  do putStrLn $ "Observation time: " ++ show obsTime
-                      L8.hPut stdout $ toLazyByteString $ buildEntry (prn, k) r
+  let navMap        = readNavRinex304 bs
+      prn           = 6                                        -- Input: satellite number
+      obsGpsCalTime = mkGpsCalendarTime 2025 08 02 01 00 01.5  -- Input: receiver time of signal reception
+      obsGpsTime    = gpsCalTimeToWeekTow obsGpsCalTime
+  case MS.lookup prn navMap of
+    Nothing -> putStrLn "No records for given PRN"
+    Just m  ->
+        case findValidEphemeris obsGpsTime m of
+          Nothing -> putStrLn "Cannot find valid ephemeris for given prn and observation time"
+          Just r  -> do
+            putStrLn $ "Observation time: " ++ show obsGpsCalTime
+            L8.hPut stdout $ toLazyByteString $ buildEntry r
 
 -- | Parses a RINEX 3.04 navigation file into a NavMap.
 --   Validates the file header.
 --   Splits the navigation data into 8-line chunks.
 --   Converts each chunk into a NavRecord.
---   Builds a map keyed by (PRN, calToc).
+--   Builds a map.
 readNavRinex304 :: L8.ByteString -> NavMap
 readNavRinex304 bs =
   case L8.lines bs of
@@ -187,53 +180,69 @@ chunks8 l  = chunk : chunks8 rest
     where
       (chunk, rest) = splitAt 8 l                      
 
--- | Constructs a NavMap from a list of NavRecord values.
+-- | Constructs a NavMap from a list of NavRecord values for healthy satellites.
 buildNavMap :: [NavRecord] -> NavMap
-buildNavMap = Map.fromList . map (\r -> ((prn r, calToc r), r))
+buildNavMap rs =
+  MS.fromListWith MS.union
+    [ (prn r, MS.singleton (week r, toe r) r)
+    | r <- rs, svHealth r == 0 ]
 
 -- | Trim leading and trailing whitespace from a ByteString.              
 trim :: L8.ByteString -> L8.ByteString
 trim = L8.dropWhile isSpace . L8.dropWhileEnd isSpace
 
--- |Finds the closest valid ephemeris record for a given observation time.
---  Uses closestLocalTime to locate the nearest record.
---  Validates the record with isEphemerisValid.
---  If invalid, removes the record and repeats the search.       
+-- |Finds the nearest valid ephemeris record for observation time.
 findValidEphemeris 
-  :: GpsCalendarTime                                        -- calendar observation time
-  -> Map GpsCalendarTime NavRecord                          -- nav records of one GPS satellite with calToc key
-  -> Maybe (GpsCalendarTime, NavRecord)
-findValidEphemeris obsTime m =
-    case closestLocalTime obsTime m of
-        Nothing -> Nothing
-        Just (k,v) ->
-            if isEphemerisValid (gpsCalTimeToWeekTow obsTime) v
-               then Just (k,v)
-               else findValidEphemeris obsTime (Map.delete k m)
+  :: GpsTime                                                -- observation time
+  -> Map GpsTime NavRecord                                  -- nav records of one GPS satellite
+  -> Maybe NavRecord
+findValidEphemeris obsGpsTime m = do
+    r <- nearestNavRecord obsGpsTime m
+    if isEphemerisValid obsGpsTime r
+    then Just r
+    else Nothing
 
--- | Finds the record with the closest LocalTime to the given time.
---   Compares both the nearest earlier (lookupLE) and later (lookupGE) entries.
---   Returns whichever is closer.
-closestLocalTime :: LocalTime -> Map.Map LocalTime a -> Maybe (LocalTime, a)
-closestLocalTime x m =
-    case (Map.lookupLE x m, Map.lookupGE x m) of
-        (Nothing, Nothing) -> Nothing
-        (Just kv, Nothing) -> Just kv
-        (Nothing, Just kv) -> Just kv
-        (Just (kl,vl), Just (kr,vr)) ->
-            if abs (diffLocalTime x kl) <= abs (diffLocalTime x kr)
-               then Just (kl,vl)
-               else Just (kr,vr)
+-- | Finds the nearest ephemeris record for observation time.         
+nearestNavRecord
+    :: GpsTime                                              -- observation time
+    -> Map GpsTime NavRecord                                -- nav records of one GPS satellite
+    -> Maybe NavRecord
+nearestNavRecord obsGpsTime m =
+    let mLE = MS.lookupLE obsGpsTime m
+        mGE = MS.lookupGE obsGpsTime m
+
+        choose (Just (_,r1)) (Just (_,r2)) =
+            if    abs (diffGpsTime (week r1, toe r1) obsGpsTime)
+               <= abs (diffGpsTime (week r2, toe r2) obsGpsTime)
+            then Just r1
+            else Just r2
+        choose (Just (_,r1))  Nothing      = Just r1
+        choose Nothing       (Just (_,r2)) = Just r2
+        choose _ _ = Nothing
+                     
+    in choose mLE mGE
+
+
+-- | Calculates the number of seconds between two GPS times.
+diffGpsTime
+    :: GpsTime                                               -- ^ GPS week, time-of-week [s]
+    -> GpsTime                                               -- ^ GPS week, time-of-week [s]
+    -> Pico                                                  -- ^ time difference [s]
+diffGpsTime (w2,tow2) (w1,tow1) =
+    fromInteger (dw * 604800) + dtow
+    where
+      dw   = w2   - w1
+      dtow = tow2 - tow1
 
 -- | Converts a GPS calendar time into GPS week number and time-of-week (TOW).
 --   GPS time starts from January 6, 1980.
 --   Calculates the number of weeks and seconds since that epoch.
 gpsCalTimeToWeekTow
     :: GpsCalendarTime                                       -- ^ GPS calendar time
-    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week
+    -> GpsTime                                               -- ^ GPS week, time-of-week
 gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
-    let gpsStartDate = fromGregorian 1980 1 6                -- The date from which the GPS time is counted
-        days         = diffDays date gpsStartDate            -- Number of days since GPS start date
+    let gpsStartDate = fromGregorian 1980 1 6                -- the date from which the GPS time is counted
+        days         = diffDays date gpsStartDate            -- number of days since GPS start date
         w            = days `div` 7                          -- GPS week
         dow          = days `mod` 7                          -- GPS day-of-week
         tow          = fromIntegral ( dow * 86400
@@ -242,10 +251,25 @@ gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
                      + s
     in (w, tow)
 
+-- | Converts GPS week number and time-of-week (TOW) into GPS calendar time
+weekTowToGpsCalTime
+    :: GpsTime                                              -- ^ GPS week, time-of-week
+    -> GpsCalendarTime                                      -- ^ GPS calendar time
+weekTowToGpsCalTime (w, tow) =
+    let gpsStartDate = fromGregorian 1980 1 6                       -- the date from which the GPS time is counted
+        days         = w * 7 + (floor (tow / 86400) :: Integer)     -- number of days since GPS start date
+        date         = addDays days gpsStartDate
+        sod          = tow
+                     - fromIntegral (floor (tow / 86400) * 86400)   -- GPS second-of-day
+        h            = floor (sod / 3600)
+        m            = floor ((sod - fromIntegral (h*3600)) / 60)
+        s            = sod - fromIntegral (h*3600 + m*60)              
+    in LocalTime date (TimeOfDay h m s)     
+
 -- | Checks whether an ephemeris record is valid for a given observation time.
 --   Compares GPS week and time-of-week with the record’s toe and fitIntv.
 isEphemerisValid
-  :: (Integer, Pico)                                         -- GPS week number, time-of-week
+  :: GpsTime                                                -- GPS week number, time-of-week
   -> NavRecord
   -> Bool
 isEphemerisValid (w, tow) eph 
@@ -298,7 +322,6 @@ getField start len = L8.take len . L8.drop start
 
 -- | Parses a single GPS navigation record from eight consecutive lines of a RINEX 3.04 navigation file.
 --   Expects exactly 8 lines (l1–l8).
---   Extracts satellite system identifier, PRN, calendar time of clock data (calToc), and all orbital/clock parameters.
 --   Converts numeric fields using readDoubleField.
 --   Returns Nothing if the input does not match the expected format or if the satellite system is not GPS (sys == 'G').
 --   On success, constructs and returns a NavRecord
@@ -367,10 +390,11 @@ mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h
 --   Produces a Builder that can be efficiently converted to a ByteString.
 --   Each field is printed on a separate line with its label and value.
 --   Ends with a separator line (----------------------------------).                                  
-buildEntry :: (Int, GpsCalendarTime) -> NavRecord -> Builder
-buildEntry (prnK, calTocK) NavRecord{..} =
-       string8 "PRN: "     <> intDec prnK <> string8 "   "
-    <> string8 " calToc: "  <> string8 (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" calTocK) <> char8 '\n'
+buildEntry :: NavRecord -> Builder
+buildEntry NavRecord{..} =
+    string8 "          calToe: "  <> string8 (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" calToe) <> char8 '\n'
+    <> string8 "PRN: "     <> intDec prn <> string8 "   "
+    <> string8 " calToc: "  <> string8 (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" calToc) <> char8 '\n'
     <> string8 "af0:      " <> doubleDec  af0             <> char8 '\n'
     <> string8 "af1:      " <> doubleDec  af1             <> char8 '\n'
     <> string8 "af2:      " <> doubleDec  af2             <> char8 '\n'
@@ -397,13 +421,14 @@ buildEntry (prnK, calTocK) NavRecord{..} =
     <> string8 "ttom:     " <> doubleDec  ttom            <> char8 '\n'
     <> string8 "fitIntv:  " <> intDec     fitIntv         <> char8 '\n'
     <> string8 "----------------------------------\n"
+    where
+      calToe = weekTowToGpsCalTime (week, toe)          -- ephemeris reference time in calendar format
 
--- | Pretty-prints all navigation records contained in a NavMap.
---   Iterates over the map using Map.foldMapWithKey.
---   Uses buildEntry to format each record.
---   Outputs the result to stdout as a lazy ByteString.       
-prettyPrintNavMapIO :: NavMap -> IO ()
-prettyPrintNavMapIO navMap =
-  L8.hPut stdout $ toLazyByteString $
-    Map.foldMapWithKey buildEntry navMap
-       
+               
+printPrnNavRecords :: Int -> NavMap -> IO ()
+printPrnNavRecords prn navMap =
+  case MS.lookup prn navMap of
+    Nothing -> putStrLn $ "No records for PRN " ++ show prn
+    Just m  ->
+      L8.hPut stdout $ toLazyByteString $
+        MS.foldr (\r acc -> buildEntry r <> acc) mempty m
