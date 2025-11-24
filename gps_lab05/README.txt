@@ -56,7 +56,7 @@ czasu obserwacji.
 
 Wejście:				         
   - nazwa pliku nawigacyjnego RINEX 3.04
-  - czas odbiornika odioru sygnału (czas obserwacji)
+  - czas odbiornika odbioru sygnału (czas obserwacji)
   - numer satelity GPS		         
                                        
 Output:				         
