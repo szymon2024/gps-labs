@@ -17,7 +17,8 @@ gps_lab03 - GPS satellite position at signal emission time using
             
 gps_lab04 - Scientific notation RINEX 3.04 file converter
 
-gps_lab05 - Selection of broadcast ephemeris for the observation time
+gps_lab05 - Selection of GPS broadcast ephemeris for the observation
+            time
 
 
 PL:
@@ -37,4 +38,4 @@ gps_lab03 - Pozycja satelity GPS w chwili emisji sygnału
             
 gps_lab04 - Konwerter notacji naukowej pliku RINEX 3.04
 
-gps_lab05 - Wybór efemerydy rozgłoszeniowej dla czasu obserwacji
+gps_lab05 - Wybór efemerydy rozgłoszeniowej GPS dla czasu obserwacji
