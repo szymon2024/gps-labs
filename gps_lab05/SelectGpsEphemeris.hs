@@ -201,7 +201,7 @@ trim = L8.dropWhile isSpace . L8.dropWhileEnd isSpace
 --  If invalid, removes the record and repeats the search.       
 findValidEphemeris 
   :: GpsCalendarTime                                        -- calendar observation time
-  -> Map GpsCalendarTime NavRecord
+  -> Map GpsCalendarTime NavRecord                          -- nav records of one GPS satellite with calToc key
   -> Maybe (GpsCalendarTime, NavRecord)
 findValidEphemeris obsTime m =
     case closestLocalTime obsTime m of
