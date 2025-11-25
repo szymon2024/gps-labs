@@ -143,7 +143,7 @@ main = do
     Just m  -> do
         case findValidEphemeris obsGpsTime m of
           Nothing -> putStrLn "Cannot find valid ephemeris \
-                       \ for given prn and observation time"
+                       \for given prn and observation time"
           Just r  -> do                                        -- Output: navigation record 
             putStrLn $ "Observation time: " ++ show obsGpsCalTime
             L8.hPut stdout $ toLazyByteString $ buildEntry r
