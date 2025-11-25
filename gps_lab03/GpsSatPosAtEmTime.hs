@@ -1,4 +1,4 @@
--- 2025-11-24
+-- 2025-11-25
 
 {- | Estimate ECEF satellite position at GPS emission time [s] from
      broadcast ephemeris for dual-frequency pseudorange measurement
@@ -25,7 +25,7 @@
        What matters is that the satellite's position corresponds to the satellite-receiver distance.
               
      Input:
-       - receiver time of signal reception          obsTime        (hand copied from RINEX observation file)
+       - receiver time of signal reception          obsGpsCalTime  (hand copied from RINEX observation file)
        - pseudorange for f1 [m]                     pr1            (hand copied from RINEX observation file)
        - pseudorange for f2 [m]                     pr2            (hand copied from RINEX observation file)
        - navigation data record in RINEX 3.04
@@ -50,17 +50,17 @@
 
 module GpsSatPosAtTrTime where
 
-import Data.Time.Calendar                      (fromGregorian, diffDays)
-import Data.Time.LocalTime                     (LocalTime (..), TimeOfDay(..))
-import Data.Fixed                              (Pico)    
-import Text.Printf                             (printf)
+import           Data.Time.Calendar            (fromGregorian, diffDays)
+import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..))
+import           Data.Fixed                    (Pico)    
+import           Text.Printf                   (printf)
 import qualified Data.ByteString.Char8  as BSC
-import Control.Monad                           (guard)
+import           Control.Monad                 (guard)
 import qualified Data.ByteString.Unsafe as BSU (unsafeUseAsCString)
-import Foreign                                 (Ptr, alloca, peek, minusPtr)
-import Foreign.C.Types                         (CChar, CDouble(CDouble))
-import Foreign.C.String                        (CString)
-import System.IO.Unsafe                        (unsafePerformIO)
+import           Foreign                       (Ptr, alloca, peek, minusPtr)
+import           Foreign.C.Types               (CChar, CDouble(CDouble))
+import           Foreign.C.String              (CString)
+import           System.IO.Unsafe              (unsafePerformIO)
 
 
 -- | GPS navigation data (a subset of fields from RINEX 3.04 navigation file)
@@ -385,11 +385,11 @@ isEphemerisValid (w, tow) eph
 --   * prints receiver clock time of signal reception, the emission time, and satellite position.
 main :: IO ()
 main = do
-  let obsTime  = mkGpsCalendarTime 2024 03 07 00 53 01.0000000         -- Input: receiver time of signal reception
+  let obsGpsCalTime = mkGpsCalendarTime 2024 03 07 00 53 01.0000000    -- Input: receiver time of signal reception
       pr1      = 21548635.724                                          -- Input: pseudorange for f1 e.g. C1C
       pr2      = 21548628.027                                          -- Input: pseudorange for f2 e.g. C2X
       fn       = "nav_record.txt"                                      -- Input: file name
-      (w, trv) = gpsCalTimeToWeekTow obsTime                           -- receiver GPS week number, receiver tow
+      (w, trv) = gpsCalTimeToWeekTow obsGpsCalTime                     -- receiver GPS week number, receiver tow
   navRec <- BSC.readFile fn                                            -- navigation data record
   case parseNavRecord navRec of
     Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
