@@ -17,9 +17,9 @@ Output:
   - navigation record (ephemeris)	         
                                        
 Print of run:			         
-Observation time: 2025-08-02 01:00:01.5
-          calToe: 2025-08-02 02:00:00
-PRN: 6    calToc: 2025-08-02 02:00:00
+Observation time: 2025 08 02 01 00 01.5
+          calToe: 2025 08 02 02 00 00
+PRN: 6    calToc: 2025 08 02 02 00 00
 af0:      -4.722196608782e-4         
 af1:      -1.432454155292e-11        
 af2:      0.0                        
@@ -64,9 +64,9 @@ Output:
   - rekord nawigacyjny (efemeryda)
                                        
 Wydruk uruchomienia:			         
-Observation time: 2025-08-02 01:00:01.5
-          calToe: 2025-08-02 02:00:00
-PRN: 6    calToc: 2025-08-02 02:00:00
+Observation time: 2025 08 02 01 00 01.5
+          calToe: 2025 08 02 02 00 00
+PRN: 6    calToc: 2025 08 02 02 00 00
 af0:      -4.722196608782e-4         
 af1:      -1.432454155292e-11        
 af2:      0.0                        

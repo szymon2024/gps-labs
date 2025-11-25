@@ -30,9 +30,9 @@
        - navigation record (ephemeris)                      r
 
      Print of run:
-     Observation time: 2025-08-02 01:00:01.5
-               calToe: 2025-08-02 02:00:00
-     PRN: 6    calToc: 2025-08-02 02:00:00
+     Observation time: 2025 08 02 01 00 01.5
+               calToe: 2025 08 02 02 00 00
+     PRN: 6    calToc: 2025 08 02 02 00 00
      af0:      -4.722196608782e-4         
      af1:      -1.432454155292e-11        
      af2:      0.0                        
@@ -145,7 +145,7 @@ main = do
           Nothing -> putStrLn "Cannot find valid ephemeris \
                        \for given prn and observation time"
           Just r  -> do                                        -- Output: navigation record 
-            putStrLn $ "Observation time: " ++ show obsGpsCalTime
+            putStrLn $ "Observation time: " ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S" obsGpsCalTime
             L8.hPut stdout $ toLazyByteString $ buildEntry r
 
 -- | Parses a RINEX 3.04 navigation file into a NavMap.
@@ -399,9 +399,9 @@ mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h
 --   Ends with a separator line (----------------------------------).                                  
 buildEntry :: NavRecord -> Builder
 buildEntry NavRecord{..} =
-    string8 "          calToe: "  <> string8 (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" calToe) <> char8 '\n'
+    string8 "          calToe: "  <> string8 (formatTime defaultTimeLocale "%Y %m %d %H %M %S" calToe) <> char8 '\n'
     <> string8 "PRN: "     <> intDec prn <> string8 "   "
-    <> string8 " calToc: "  <> string8 (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" calToc) <> char8 '\n'
+    <> string8 " calToc: "  <> string8 (formatTime defaultTimeLocale "%Y %m %d %H %M %S" calToc) <> char8 '\n'
     <> string8 "af0:      " <> doubleDec  af0             <> char8 '\n'
     <> string8 "af1:      " <> doubleDec  af1             <> char8 '\n'
     <> string8 "af2:      " <> doubleDec  af2             <> char8 '\n'
