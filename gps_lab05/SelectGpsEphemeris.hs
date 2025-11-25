@@ -21,12 +21,13 @@
      this condition, it is printed. Otherwise the program terminates.
 
      Input:
-       - RINEX 3.04 navigation file name
-       - receiver time of signal reception (observation time)
-       - satellite number
+       - RINEX 3.04 navigation file name                    fn
+       - receiver time of signal reception
+         (observation time)                                 obsGpsCalTime
+       - satellite number                                   prn
 
      Output:
-       - navigation record (ephemeris)
+       - navigation record (ephemeris)                      r
 
      Print of run:
      Observation time: 2025-08-02 01:00:01.5
@@ -64,33 +65,38 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
+module SelectGpsEphemeris where
+
 import           Data.Map.Strict                   (Map)
-import qualified Data.Map.Strict as MS
-import Data.Char                                   (isSpace)
-import Data.Int                                    (Int64)
-import Control.Monad                               (guard, when)
+import qualified Data.Map.Strict    as MS
+import           Data.IntMap.Strict                (IntMap)
+import qualified Data.IntMap.Strict as IMS
+import           Data.Char                         (isSpace)
+import           Data.Int                          (Int64)
+import           Control.Monad                     (guard, when)
 import qualified Data.ByteString.Lazy.Char8 as L8
-import Data.Time.Calendar                          (Day, fromGregorian, diffDays, addDays)
-import Data.Time.LocalTime                         (LocalTime (..), TimeOfDay(..), diffLocalTime)
-import Data.Time.Format                            (formatTime, defaultTimeLocale)
-import Data.Fixed                                  (Pico)
-import Text.Printf                                 (printf)
+import           Data.Time.Calendar                (Day, fromGregorian, diffDays, addDays)
+import           Data.Time.LocalTime               (LocalTime (..), TimeOfDay(..), diffLocalTime)
+import           Data.Time.Format                  (formatTime, defaultTimeLocale)
+import           Data.Fixed                        (Pico)
+import           Text.Printf                       (printf)
+import           Data.List                         (unfoldr)
 
 -- For readDouble
 import qualified Data.ByteString.Unsafe     as BSU (unsafeUseAsCString)    
-import Foreign                                     (Ptr, alloca, peek, minusPtr)
-import Foreign.C.Types                             (CChar, CDouble(CDouble)) 
-import Foreign.C.String                            (CString)                 
-import System.IO.Unsafe                            (unsafePerformIO)         
-import Data.Maybe                                  (catMaybes)
+import           Foreign                           (Ptr, alloca, peek, minusPtr)
+import           Foreign.C.Types                   (CChar, CDouble(CDouble)) 
+import           Foreign.C.String                  (CString)                 
+import           System.IO.Unsafe                  (unsafePerformIO)         
+import           Data.Maybe                        (catMaybes)
 
 -- For NavMap printing
-import Data.ByteString.Builder
-import System.IO                                   (stdout)
+import           Data.ByteString.Builder
+import           System.IO                         (stdout)
     
 type GpsCalendarTime  = LocalTime
 type GpsTime          = (Integer, Pico)                     -- ^ GPS week, time-of-week
-type NavMap           = Map Int (Map GpsTime NavRecord)     -- ^ key1: prn, key2: (week r, toe r)
+type NavMap           = IntMap (Map GpsTime NavRecord)      -- ^ key1: prn, key2: (week r, toe r)
 
 
 -- | GPS navigation data record from RINEX 3.04 navigation file.
@@ -132,12 +138,13 @@ main = do
       prn           = 6                                        -- Input: satellite number
       obsGpsCalTime = mkGpsCalendarTime 2025 08 02 01 00 01.5  -- Input: receiver time of signal reception
       obsGpsTime    = gpsCalTimeToWeekTow obsGpsCalTime
-  case MS.lookup prn navMap of
+  case IMS.lookup prn navMap of
     Nothing -> putStrLn "No records for given PRN"
-    Just m  ->
+    Just m  -> do
         case findValidEphemeris obsGpsTime m of
-          Nothing -> putStrLn "Cannot find valid ephemeris for given prn and observation time"
-          Just r  -> do
+          Nothing -> putStrLn "Cannot find valid ephemeris \
+                       \ for given prn and observation time"
+          Just r  -> do                                        -- Output: navigation record 
             putStrLn $ "Observation time: " ++ show obsGpsCalTime
             L8.hPut stdout $ toLazyByteString $ buildEntry r
 
@@ -179,13 +186,13 @@ chunks8 [] = []
 chunks8 l  = chunk : chunks8 rest
     where
       (chunk, rest) = splitAt 8 l                      
-
+    
 -- | Constructs a NavMap from a list of NavRecord values for healthy satellites.
 buildNavMap :: [NavRecord] -> NavMap
 buildNavMap rs =
-  MS.fromListWith MS.union
+  IMS.fromListWith MS.union
     [ (prn r, MS.singleton (week r, toe r) r)
-    | r <- rs, svHealth r == 0 ]
+    | r <- rs, svHealth r == 0]
 
 -- | Trim leading and trailing whitespace from a ByteString.              
 trim :: L8.ByteString -> L8.ByteString
@@ -427,7 +434,7 @@ buildEntry NavRecord{..} =
                
 printPrnNavRecords :: Int -> NavMap -> IO ()
 printPrnNavRecords prn navMap =
-  case MS.lookup prn navMap of
+  case IMS.lookup prn navMap of
     Nothing -> putStrLn $ "No records for PRN " ++ show prn
     Just m  ->
       L8.hPut stdout $ toLazyByteString $
