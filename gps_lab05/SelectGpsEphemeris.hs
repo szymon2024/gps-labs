@@ -1,4 +1,4 @@
--- 2025-11-25
+-- 2025-11-26
 
 {- | The program selects the ephemeris (orbital parameters) from a RINEX
      3.04 navigation file for a given observation time and a GPS
@@ -132,21 +132,32 @@ data NavRecord = NavRecord
 
 -- Entry point of the program.
 main = do
-  let fn = "source.rnx"                                        -- Input: RINEX 3.04 navigation file name
+  let fn = "source.nav"                                        -- Input: RINEX 3.04 navigation file name
   bs <- L8.readFile fn               
   let navMap        = readNavRinex304 bs
       prn           = 6                                        -- Input: satellite number
       obsGpsCalTime = mkGpsCalendarTime 2025 08 02 01 00 01.5  -- Input: receiver time of signal reception
-      obsGpsTime    = gpsCalTimeToWeekTow obsGpsCalTime
-  case IMS.lookup prn navMap of
-    Nothing -> putStrLn "No records for given PRN"
-    Just m  -> do
-        case findValidEphemeris obsGpsTime m of
-          Nothing -> putStrLn "Cannot find valid ephemeris \
-                       \for given prn and observation time"
-          Just r  -> do                                        -- Output: navigation record 
-            putStrLn $ "Observation time: " ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S" obsGpsCalTime
-            L8.hPut stdout $ toLazyByteString $ buildEntry r
+  case selectGpsEphemeris obsGpsCalTime prn navMap of
+    Nothing -> putStrLn "Cannot find valid ephemeris \
+                        \for given prn and observation time"
+    Just r  -> do                                        -- Output: navigation record 
+         putStrLn $ "Observation time: " ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S" obsGpsCalTime
+         L8.hPut stdout $ toLazyByteString $ buildEntry r
+
+-- | Selects the appropriate GPS ephemeris record for a given observation.
+--   Converts the observation time into GPS week and time-of-week
+--   using gpsCalTimeToWeekTow.
+--   Looks up the satellite PRN in the navigation map.
+--   If no navigation data exists for that PRN, returns 'Nothing'.
+--   Otherwise, searches the satellite's ephemeris records with
+--   findValidEphemeris to find the one valid at the observation time.
+selectGpsEphemeris
+  :: GpsCalendarTime -> IMS.Key -> NavMap -> Maybe NavRecord
+selectGpsEphemeris obsGpsCalTime prn navMap =
+    let obsGpsTime = gpsCalTimeToWeekTow obsGpsCalTime
+    in case IMS.lookup prn navMap of
+         Nothing -> Nothing
+         Just m  -> findValidEphemeris obsGpsTime m
 
 -- | Parses a RINEX 3.04 navigation file into a NavMap.
 --   Validates the file header.
@@ -154,31 +165,35 @@ main = do
 --   Converts each chunk into a NavRecord.
 --   Builds a map.
 readNavRinex304 :: L8.ByteString -> NavMap
-readNavRinex304 bs =
-  case L8.lines bs of
-    []       -> error "Empty file"
-    (hdr:ls) -> if validateHeader hdr
-                then parseNavData ls
-                else undefined
-  where
-    validateHeader hdr
-      | rinexVer /= "3.04" = error "This is not RINEX 3.04 file"
-      | fileType /= "N"    = error "This is not navigation file"
-      | otherwise          = True
+readNavRinex304 bs
+    | L8.null bs         = error "Empty file"
+    | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
+    | fileType /= "N"    = error "Not navigation file"
+    | otherwise =
+        let ls = L8.lines bs
+            rest = dropWhile (not . isEndOfHeader) ls
+        in parseNavData (drop 1 rest)
       where
-        rinexVer = trim $ getField 0 9 hdr
-        fileType = trim $ getField 20 1 hdr
+        rinexVer = trim $ getField  0 9 bs 
+        fileType = trim $ getField 20 1 bs
+        isEndOfHeader line =
+            trim (L8.drop 60 line) == "END OF HEADER"
 
-    parseNavData ls =
-      case dropWhile (not . isEndOfHeader) ls of
-        []         -> error "No navigation data"
-        (_:dataSec) -> buildNavMap
-                     . catMaybes
-                     . map parseGPSNavRec
-                     $ chunks8 dataSec
-
-    isEndOfHeader line =
-      trim (L8.drop 60 line) == L8.pack "END OF HEADER"
+-- | Parses raw navigation file lines into a NavMap.
+--   Each GPS navigation record spans 8 lines.
+--   The function splits the input into 8-line chunks,
+--   parses each chunk with parseGpsNavRec,
+--   discards invalid records (Nothing),
+--   and builds a NavMap from the valid ones.
+--   Throws an error if the input list is empty.
+parseNavData
+    :: [L8.ByteString]                                      -- ^ lines from a RINEX navigation data (body) 
+    -> NavMap
+parseNavData [] = error "No navigation data"
+parseNavData ls = buildNavMap
+                  . catMaybes
+                  . map parseGpsNavRec
+                  $ chunks8 ls
 
 -- | Splits a list into chunks of 8 elements. Used to group navigation records.           
 chunks8 :: [a] -> [[a]]
@@ -332,8 +347,8 @@ getField start len = L8.take len . L8.drop start
 --   Converts numeric fields using readDoubleField.
 --   Returns Nothing if the input does not match the expected format or if the satellite system is not GPS (sys == 'G').
 --   On success, constructs and returns a NavRecord
-parseGPSNavRec :: [L8.ByteString] -> Maybe NavRecord
-parseGPSNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
+parseGpsNavRec :: [L8.ByteString] -> Maybe NavRecord
+parseGpsNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
   (sys, _) <- L8.uncons l1                                
   guard (sys == 'G')
   (prn, _)  <- L8.readInt $ getField  1 2 l1     
@@ -387,7 +402,7 @@ parseGPSNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
       fitIntv  = round      fitIntvD
               
   return NavRecord {..}
-parseGPSNavRec _ = Nothing
+parseGpsNavRec _ = Nothing
 
 -- | Makes GpsCalendarTime from numbers.
 mkGpsCalendarTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsCalendarTime
