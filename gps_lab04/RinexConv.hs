@@ -1,4 +1,4 @@
--- 2025-11-19
+-- 2025-11-25
 
 {- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
      in the data section so that scientific notation uses 'E'
@@ -9,8 +9,8 @@
        because there can be END OF HEADER in comment fields.
 
      Input:
-       - source RINEX file name      (to set in the code)
-       - destination RINEX file name (to set in the code)
+       - source RINEX file name      (to set in the code)   sn
+       - destination RINEX file name (to set in the code)   dn
 
      Output: 
        - destination RINEX file with normalized scentific notation with letter 'E'
@@ -19,14 +19,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import qualified Data.ByteString.Lazy.Char8 as L8    
-import Data.Char                                  (isSpace)
-import Data.Int                                   (Int64)
+import           Data.Char                           (isSpace)
+import           Data.Int                            (Int64)
 
 main :: IO ()
 main = do
   let
-      sn = "source.nav"                                      -- Input: source file name     
-      dn = "destination.nav"                                 -- Input: destination file name
+      sn = "source.nav"                                     -- Input: source file name     
+      dn = "destination.nav"                                -- Input: destination file name
 
   putStrLn "Start processing"
   convertRinex sn dn
@@ -38,13 +38,13 @@ main = do
 --   * replacing all 'D' or 'd' with 'E' in the data section,
 --   * writing the result to the destination file.
 convertRinex
-    :: FilePath                                              -- ^ source file name
-    -> FilePath                                              -- ^ destination file name
+    :: FilePath                                             -- ^ source file name
+    -> FilePath                                             -- ^ destination file name
     -> IO ()
 convertRinex sn dn = do
     bs <- L8.readFile sn
-    let pieces = L8.split '\n' bs                            -- Only header pieces will be read
-                                                             -- Don't use L8.lines because it works differently
+    let pieces = L8.split '\n' bs                           -- Only header pieces will be read
+                                                            -- Don't use L8.lines because it works differently
         hdrLen = headerLength pieces
     case pieces of
       []     -> error "Empty file"
