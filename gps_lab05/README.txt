@@ -6,7 +6,9 @@ EN:
 ======================================================================
 
 The program selects the ephemeris from a RINEX 3.04 navigation file
-for a given observation time and a GPS satellite.
+for a given observation time and a GPS satellite.  The main selection
+criterion is the ephemeris with the closest (week, toe) and
+svHealth==0.
 
 Input:				         
   - RINEX 3.04 navigation file name         
@@ -53,7 +55,8 @@ PL:
 ======================================================================
 
 Program wybiera efemerydę z pliku nawigacyjnego RINEX 3.04 dla danego
-czasu obserwacji i satelity GPS.
+czasu obserwacji i satelity GPS. Głównym kryterium wyboru jest
+efemeryda z najbliższym (week, toe) i svHealth==0
 
 Wejście:				         
   - nazwa pliku nawigacyjnego RINEX 3.04
