@@ -24,7 +24,7 @@ Without matched ephemeris: 0
 
 PL:
 =====================================================================
-          MATCHING GPS EPHEMERIDES TO SATELLITE OBSERVATIONS
+         DOPASOWANIE EFEMERYD GPS DO OBSERWACJI SATELITARNYCH
 =====================================================================
 
 Program do dopasowywania efemeryd GPS (RINEX NAV) do obserwacji
