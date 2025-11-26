@@ -1,4 +1,4 @@
-2025-11-23
+2025-11-26
 
 EN:
 ======================================================================
@@ -9,8 +9,8 @@ EN:
 A program for computing the position of a GPS satellite in the ECEF
 coordinate system based on sample orbital parameters (ephemerides)
 transmitted by the satellite in the navigation message and GPS time
-provided as input. Calculations are performed for GPS time expressed
-as (w, tow) where w is GPS week and tow is time-of-week.
+provided as input. Calculations are performed for (w, tow) where w is
+GPS week and tow is time-of-week.
 
 Input
 -----
@@ -42,8 +42,8 @@ PL:
 Program do wyznaczania pozycji satelity GPS w układzie ECEF na
 podstawie przykładowych parametrów orbity tzw. efemerydy nadawanej
 przez satelitę w wiadomości nawigacyjnej oraz podanego czasu
-GPS. Obliczenia są wykonywane dla czasu GPS wyrażonego jako (w, tow),
-gdzie w to tydzień GPS a tow to czas tygodnia.
+GPS. Obliczenia są wykonywane dla (w, tow), gdzie w to tydzień GPS
+a tow to czas tygodnia.
 
 Wejście
 -------

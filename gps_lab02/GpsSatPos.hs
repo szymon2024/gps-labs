@@ -1,15 +1,15 @@
--- 2025-11-23
+-- 2025-11-26
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
      (ephemerides) transmitted by the satellite in the navigation
      message and GPS time provided as input. Calculations are
-     performed for GPS time expressed as (w, tow) where w is GPS week
-     and tow is time-of-week.
+     performed for (w, tow) where w is GPS week and tow is
+     time-of-week.
 
      To ensure ephemeris freshness, the programm uses the
      isEphemerisValid function, which limits the time interval since
-     toe. For demonstration purposes, this programm assumes an
+     (week, toe). For demonstration purposes, this programm assumes an
      ephemeris validity interval of 4h.
 
      The Pico is used to represent time-of-week values, ensuring high
@@ -19,9 +19,8 @@
      may slightly reduce readability but preserve accuracy.
      
      Input:
-       - GPS Ephemeris               defined in the code as ephExample,
-       - GPS Time
-         in calendar format          defined in the code as gpsTime
+       - GPS Ephemeris                       ephExample    defined in the code 
+       - GPS Time                            gpsTime       defined in the code
 
      Output:
        - ECEF satellite position             (x, y, z)
@@ -56,7 +55,7 @@ data Ephemeris = Ephemeris
   , e        :: Double                                      -- ^ eccentricity []
   , cus      :: Double                                      -- ^ latitude argument correction [rad]
   , sqrtA    :: Double                                      -- ^ square root of semi-major axis [m^0.5]
-  , toe      :: Pico                                        -- ^ time of ephemeris in GPS week [s]
+  , toe      :: Pico                                        -- ^ time of ephemeris in GPS week (time-of-week of ephemeris) [s]
   , cic      :: Double                                      -- ^ inclination correction [rad]
   , omega0   :: Double                                      -- ^ longitude of ascending node at toe epoch [rad]
   , cis      :: Double                                      -- ^ inclination correction [rad]
@@ -65,10 +64,11 @@ data Ephemeris = Ephemeris
   , omega    :: Double                                      -- ^ argument of perigee [rad]
   , omegaDot :: Double                                      -- ^ rate of node's right ascension [rad/s]
   , iDot     :: Double                                      -- ^ rate of inclination angle [rad/s]
-  , week     :: Integer                                     -- ^ number of GPS week for toe
+  , week     :: Integer                                     -- ^ GPS week to go with toe
   } deriving (Show)
 
-type GpsCalendarTime = LocalTime                            -- ^ GPS time in calendar format
+type GpsTime    = LocalTime
+type GpsWeekTow = (Integer, Pico)
 
 -- | Constants
 mu, omegaEDot :: Double
@@ -76,10 +76,9 @@ mu        = 3.986005e14           -- WGS 84 value of earth's universal gravitati
 omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [rad/s]
 
 -- | Determining the GPS satellite position in ECEF from the GPS
---   ephemeris and for a GPS time-of-week based on IS-GPS-200N
---   20.3.3.4.3 ready-made mathematical formulas.
+--   ephemeris and for a GPS time.
 satPosition       
-    :: (Integer, Pico)                                      -- ^ GPS week, time-of-week [s]
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
     -> Ephemeris                                            -- ^ ephemeris
     -> (Double, Double, Double)                             -- ^ satellite position in ECEF [m]
 satPosition (w, tow) eph =
@@ -88,7 +87,7 @@ satPosition (w, tow) eph =
     n0     = sqrt(mu/(a*a*a))                               -- computed mean motion [rad/sec]       
     n      = n0 + deltaN eph                                -- corrected mean motion [rad/s]        
     tk     = realToFrac $
-             diffGpsTime (w, tow) (week eph, toe eph)       -- time elapsed since toe [s]
+             diffGpsWeekTow (w, tow) (week eph, toe eph)    -- time elapsed since toe [s]
     mk     = m0 eph + n*tk                                  -- mean anomaly at tk [rad]             
     ek     = keplerSolve mk (e eph)                         -- eccentric anomaly [rad]              
     vk     = atan2 (sqrt (1 - e eph *e eph ) * sin ek)
@@ -133,14 +132,14 @@ keplerSolve m e = iterate e0 0
             fDot =  1 - e * cos eN                          -- derivative of the function f
 
 
--- | GPS time to GPS week number and GPS time-of-week
-gpsCalTimeToWeekTow
-    :: GpsCalendarTime                                       -- ^ GPS calendar time
-    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week
-gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
+-- | Conversion of GPS time to GPS week and time-of-week
+gpsTimeToWeekTow
+    :: GpsTime
+    -> GpsWeekTow
+gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     let gpsStartDate = fromGregorian 1980 1 6                -- The date from which the GPS time is counted
         days         = diffDays date gpsStartDate            -- Number of days since GPS start date
-        w            = days `div` 7                          -- GPS week number
+        w            = days `div` 7                          -- GPS week
         dow          = days `mod` 7                          -- GPS day-of-week
         tow          = fromIntegral ( dow * 86400
                                     + toInteger (h * 3600 + m * 60)
@@ -170,12 +169,12 @@ ephExample = Ephemeris
           , week     =  2304
           }
 
--- | Calculates the number of seconds between two GPS times.
-diffGpsTime
-    :: (Integer, Pico)                                       -- ^ GPS week, time-of-week [s]
-    -> (Integer, Pico)                                       -- ^ GPS week, time-of-week [s]
-    -> Pico                                                  -- ^ time difference [s]
-diffGpsTime (w2,tow2) (w1,tow1) =
+-- | Calculates the number of seconds between two (GPS week, tow).
+diffGpsWeekTow
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    -> GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    -> Pico                                                 -- ^ time difference [s]
+diffGpsWeekTow (w2,tow2) (w1,tow1) =
     fromInteger (dw * 604800) + dtow
     where
       dw   = w2   - w1
@@ -184,8 +183,8 @@ diffGpsTime (w2,tow2) (w1,tow1) =
 -- | Ephemeris validity check.  Assumes that ephemeris is valid within
 --   4 hours.
 isEphemerisValid
-  :: (Integer, Pico)                                         --           week, time-of-week
-  -> (Integer, Pico)                                         -- ephemeris week, time-of-ephemeris
+  :: GpsWeekTow                                             --           GPS week, time-of-week
+  -> GpsWeekTow                                             -- ephemeris GPS week, time-of-week of ephemeris
   -> Bool
 isEphemerisValid (w, tow) (week, toe)
     |     dw == 0  = abs dtow <= 2 * 3600.0                 -- condition for the same week
@@ -195,24 +194,22 @@ isEphemerisValid (w, tow) (week, toe)
       dw        = w   - week
       dtow      = tow - toe
 
--- | Makes GpsCalendarTime from numbers.
-mkGpsCalendarTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsCalendarTime
-mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
+-- | Makes GpsTime from numbers.
+mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
+mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- Calculates GPS satelite position for example GPS ephemeris and GPS
--- time.  Before doing so, it checks the possibility of using the
--- wrapWeekCrossover function and the validity of the ephemeris.
+                          
 main :: IO ()
 main = do
-  let eph        = ephExample                                -- Input: GPS Ephemeris
-      gpsCalTime = mkGpsCalendarTime 2024 03 07 22 00 30.0   -- Input: GPS calendar Time
-      (w, tow)   = gpsCalTimeToWeekTow gpsCalTime            -- GPS week number, time-of-week
+  let eph      = ephExample                                 -- Input: GPS Ephemeris
+      gpsTime  = mkGpsTime 2024 03 07 22 00 30.0            -- Input: GPS Time
+      (w, tow) = gpsTimeToWeekTow gpsTime                   -- GPS week, time-of-week
   if isEphemerisValid (w, tow) (week eph, toe eph)
   then do
-    let (x, y, z) = satPosition (w, tow) eph                 -- Output: ECEF satellite position
-    putStrLn $ "Entered GPS time             (w   , tow) = " ++ show (w       , tow)
-    putStrLn $ "Ephemeris reference GPS time (week, toe) = " ++ show (week eph, toe eph)
-    putStrLn $ "Number of seconds since toe              =           " ++ show  (diffGpsTime (w, tow) (week eph,toe eph))
+    let (x, y, z) = satPosition (w, tow) eph                -- Output: ECEF satellite position
+    putStrLn $ "Entered GPS time             (w  , tow) = " ++ show (w          , tow    )
+    putStrLn $ "Ephemeris reference GPS time (woe, toe) = " ++ show (week eph, toe eph)
+    putStrLn $ "Number of seconds since toe             =           " ++ show  (diffGpsWeekTow (w, tow) (week eph,toe eph))
     putStrLn ""
     printf "ECEF satellite position [m]:\n"
     printf "X = %18.9f\n" x
