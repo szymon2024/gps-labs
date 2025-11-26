@@ -10,15 +10,18 @@ for a given observation time and a GPS satellite.  The main selection
 criterion is the ephemeris with the nearest (week, toe) and
 svHealth==0, for which the observation time is within fitIntv.
 
-Input:				         
+Input
+-----
   - RINEX 3.04 navigation file name         
   - receiver time of signal reception (GPS observation time)
   - satellite number		         
                                        
-Output:				         
+Output
+------
   - navigation record (ephemeris)	         
                                        
-Print of run:			         
+Print of run
+------------
 Observation time: 2025 08 02 01 00 01.5
           calToe: 2025 08 02 02 00 00
 PRN: 6    calToc: 2025 08 02 02 00 00
@@ -59,15 +62,18 @@ czasu obserwacji i satelity GPS. Głównym kryterium wyboru jest
 efemeryda z najbliższym (week, toe) i svHealth==0, dla której czas
 obserwacji mieści się w fitIntv.
 
-Wejście:				         
+Wejście
+-------
   - nazwa pliku nawigacyjnego RINEX 3.04
   - czas odbiornika odbioru sygnału (czas GPS obserwacji)
   - numer satelity GPS		         
                                        
-Output:				         
+Output
+------
   - rekord nawigacyjny (efemeryda)
                                        
-Wydruk uruchomienia:			         
+Wydruk uruchomienia
+-------------------
 Observation time: 2025 08 02 01 00 01.5
           calToe: 2025 08 02 02 00 00
 PRN: 6    calToc: 2025 08 02 02 00 00
