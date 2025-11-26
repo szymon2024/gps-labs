@@ -5,8 +5,8 @@ EN:
           MATCHING GPS EPHEMERIDES TO SATELLITE OBSERVATIONS
 =====================================================================
 
-Program for matching GPS ephemerides (RINEX 3.04 NAV) to satellite
-observations (RINEX 3.04 OBS). The program only processes GPS
+The program finds GPS ephemeris from a RINEX NAV file for satellite
+observations from a RINEX OBS file. The program only processes GPS
 satellite data.
 
 Input:
@@ -27,9 +27,9 @@ PL:
          DOPASOWANIE EFEMERYD GPS DO OBSERWACJI SATELITARNYCH
 =====================================================================
 
-Program do dopasowywania efemeryd GPS (RINEX NAV) do obserwacji
-satelitarnych (RINEX OBS). Program przetwarza tylko dane satelitów
-GPS.
+Program znajduje efemerydy GPS z pliku RINEX NAV dla obserwacji
+satelitarnych z pliku RINEX OBS. Program przetwarza tylko dane
+satelitów GPS.
 
 Wejście:
   - nazwa pliku nawigacyjnego RINEX 3.04
