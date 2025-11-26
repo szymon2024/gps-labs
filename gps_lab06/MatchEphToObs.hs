@@ -49,15 +49,15 @@ import           Foreign.C.String                  (CString)
 import           System.IO.Unsafe                  (unsafePerformIO)         
 
 
-type GpsCalendarTime  = LocalTime
-type GpsTime          = (Integer, Pico)                     -- ^ GPS week, time-of-week
-type NavMap           = IntMap (Map GpsTime NavRecord)      -- ^ key1: prn, key2: (week r, toe r)    
-type ObsEpoch         = (GpsCalendarTime,[Int])
+type GpsTime    = LocalTime
+type GpsWeekTow = (Integer, Pico)
+type NavMap     = IntMap (Map GpsWeekTow NavRecord)         -- ^ key1: prn, key2: (week r, toe r)    
+type ObsEpoch   = (GpsTime,[Int])
 
 -- | GPS navigation data record from RINEX 3.04 navigation file.
 data NavRecord = NavRecord
   { prn      :: Int               -- ^ satellite number
-  , calToc   :: GpsCalendarTime   -- ^ toc as calendar date - clock data reference time
+  , toc      :: GpsTime           -- ^ clock data reference time
   , af0      :: Double            -- ^ SV clock bias correction coefficient [s]
   , af1      :: Double            -- ^ SV clock drift correction coefficient [s/s]
   , af2      :: Double            -- ^ SV clock drift rate correction coefficient [s/s^2]
@@ -69,7 +69,7 @@ data NavRecord = NavRecord
   , e        :: Double            -- ^ eccentricity []
   , cus      :: Double            -- ^ latitude argument correction [rad]
   , sqrtA    :: Double            -- ^ sqare root of semi-major axis [m^0.5]
-  , toe      :: Pico              -- ^ time of ephemeris in GPS week [s]
+  , toe      :: Pico              -- ^ time of ephemeris in GPS week (time-of-week of ephemeris) [s]
   , cic      :: Double            -- ^ inclination correction [rad]
   , omega0   :: Double            -- ^ longitude of ascending node at toe epoch [rad]
   , cis      :: Double            -- ^ inclination correction [rad]
@@ -86,7 +86,7 @@ data NavRecord = NavRecord
   } deriving (Eq, Show)
 
 data Match = Match
-  { obsGpsCalTime :: GpsCalendarTime                        -- epoch time
+  { obsGpsTime    :: GpsTime                        -- epoch time
   , obsPrn        :: Int
   , navRecord     :: Maybe NavRecord
   } deriving Show
@@ -112,7 +112,7 @@ matchAll
     -> NavMap                                               -- ^ GPS navigation data map, organized by PRN and ephemeris time
     -> [Match]
 matchAll epochs navMap =
-  [ Match { obsGpsCalTime = t
+  [ Match { obsGpsTime = t
           , obsPrn        = p
           , navRecord     = selectGpsEphemeris t p navMap
           }
@@ -180,29 +180,29 @@ buildNavMap rs =
     [ (prn r, MS.singleton (week r, toe r) r)
     | r <- rs, svHealth r == 0]
 
--- |Finds the nearest valid ephemeris record for observation time.
+-- |Finds the nearest valid ephemeris record for observation (GPS week, tow).
 findValidEphemeris 
-  :: GpsTime                                                -- observation time
-  -> Map GpsTime NavRecord                                  -- nav records of one GPS satellite
+  :: GpsWeekTow                                             -- observation (GPS w, tow)
+  -> Map GpsWeekTow NavRecord                                  -- nav records of one GPS satellite
   -> Maybe NavRecord
-findValidEphemeris obsGpsTime m = do
-    r <- nearestNavRecord obsGpsTime m
-    if isEphemerisValid obsGpsTime r
+findValidEphemeris obsGpsWeekTow m = do
+    r <- nearestNavRecord obsGpsWeekTow m
+    if isEphemerisValid obsGpsWeekTow r
     then Just r
     else Nothing
 
 -- | Finds the nearest ephemeris record for observation time.         
 nearestNavRecord
-    :: GpsTime                                              -- observation time
-    -> Map GpsTime NavRecord                                -- nav records of one GPS satellite
+    :: GpsWeekTow
+    -> Map GpsWeekTow NavRecord                                -- nav records of one GPS satellite
     -> Maybe NavRecord
-nearestNavRecord obsGpsTime m =
-    let mLE = MS.lookupLE obsGpsTime m
-        mGE = MS.lookupGE obsGpsTime m
+nearestNavRecord obsGpsWeekTow m =
+    let mLE = MS.lookupLE obsGpsWeekTow m
+        mGE = MS.lookupGE obsGpsWeekTow m
 
         choose (Just (_,r1)) (Just (_,r2)) =
-            if    abs (diffGpsTime (week r1, toe r1) obsGpsTime)
-               <= abs (diffGpsTime (week r2, toe r2) obsGpsTime)
+            if    abs (diffGpsWeekTow (week r1, toe r1) obsGpsWeekTow)
+               <= abs (diffGpsWeekTow (week r2, toe r2) obsGpsWeekTow)
             then Just r1
             else Just r2
         choose (Just (_,r1))  Nothing      = Just r1
@@ -228,7 +228,7 @@ parseGpsNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
   (m  , _)  <- L8.readInt $ getField 18 2 l1
   (s  , _)  <- L8.readInt $ getField 21 2 l1
   
-  let calToc = mkGpsCalendarTime (toInteger y) mon d h m (fromIntegral s)
+  let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
   af0       <- readDoubleField $ getField 23 19 l1
   af1       <- readDoubleField $ getField 42 19 l1
@@ -273,12 +273,12 @@ parseGpsNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
   return NavRecord {..}
 parseGpsNavRec _ = Nothing       
 
--- | Calculates the number of seconds between two GPS times.
-diffGpsTime
-    :: GpsTime                                               -- ^ GPS week, time-of-week [s]
-    -> GpsTime                                               -- ^ GPS week, time-of-week [s]
-    -> Pico                                                  -- ^ time difference [s]
-diffGpsTime (w2,tow2) (w1,tow1) =
+-- | Calculates the number of seconds between two (GPS week, tow).
+diffGpsWeekTow
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    -> GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    -> Pico                                                 -- ^ time difference [s]
+diffGpsWeekTow (w2,tow2) (w1,tow1) =
     fromInteger (dw * 604800) + dtow
     where
       dw   = w2   - w1
@@ -287,7 +287,7 @@ diffGpsTime (w2,tow2) (w1,tow1) =
 -- | Checks whether an ephemeris record is valid for a given observation time.
 --   Compares GPS week and time-of-week with the record’s toe and fitIntv.
 isEphemerisValid
-  :: GpsTime                                                -- GPS week number, time-of-week
+  :: GpsWeekTow                                             -- GPS week number, time-of-week
   -> NavRecord
   -> Bool
 isEphemerisValid (w, tow) eph 
@@ -331,19 +331,19 @@ parseEpoch (l:ls) = do
   (m  , _)  <- L8.readInt      $ getField 16  2 l
   s         <- readDoubleField $ getField 19 11 l
 
-  let obsGpsCalTime = mkGpsCalendarTime (toInteger y) mon d h m (realToFrac s)               
+  let obsGpsTime = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
 
   (n  , _)  <- L8.readInt $ getField 33  3 l
                
   let prns = mapMaybe (\line -> fmap fst (L8.readInt (getField 1 2 line)))
                       (take n ls)
              
-  return ((obsGpsCalTime, prns), drop n ls)
+  return ((obsGpsTime, prns), drop n ls)
 parseEpoch [] = Nothing
                
--- | Makes GpsCalendarTime from numbers.
-mkGpsCalendarTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsCalendarTime
-mkGpsCalendarTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
+-- | Makes GpsTime from numbers.
+mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
+mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
 -- | Function import: double strtod(const char *nptr, char **endptr)
 foreign import ccall unsafe "stdlib.h strtod"
@@ -388,28 +388,28 @@ getField start len = L8.take len . L8.drop start
 trim :: L8.ByteString -> L8.ByteString
 trim = L8.dropWhile isSpace . L8.dropWhileEnd isSpace
 
--- | Converts a GPS calendar time into GPS week number and time-of-week (TOW).
+-- | Converts a GPS time into GPS week and time-of-week (tow).
 --   GPS time starts from January 6, 1980.
 --   Calculates the number of weeks and seconds since that epoch.
 gpsCalTimeToWeekTow
-    :: GpsCalendarTime                                       -- ^ GPS calendar time
-    -> GpsTime                                               -- ^ GPS week, time-of-week
+    :: GpsTime
+    -> GpsWeekTow                                           -- ^ GPS week, time-of-week
 gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
-    let gpsStartDate = fromGregorian 1980 1 6                -- the date from which the GPS time is counted
-        days         = diffDays date gpsStartDate            -- number of days since GPS start date
-        w            = days `div` 7                          -- GPS week
-        dow          = days `mod` 7                          -- GPS day-of-week
+    let gpsStartDate = fromGregorian 1980 1 6               -- the date from which the GPS time is counted
+        days         = diffDays date gpsStartDate           -- number of days since GPS start date
+        w            = days `div` 7                         -- GPS week
+        dow          = days `mod` 7                         -- GPS day-of-week
         tow          = fromIntegral ( dow * 86400
                                     + toInteger (h * 3600 + m * 60)
                                     )
                      + s
     in (w, tow)
 
--- | Converts GPS week number and time-of-week (TOW) into GPS calendar time
-weekTowToGpsCalTime
-    :: GpsTime                                              -- ^ GPS week, time-of-week
-    -> GpsCalendarTime                                      -- ^ GPS calendar time
-weekTowToGpsCalTime (w, tow) =
+-- | Converts GPS week and time-of-week (tow) into GPS time
+weekTowToGpsTime
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
+    -> GpsTime                                              -- ^ GPS time
+weekTowToGpsTime (w, tow) =
     let gpsStartDate = fromGregorian 1980 1 6                       -- the date from which the GPS time is counted
         days         = w * 7 + (floor (tow / 86400) :: Integer)     -- number of days since GPS start date
         date         = addDays days gpsStartDate
