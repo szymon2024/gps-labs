@@ -213,14 +213,14 @@ buildNavMap rs =
 trim :: L8.ByteString -> L8.ByteString
 trim = L8.dropWhile isSpace . L8.dropWhileEnd isSpace
 
--- |Finds the nearest valid ephemeris record for observation time.
+-- |Finds the nearest valid ephemeris record for observation (GPS week, tow).
 findValidEphemeris 
   :: GpsWeekTow                                             -- observation (GPS w, tow)
   -> Map GpsWeekTow NavRecord                               -- nav records of one GPS satellite
   -> Maybe NavRecord
-findValidEphemeris obsWeekTow m = do
-    r <- nearestNavRecord obsWeekTow m
-    if isEphemerisValid obsWeekTow r
+findValidEphemeris obsGpsWeekTow m = do
+    r <- nearestNavRecord obsGpsWeekTow m
+    if isEphemerisValid obsGpsWeekTow r
     then Just r
     else Nothing
 
@@ -229,13 +229,13 @@ nearestNavRecord
     :: GpsWeekTow
     -> Map GpsWeekTow NavRecord                                -- nav records of one GPS satellite
     -> Maybe NavRecord
-nearestNavRecord obsWeekTow m =
-    let mLE = MS.lookupLE obsWeekTow m
-        mGE = MS.lookupGE obsWeekTow m
+nearestNavRecord obsGpsWeekTow m =
+    let mLE = MS.lookupLE obsGpsWeekTow m
+        mGE = MS.lookupGE obsGpsWeekTow m
 
         choose (Just (_,r1)) (Just (_,r2)) =
-            if    abs (diffGpsWeekTow (week r1, toe r1) obsWeekTow)
-               <= abs (diffGpsWeekTow (week r2, toe r2) obsWeekTow)
+            if    abs (diffGpsWeekTow (week r1, toe r1) obsGpsWeekTow)
+               <= abs (diffGpsWeekTow (week r2, toe r2) obsGpsWeekTow)
             then Just r1
             else Just r2
         choose (Just (_,r1))  Nothing      = Just r1
@@ -256,7 +256,7 @@ diffGpsWeekTow (w2,tow2) (w1,tow1) =
       dw   = w2   - w1
       dtow = tow2 - tow1
 
--- | Converts a GPS time into GPS week number and time-of-week (tow).
+-- | Converts a GPS time into GPS week and time-of-week (tow).
 --   GPS time starts from January 6, 1980.
 --   Calculates the number of weeks and seconds since that epoch.
 gpsTimeToWeekTow
