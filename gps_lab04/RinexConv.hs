@@ -1,4 +1,4 @@
--- 2025-11-25
+-- 2025-11-26
 
 {- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
      in the data section so that scientific notation uses 'E'
@@ -18,6 +18,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+module RinexConv where
+
 import qualified Data.ByteString.Lazy.Char8 as L8    
 import           Data.Char                           (isSpace)
 import           Data.Int                            (Int64)
@@ -29,39 +31,42 @@ main = do
       dn = "destination.nav"                                -- Input: destination file name
 
   putStrLn "Start processing"
-  convertRinex sn dn
+  rinexConvertFile sn dn
   putStrLn "Processing complete."
            
--- | Convert a RINEX file by:
---   * separating the header (up to the line containing "END OF HEADER"),
---   * copying the header unchanged,
---   * replacing all 'D' or 'd' with 'E' in the data section,
---   * writing the result to the destination file.
-convertRinex
+-- | Convert a RINEX file
+rinexConvertFile
     :: FilePath                                             -- ^ source file name
     -> FilePath                                             -- ^ destination file name
     -> IO ()
-convertRinex sn dn = do
+rinexConvertFile sn dn = do
     bs <- L8.readFile sn
-    let pieces = L8.split '\n' bs                           -- Only header pieces will be read
-                                                            -- Don't use L8.lines because it works differently
-        hdrLen = headerLength pieces
-    case pieces of
-      []     -> error "Empty file"
-      (l1:_) -> do
-              let rinexVer = trim $ getField 0 9 l1
-              if rinexVer == "3.04"
-              then do
-                let hdr     = L8.take hdrLen bs
-                    dataSec = L8.drop hdrLen bs
-                L8.writeFile dn (hdr <> (L8.map replaceD dataSec))
-              else error "This is not RINEX 3.04 file"
+    let bs' = rinexConvertNotation bs
+    L8.writeFile dn bs'
 
+-- | Convert scientific notation by:
+--   * separating the header (up to the line containing "END OF HEADER"),
+--   * copying the header unchanged,
+--   * replacing all 'D' or 'd' with 'E' in the data section,      
+rinexConvertNotation :: L8.ByteString -> L8.ByteString                   
+rinexConvertNotation bs
+    | L8.null bs          = error "Empty file"
+    | rinexVer /= "3.04"  = error "Not RINEX 3.04 file"
+    | otherwise =  
+        let pieces = L8.split '\n' bs                       -- Only header pieces will be read
+                                                            -- Don't use L8.lines because it works differently
+            hdrLen = headerLength pieces
+            hdr     = L8.take hdrLen bs
+            dataSec = L8.drop hdrLen bs
+        in hdr <> (L8.map replaceD dataSec)
+    where
+       rinexVer = trim $ getField 0 9 bs
+        
 -- | Compute RINEX header length including END OF HEADER line
 headerLength :: [L8.ByteString] -> Int64
 headerLength ls = case break isEndOfHeader ls of
                     (_   , []  )  -> error "Cannot detect rinex header."
-                    (part, l1:[]) -> sum (map ((+1) . L8.length) part) + L8.length l1       -- +1 to count '\n'
+                    (part, l1:[]) -> sum (map ((+1) . L8.length) part) +  L8.length l1      -- +1 to count '\n'
                     (part, l1:_)  -> sum (map ((+1) . L8.length) part) + (L8.length l1 + 1) -- +1 to count '\n'
     where
       isEndOfHeader line = trim (L8.drop 60 line) == L8.pack "END OF HEADER"
