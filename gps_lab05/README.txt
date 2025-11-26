@@ -12,7 +12,7 @@ svHealth==0, for which the observation time is within fitIntv.
 
 Input:				         
   - RINEX 3.04 navigation file name         
-  - receiver time of signal reception (observation time)
+  - receiver time of signal reception (GPS observation time)
   - satellite number		         
                                        
 Output:				         
@@ -61,7 +61,7 @@ obserwacji mieści się w fitIntv.
 
 Wejście:				         
   - nazwa pliku nawigacyjnego RINEX 3.04
-  - czas odbiornika odbioru sygnału (czas obserwacji)
+  - czas odbiornika odbioru sygnału (czas GPS obserwacji)
   - numer satelity GPS		         
                                        
 Output:				         
