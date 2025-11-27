@@ -27,7 +27,7 @@
        satellite-receiver distance.
               
      Input:
-       - receiver time of signal reception          obsGpsTime     (hand copied from RINEX observation file)
+       - receiver time of signal reception          tro            (hand copied from RINEX observation file)
        - pseudorange for f1 [m]                     pr1            (hand copied from RINEX observation file)
        - pseudorange for f2 [m]                     pr2            (hand copied from RINEX observation file)
        - navigation data record in RINEX 3.04
@@ -397,12 +397,12 @@ isEphemerisValid (w, tow) eph =
 --   * prints receiver clock time of signal reception, the emission time, and satellite position.
 main :: IO ()
 main = do
-  let obsGpsTime = mkGpsTime 2024 03 07 00 53 01.0000000               -- Input: receiver time of signal reception
+  let tro        = mkGpsTime 2024 03 07 00 53 01.0000000               -- Input: receiver time of signal reception
                                                                        --       (receiver time of observation)
       pr1        = 21548635.724                                        -- Input: pseudorange for f1 e.g. C1C
       pr2        = 21548628.027                                        -- Input: pseudorange for f2 e.g. C2X
       fn         = "nav_record.txt"                                    -- Input: file name
-      (wr, tr)   = gpsTimeToWeekTow obsGpsTime                         -- receiver GPS week number, time-of-week
+      (wr, tr)   = gpsTimeToWeekTow tro                                -- receiver GPS week number, time-of-week
   bs <- BSC.readFile fn                                                -- data from "nav_record.txt"
   case readNavRecord bs of
     Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
