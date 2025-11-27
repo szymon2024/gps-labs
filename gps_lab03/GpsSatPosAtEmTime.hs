@@ -1,4 +1,4 @@
--- 2025-11-26
+-- 2025-11-27
 
 {- | Estimate ECEF satellite position at GPS emission time [s] from
      broadcast ephemeris for dual-frequency pseudorange measurement
@@ -40,7 +40,7 @@
 
      Print of run:
      Receiver clock time of signal reception [w,s]: (2304,348781.000000000000)
-     Emission time                           [w,s]: (2304,348780.927812714088)
+     Emission time by GPS clock              [w,s]: (2304,348780.927812714088)
 
      ECEF satellite position [m]:
      X =  4460302.794944842
@@ -191,19 +191,19 @@ eAnom (w, tow) NavRecord{..} =
 -- | Compute relativistic correction for satellite clock
 --   based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
 relCorr
-    :: GpsWeekTow                                            -- ^ GPS week, time-of-week
-    -> NavRecord                                             -- ^ ephemeris
-    -> Pico                                                  -- ^ dtr - relativistic correction [s]
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
+    -> NavRecord                                            -- ^ ephemeris
+    -> Pico                                                 -- ^ dtr - relativistic correction [s]
 relCorr (w, tow) NavRecord{..} = realToFrac (fRel * e * sqrtA * sin ek)
     where
-      ek = eAnom (w, tow) NavRecord{..}                      -- eccentric anomaly [rad]
+      ek = eAnom (w, tow) NavRecord{..}                     -- eccentric anomaly [rad]
 
 -- | Compute satellite clock correction
 --   based on IS-GPS-200N 20.3.3.3.3.1 ready-made formulas.
 clkCorr
-    :: GpsWeekTow                                            -- ^ GPS week, time-of-week
-    -> NavRecord                                             -- ^ ephemeris                                 
-    -> Pico                                                  -- ^ dtsv - satellite clock correction [s]
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
+    -> NavRecord                                            -- ^ ephemeris                                 
+    -> Pico                                                 -- ^ dtsv - satellite clock correction [s]
 clkCorr (w, tow) NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^2)
     where
       dt  = realToFrac $ diffGpsWeekTow (w, tow) (week, tocTow)
@@ -213,15 +213,15 @@ clkCorr (w, tow) NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^2)
 --   time depends on the clock corrections and the clock corrections
 --   depend on the emission time.
 emissionTime            
-  :: Double                                                  -- ^ pseudorange pr1 [m]
-  -> Double                                                  -- ^ pseudorange pr2 [m]
-  -> GpsWeekTow                                              -- ^ receiver time of signal reception [s]
-  -> NavRecord                                               -- ^ broadcast ephemeris
-  -> GpsWeekTow                                              -- ^ signal emission time [s]
-emissionTime pr1 pr2 (w, trv) eph = iterate te0 0
+  :: Double                                                 -- ^ pseudorange pr1 [m]
+  -> Double                                                 -- ^ pseudorange pr2 [m]
+  -> GpsWeekTow                                             -- ^ receiver time of signal reception [s]
+  -> NavRecord                                              -- ^ broadcast ephemeris
+  -> GpsWeekTow                                             -- ^ signal emission time [s]
+emissionTime pr1 pr2 (wr, tr) eph = iterate te0 0
     where
       pr   = pseudorangeDF pr1 pr2
-      tsv  = subSeconds (w, trv)  (realToFrac (pr/c))    -- satelite time of signal emission
+      tsv  = subSeconds (wr, tr)  (realToFrac (pr/c))       -- satelite time of signal emission
       te0 = tsv
       iterate te k
           | k >= 10                  = error "Number of time emission iterations exceeded"
@@ -235,9 +235,9 @@ emissionTime pr1 pr2 (w, trv) eph = iterate te0 0
 
 -- | Calculates the number of seconds between two (GPS week, tow).
 diffGpsWeekTow
-    :: GpsWeekTow                                            -- ^ GPS week, time-of-week [s]
-    -> GpsWeekTow                                            -- ^ GPS week, time-of-week [s]
-    -> Pico                                                  -- ^ time difference [s]
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    -> GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    -> Pico                                                 -- ^ time difference [s]
 diffGpsWeekTow (w2,tow2) (w1,tow1) =
     fromInteger (dw * 604800) + dtow
     where
@@ -296,55 +296,64 @@ mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
 -- | Parse a single navigation data record
-parseNavRecord :: BSC.ByteString -> Maybe NavRecord
-parseNavRecord r = do
-  let (l1:l2:l3:l4:l5:l6:_:l8:_) = BSC.lines r
-
-  (sys, _) <- BSC.uncons l1                                
+readNavRecord :: BSC.ByteString -> Maybe (NavRecord, BSC.ByteString)
+readNavRecord bs1 = do
+  (sys, _) <- BSC.uncons bs1
   guard (sys == 'G')
-  (prn, _) <- BSC.readInt $ getField  1 2 l1     
-  (y  , _) <- BSC.readInt $ getField  4 4 l1
-  (mon, _) <- BSC.readInt $ getField  9 2 l1
-  (d  , _) <- BSC.readInt $ getField 12 2 l1
-  (h  , _) <- BSC.readInt $ getField 15 2 l1
-  (m  , _) <- BSC.readInt $ getField 18 2 l1
-  (s  , _) <- BSC.readInt $ getField 21 2 l1
+  (prn, _) <- BSC.readInt $ getField  1 2 bs1
+  (y  , _) <- BSC.readInt $ getField  4 4 bs1
+  (mon, _) <- BSC.readInt $ getField  9 2 bs1
+  (d  , _) <- BSC.readInt $ getField 12 2 bs1
+  (h  , _) <- BSC.readInt $ getField 15 2 bs1
+  (m  , _) <- BSC.readInt $ getField 18 2 bs1
+  (s  , _) <- BSC.readInt $ getField 21 2 bs1
   
   let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-  af0      <- readDoubleField $ getField 23 19 l1
-  af1      <- readDoubleField $ getField 42 19 l1
-  af2      <- readDoubleField $ getField 61 19 l1
+  af0      <- readDoubleField $ getField 23 19 bs1
+  af1      <- readDoubleField $ getField 42 19 bs1
+  af2      <- readDoubleField $ getField 61 19 bs1
 
-  crs      <- readDoubleField $ getField 23 19 l2
-  deltaN   <- readDoubleField $ getField 42 19 l2
-  m0       <- readDoubleField $ getField 61 19 l2
+  let bs2 = dropLine bs1
+  crs      <- readDoubleField $ getField 23 19 bs2
+  deltaN   <- readDoubleField $ getField 42 19 bs2
+  m0       <- readDoubleField $ getField 61 19 bs2
 
-  cuc      <- readDoubleField $ getField  4 19 l3
-  e        <- readDoubleField $ getField 23 19 l3
-  cus      <- readDoubleField $ getField 42 19 l3
-  sqrtA    <- readDoubleField $ getField 61 19 l3
+  let bs3 = dropLine bs2
+  cuc      <- readDoubleField $ getField  4 19 bs3
+  e        <- readDoubleField $ getField 23 19 bs3
+  cus      <- readDoubleField $ getField 42 19 bs3
+  sqrtA    <- readDoubleField $ getField 61 19 bs3
 
-  toeD     <- readDoubleField $ getField  4 19 l4
-  cic      <- readDoubleField $ getField 23 19 l4
-  omega0   <- readDoubleField $ getField 42 19 l4
-  cis      <- readDoubleField $ getField 61 19 l4
+  let bs4 = dropLine bs3
+  toeD     <- readDoubleField $ getField  4 19 bs4
+  cic      <- readDoubleField $ getField 23 19 bs4
+  omega0   <- readDoubleField $ getField 42 19 bs4
+  cis      <- readDoubleField $ getField 61 19 bs4
 
-  i0       <- readDoubleField $ getField  4 19 l5
-  crc      <- readDoubleField $ getField 23 19 l5
-  omega    <- readDoubleField $ getField 42 19 l5
-  omegaDot <- readDoubleField $ getField 61 19 l5                 
-                                                               
-  iDot     <- readDoubleField $ getField  4 19 l6
-  weekD    <- readDoubleField $ getField 42 19 l6
+  let bs5 = dropLine bs4
+  i0       <- readDoubleField $ getField  4 19 bs5
+  crc      <- readDoubleField $ getField 23 19 bs5
+  omega    <- readDoubleField $ getField 42 19 bs5
+  omegaDot <- readDoubleField $ getField 61 19 bs5                 
 
-  fitIntvD <- readDoubleField $ getField 23 19 l8
+  let bs6 = dropLine bs5
+  iDot     <- readDoubleField $ getField  4 19 bs6
+  weekD    <- readDoubleField $ getField 42 19 bs6
 
-  let toe     = realToFrac toeD
+  let bs7 = dropLine bs6
+      bs8 = dropLine bs7
+  fitIntvD <- readDoubleField $ getField 23 19 bs8
+
+  let bs'     = dropLastLine bs8
+      toe     = realToFrac toeD
       week    = round weekD                                 -- conversion is needed for equality comparisons
-      fitIntv = round fitIntvD
-                
-  return NavRecord {..}
+      fitIntv = round fitIntvD       
+  return (NavRecord {..}, bs')
+    where dropLine     = BSC.drop 1 . BSC.dropWhile (/='\n')
+                         . BSC.drop 80
+          dropLastLine = BSC.drop 1 . BSC.dropWhile (/='\n')
+                         . BSC.drop 42                      -- last line can have two, three, four fields
 
 -- | Conversion of GPS time to GPS week and time-of-week
 gpsTimeToWeekTow
@@ -378,7 +387,7 @@ isEphemerisValid (w, tow) eph
 
 -- Main program:
 --   * Converts receiver time of signal reception
---     (observation time,
+--     (called also observation time,
 --      observation epoch,
 --      receiver time tag,
 --      receiver time stamp,
@@ -392,20 +401,21 @@ isEphemerisValid (w, tow) eph
 main :: IO ()
 main = do
   let obsGpsTime = mkGpsTime 2024 03 07 00 53 01.0000000               -- Input: receiver time of signal reception
-      pr1      = 21548635.724                                          -- Input: pseudorange for f1 e.g. C1C
-      pr2      = 21548628.027                                          -- Input: pseudorange for f2 e.g. C2X
-      fn       = "nav_record.txt"                                      -- Input: file name
-      (w, trv) = gpsTimeToWeekTow obsGpsTime                           -- receiver GPS week number, time-of-week
-  navRec <- BSC.readFile fn                                            -- navigation data record
-  case parseNavRecord navRec of
+                                                                       --       (receiver time of observation)
+      pr1        = 21548635.724                                        -- Input: pseudorange for f1 e.g. C1C
+      pr2        = 21548628.027                                        -- Input: pseudorange for f2 e.g. C2X
+      fn         = "nav_record.txt"                                    -- Input: file name
+      (wr, tr)   = gpsTimeToWeekTow obsGpsTime                         -- receiver GPS week number, time-of-week
+  bs <- BSC.readFile fn                                                -- data from "nav_record.txt"
+  case readNavRecord bs of
     Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
-    Just eph ->                                                        -- ephemeris
-       if isEphemerisValid (w, trv) eph
+    Just (eph, _) ->                                                   -- ephemeris
+       if isEphemerisValid (wr, tr) eph
        then do
-         let te      = emissionTime pr1 pr2 (w, trv) eph               -- Output: signal emission time by GPS clock [s]
+         let te      = emissionTime pr1 pr2 (wr, tr) eph               -- Output: signal emission time by GPS clock [s]
              (x,y,z) = satPosition te eph                              -- Output: satelite ECEF position [m]
-         putStrLn $ "Receiver clock time of signal reception [w,s]: " ++ show (w, trv)
-         putStrLn $ "Emission time                           [w,s]: " ++ show te
+         putStrLn $ "Receiver clock time of signal reception [w,s]: " ++ show (wr, tr)
+         putStrLn $ "Emission time by GPS clock              [w,s]: " ++ show te
          putStrLn ""
          printf "ECEF satellite position [m]:\n"
          printf "X = %18.9f\n" x

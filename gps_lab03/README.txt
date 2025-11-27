@@ -1,4 +1,4 @@
-2025-11-26
+2025-11-27
 
 EN:
 =====================================================================
@@ -26,7 +26,7 @@ Output
 Print of run
 ------------
 Receiver clock time of signal reception [w,s]: (2304,348781.000000000000)
-Emission time                           [w,s]: (2304,348780.927812714088)
+Emission time by GPS clock              [w,s]: (2304,348780.927812714088)
 
 ECEF satellite position [m]:
 X =  4460302.794944842
@@ -61,7 +61,7 @@ Wyjście
 Wydruk uruchomienia
 ---------------------
 Receiver clock time of signal reception [w,s]: (2304,348781.000000000000)
-Emission time                           [w,s]: (2304,348780.927812714088)
+Emission time by GPS clock              [w,s]: (2304,348780.927812714088)
 
 ECEF satellite position [m]:
 X =  4460302.794944842
