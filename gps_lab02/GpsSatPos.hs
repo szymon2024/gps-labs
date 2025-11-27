@@ -1,4 +1,4 @@
--- 2025-11-26
+-- 2025-11-27
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -20,7 +20,7 @@
      
      Input:
        - GPS Ephemeris                       ephExample    defined in the code 
-       - GPS Time                            gpsTime       defined in the code
+       - GPS Time                            t             defined in the code
 
      Output:
        - ECEF satellite position             (x, y, z)
@@ -186,13 +186,11 @@ isEphemerisValid
   :: GpsWeekTow                                             --           GPS week, time-of-week
   -> GpsWeekTow                                             -- ephemeris GPS week, time-of-week of ephemeris
   -> Bool
-isEphemerisValid (w, tow) (week, toe)
-    |     dw == 0  = abs dtow <= 2 * 3600.0                 -- condition for the same week
-    | abs dw == 1  = abs dtow >  2 * 3600.0                 -- condition for adjacent weeks
-    | otherwise    = False
+isEphemerisValid (w, tow) (week, toe) =
+    abs diffTime <= halfInterval
     where
-      dw        = w   - week
-      dtow      = tow - toe
+      diffTime = diffGpsWeekTow  (w, tow) (week, toe)
+      halfInterval = 2 * 3600
 
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
@@ -202,8 +200,8 @@ mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 main :: IO ()
 main = do
   let eph      = ephExample                                 -- Input: GPS Ephemeris
-      gpsTime  = mkGpsTime 2024 03 07 22 00 30.0            -- Input: GPS Time
-      (w, tow) = gpsTimeToWeekTow gpsTime                   -- GPS week, time-of-week
+      t        = mkGpsTime 2024 03 07 22 00 30.0            -- Input: GPS Time
+      (w, tow) = gpsTimeToWeekTow t                         -- GPS week, time-of-week
   if isEphemerisValid (w, tow) (week eph, toe eph)
   then do
     let (x, y, z) = satPosition (w, tow) eph                -- Output: ECEF satellite position
