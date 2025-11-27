@@ -51,7 +51,7 @@
 
 {-# LANGUAGE RecordWildCards #-}
 
-module GpsSatPosAtTrTime where
+module GpsSatPosAtEmTime where
 
 import           Data.Time.Calendar            (fromGregorian, diffDays)
 import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..))
@@ -376,13 +376,10 @@ isEphemerisValid
   :: GpsWeekTow                                             -- GPS week, time-of-week
   -> NavRecord
   -> Bool
-isEphemerisValid (w, tow) eph 
-    |     dw == 0  = abs dtow <= halfFitIntv                -- condition for the same week
-    | abs dw == 1  = abs dtow >  halfFitIntv                -- condition for adjacent weeks
-    | otherwise    = False
+isEphemerisValid (w, tow) eph =
+    abs diffTime <= halfFitIntv
     where
-      dw   =   w - week eph
-      dtow = tow - toe  eph
+      diffTime = diffGpsWeekTow  (w, tow) (week eph, toe eph)
       halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)
 
 -- Main program:
