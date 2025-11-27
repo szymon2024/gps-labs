@@ -1,4 +1,4 @@
--- 2025-11-26
+-- 2025-11-27
 
 {- | The program selects the ephemeris (orbital parameters) from a RINEX
      3.04 navigation file for a given GPS observation time and a GPS
@@ -23,7 +23,7 @@
      Input:
        - RINEX 3.04 navigation file name                    fn
        - receiver time of signal reception
-         (observation time)                                 obsGpsTime
+         (observation time)                                 tro
        - satellite number                                   prn
 
      Output:
@@ -132,16 +132,17 @@ data NavRecord = NavRecord
 
 -- Entry point of the program.
 main = do
-  let fn = "source.nav"                                        -- Input: RINEX 3.04 navigation file name
+  let fn = "source.nav"                                     -- Input: RINEX 3.04 navigation file name
   bs <- L8.readFile fn               
-  let navMap        = readNavRinex304 bs
-      prn           = 6                                        -- Input: satellite number
-      obsGpsTime = mkGpsTime 2025 08 02 01 00 01.5             -- Input: receiver time of signal reception
-  case selectGpsEphemeris obsGpsTime prn navMap of
+  let navMap = readNavRinex304 bs
+      prn    = 6                                            -- Input: satellite number
+      tro    = mkGpsTime 2025 08 02 01 00 01.5              -- Input: receiver time of signal reception
+  case selectGpsEphemeris tro prn navMap of
     Nothing -> putStrLn "Cannot find valid ephemeris \
                         \for given prn and observation time"
-    Just r  -> do                                        -- Output: navigation record 
-         putStrLn $ "Observation time: " ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S" obsGpsTime
+    Just r  -> do                                           -- Output: navigation record 
+         putStrLn $ "Observation time: "
+                      ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S" tro
          L8.hPut stdout $ toLazyByteString $ buildEntry r
 
 -- | Selects the appropriate GPS ephemeris record for a given observation.
@@ -153,11 +154,11 @@ main = do
 --   findValidEphemeris to find the one valid at the observation time.
 selectGpsEphemeris
   :: GpsTime -> IMS.Key -> NavMap -> Maybe NavRecord
-selectGpsEphemeris obsGpsTime prn navMap =
-    let obsWeekTow = gpsTimeToWeekTow obsGpsTime
+selectGpsEphemeris tro prn navMap =
+    let wto = gpsTimeToWeekTow tro
     in case IMS.lookup prn navMap of
          Nothing -> Nothing
-         Just m  -> findValidEphemeris obsWeekTow m
+         Just m  -> findValidEphemeris wto m
 
 -- | Parses a RINEX 3.04 navigation file into a NavMap.
 --   Validates the file header.
@@ -218,9 +219,9 @@ findValidEphemeris
   :: GpsWeekTow                                             -- observation (GPS w, tow)
   -> Map GpsWeekTow NavRecord                               -- nav records of one GPS satellite
   -> Maybe NavRecord
-findValidEphemeris obsGpsWeekTow m = do
-    r <- nearestNavRecord obsGpsWeekTow m
-    if isEphemerisValid obsGpsWeekTow r
+findValidEphemeris wto m = do
+    r <- nearestNavRecord wto m
+    if isEphemerisValid wto r
     then Just r
     else Nothing
 
@@ -229,13 +230,13 @@ nearestNavRecord
     :: GpsWeekTow
     -> Map GpsWeekTow NavRecord                                -- nav records of one GPS satellite
     -> Maybe NavRecord
-nearestNavRecord obsGpsWeekTow m =
-    let mLE = MS.lookupLE obsGpsWeekTow m
-        mGE = MS.lookupGE obsGpsWeekTow m
+nearestNavRecord wto m =
+    let mLE = MS.lookupLE wto m
+        mGE = MS.lookupGE wto m
 
         choose (Just (_,r1)) (Just (_,r2)) =
-            if    abs (diffGpsWeekTow (week r1, toe r1) obsGpsWeekTow)
-               <= abs (diffGpsWeekTow (week r2, toe r2) obsGpsWeekTow)
+            if    abs (diffGpsWeekTow (week r1, toe r1) wto)
+               <= abs (diffGpsWeekTow (week r2, toe r2) wto)
             then Just r1
             else Just r2
         choose (Just (_,r1))  Nothing      = Just r1
@@ -288,21 +289,18 @@ weekTowToGpsTime (w, tow) =
         s            = sod - fromIntegral (h*3600 + m*60)              
     in LocalTime date (TimeOfDay h m s)     
 
--- | Checks whether an ephemeris record is valid for a given observation (GPS week, tow).
---   Compares GPS week and time-of-week with the record’s toe and fitIntv.
+-- | Ephemeris validity check based on fitInterval ephemeris field for
+--   a given observation time
 isEphemerisValid
-  :: GpsWeekTow                                             -- observation (GPS week, tow)
+  :: GpsWeekTow                                             -- GPS week, time-of-week
   -> NavRecord
   -> Bool
-isEphemerisValid (w, tow) eph 
-    |     dw == 0  = abs dtow <= halfFitIntv                -- condition for the same week
-    | abs dw == 1  = abs dtow >  halfFitIntv                -- condition for adjacent weeks
-    | otherwise    = False
+isEphemerisValid (w, tow) eph =
+    abs diffTime <= halfFitIntv
     where
-      dw   =   w - week eph
-      dtow = tow - toe  eph
-      halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)       
-               
+      diffTime = diffGpsWeekTow  (w, tow) (week eph, toe eph)
+      halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)
+
 -- | Function import: double strtod(const char *nptr, char **endptr)
 foreign import ccall unsafe "stdlib.h strtod"
     c_strtod :: CString -> Ptr (Ptr CChar) -> IO CDouble
