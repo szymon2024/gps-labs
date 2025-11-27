@@ -1,4 +1,4 @@
--- 2025-11-26
+-- 2025-11-27
 
 {-
   Program for matching GPS ephemerides (RINEX 3.04 NAV) to satellite
@@ -86,7 +86,7 @@ data NavRecord = NavRecord
   } deriving (Eq, Show)
 
 data Match = Match
-  { obsGpsTime    :: GpsTime                        -- epoch time
+  { tro           :: GpsTime                        -- epoch time
   , obsPrn        :: Int
   , navRecord     :: Maybe NavRecord
   } deriving Show
@@ -112,9 +112,9 @@ matchAll
     -> NavMap                                               -- ^ GPS navigation data map, organized by PRN and ephemeris time
     -> [Match]
 matchAll epochs navMap =
-  [ Match { obsGpsTime = t
-          , obsPrn        = p
-          , navRecord     = selectGpsEphemeris t p navMap
+  [ Match { tro       = t
+          , obsPrn    = p
+          , navRecord = selectGpsEphemeris t p navMap
           }
   | (t, prns) <- epochs
   , p <- prns
@@ -127,11 +127,11 @@ matchAll epochs navMap =
 --   If no navigation data exists for that PRN, returns 'Nothing'.
 --   Otherwise, searches the satellite's ephemeris records with
 --   findValidEphemeris to find the one valid at the observation time.
-selectGpsEphemeris obsGpsTime prn navMap =
-    let obsGpsWeekTow = gpsTimeToWeekTow obsGpsTime
+selectGpsEphemeris tro prn navMap =
+    let wto = gpsTimeToWeekTow tro
     in case IMS.lookup prn navMap of
          Nothing -> Nothing
-         Just m  -> findValidEphemeris obsGpsWeekTow m
+         Just m  -> findValidEphemeris wto m
 
 -- | Parses a RINEX 3.04 navigation file into a NavMap.
 --   Validates the file header.
@@ -185,9 +185,9 @@ findValidEphemeris
   :: GpsWeekTow                                             -- observation (GPS w, tow)
   -> Map GpsWeekTow NavRecord                                  -- nav records of one GPS satellite
   -> Maybe NavRecord
-findValidEphemeris obsGpsWeekTow m = do
-    r <- nearestNavRecord obsGpsWeekTow m
-    if isEphemerisValid obsGpsWeekTow r
+findValidEphemeris wto m = do
+    r <- nearestNavRecord wto m
+    if isEphemerisValid wto r
     then Just r
     else Nothing
 
@@ -196,13 +196,13 @@ nearestNavRecord
     :: GpsWeekTow
     -> Map GpsWeekTow NavRecord                                -- nav records of one GPS satellite
     -> Maybe NavRecord
-nearestNavRecord obsGpsWeekTow m =
-    let mLE = MS.lookupLE obsGpsWeekTow m
-        mGE = MS.lookupGE obsGpsWeekTow m
+nearestNavRecord wto m =
+    let mLE = MS.lookupLE wto m
+        mGE = MS.lookupGE wto m
 
         choose (Just (_,r1)) (Just (_,r2)) =
-            if    abs (diffGpsWeekTow (week r1, toe r1) obsGpsWeekTow)
-               <= abs (diffGpsWeekTow (week r2, toe r2) obsGpsWeekTow)
+            if    abs (diffGpsWeekTow (week r1, toe r1) wto)
+               <= abs (diffGpsWeekTow (week r2, toe r2) wto)
             then Just r1
             else Just r2
         choose (Just (_,r1))  Nothing      = Just r1
@@ -284,19 +284,16 @@ diffGpsWeekTow (w2,tow2) (w1,tow1) =
       dw   = w2   - w1
       dtow = tow2 - tow1
 
--- | Checks whether an ephemeris record is valid for a given observation time.
---   Compares GPS week and time-of-week with the record’s toe and fitIntv.
+-- | Ephemeris validity check based on fitInterval ephemeris field for
+--   a given observation time
 isEphemerisValid
-  :: GpsWeekTow                                             -- GPS week number, time-of-week
+  :: GpsWeekTow                                             -- GPS week, time-of-week
   -> NavRecord
   -> Bool
-isEphemerisValid (w, tow) eph 
-    |     dw == 0  = abs dtow <= halfFitIntv                -- condition for the same week
-    | abs dw == 1  = abs dtow >  halfFitIntv                -- condition for adjacent weeks
-    | otherwise    = False
+isEphemerisValid (w, tow) eph =
+    abs diffTime <= halfFitIntv
     where
-      dw   =   w - week eph
-      dtow = tow - toe  eph
+      diffTime = diffGpsWeekTow  (w, tow) (week eph, toe eph)
       halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)                  
                    
 readObsRinex304 :: L8.ByteString -> [ObsEpoch]
