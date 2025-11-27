@@ -122,16 +122,16 @@ matchAll epochs navMap =
 
 -- | Selects the appropriate GPS ephemeris record for a given observation.
 --   Converts the observation time into GPS week and time-of-week
---   using gpsCalTimeToWeekTow.
+--   using gpsTimeToWeekTow.
 --   Looks up the satellite PRN in the navigation map.
 --   If no navigation data exists for that PRN, returns 'Nothing'.
 --   Otherwise, searches the satellite's ephemeris records with
 --   findValidEphemeris to find the one valid at the observation time.
-selectGpsEphemeris obsGpsCalTime prn navMap =
-    let obsGpsTime = gpsCalTimeToWeekTow obsGpsCalTime
+selectGpsEphemeris obsGpsTime prn navMap =
+    let obsGpsWeekTow = gpsTimeToWeekTow obsGpsTime
     in case IMS.lookup prn navMap of
          Nothing -> Nothing
-         Just m  -> findValidEphemeris obsGpsTime m
+         Just m  -> findValidEphemeris obsGpsWeekTow m
 
 -- | Parses a RINEX 3.04 navigation file into a NavMap.
 --   Validates the file header.
@@ -391,10 +391,10 @@ trim = L8.dropWhile isSpace . L8.dropWhileEnd isSpace
 -- | Converts a GPS time into GPS week and time-of-week (tow).
 --   GPS time starts from January 6, 1980.
 --   Calculates the number of weeks and seconds since that epoch.
-gpsCalTimeToWeekTow
+gpsTimeToWeekTow
     :: GpsTime
     -> GpsWeekTow                                           -- ^ GPS week, time-of-week
-gpsCalTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
+gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     let gpsStartDate = fromGregorian 1980 1 6               -- the date from which the GPS time is counted
         days         = diffDays date gpsStartDate           -- number of days since GPS start date
         w            = days `div` 7                         -- GPS week
