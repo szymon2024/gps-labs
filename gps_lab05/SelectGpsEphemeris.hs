@@ -1,4 +1,4 @@
--- 2025-11-27
+-- 2025-11-28
 
 {- | The program selects the ephemeris (orbital parameters) from a RINEX
      3.04 navigation file for a given GPS observation time and a GPS
@@ -183,7 +183,7 @@ readNavRinex304 bs
 -- | Parses raw navigation file lines into a NavMap.
 --   Each GPS navigation record spans 8 lines.
 --   The function splits the input into 8-line chunks,
---   parses each chunk with parseGpsNavRec,
+--   parses each chunk with readGpsNavRec,
 --   discards invalid records (Nothing),
 --   and builds a NavMap from the valid ones.
 --   Throws an error if the input list is empty.
@@ -193,7 +193,7 @@ parseNavData
 parseNavData [] = error "No navigation data"
 parseNavData ls = buildNavMap
                   . catMaybes
-                  . map parseGpsNavRec
+                  . map readGpsNavRec
                   $ chunks8 ls
 
 -- | Splits a list into chunks of 8 elements. Used to group navigation records.           
@@ -340,14 +340,20 @@ readDoubleField bs = do
 getField :: Int64 -> Int64 -> L8.ByteString -> L8.ByteString
 getField start len = L8.take len . L8.drop start
 
--- | Parses a single GPS navigation record from eight consecutive lines of a RINEX 3.04 navigation file.
---   Expects exactly 8 lines (l1–l8).
---   Returns Nothing if the input does not match the expected format or if the satellite system is not GPS (sys == 'G').
---   On success, constructs and returns a NavRecord
-parseGpsNavRec :: [L8.ByteString] -> Maybe NavRecord
-parseGpsNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
+readGpsNavRec :: [L8.ByteString] -> Maybe NavRecord
+readGpsNavRec ch@(l1:_) = do
   (sys, _) <- L8.uncons l1                                
   guard (sys == 'G')
+  case readFields ch of
+    Nothing -> error "Parse navigation record error"
+    r       -> r
+
+-- | Parses a single GPS navigation record from eight consecutive lines of a RINEX 3.04 navigation file.
+--   Expects exactly 8 lines (l1–l8).
+--   Returns Nothing if the input does not match the expected format
+--   On success, constructs and returns a NavRecord
+readFields :: [L8.ByteString] -> Maybe NavRecord
+readFields [l1,l2,l3,l4,l5,l6,l7,l8] = do
   (prn, _)  <- L8.readInt $ getField  1 2 l1     
   (y  , _)  <- L8.readInt $ getField  4 4 l1
   (mon, _)  <- L8.readInt $ getField  9 2 l1
@@ -399,7 +405,7 @@ parseGpsNavRec [l1,l2,l3,l4,l5,l6,l7,l8] = do
       fitIntv  = round      fitIntvD
               
   return NavRecord {..}
-parseGpsNavRec _ = Nothing
+readFields _ = Nothing
 
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
