@@ -1,4 +1,4 @@
-2025-11-27
+2025-11-30
 
 EN:
 ======================================================================
@@ -7,14 +7,15 @@ EN:
 ======================================================================
 
 A program for computing the position of a GPS satellite in the ECEF
-coordinate system based on sample orbital parameters (ephemerides)
-transmitted by the satellite in the navigation message and GPS time
-provided as input. Calculations are performed for (w, tow) where w is
-GPS week and tow is time-of-week.
+coordinate system based on sample orbital parameters (ephemerides),
+ephemeris validity interval and GPS time provided as
+input. Calculations are performed for (w, tow) where w is GPS week and
+tow is time-of-week.
 
 Input
 -----
 - GPS Ephemeris
+- ephemeris validity interval
 - GPS Time
 
 Output
@@ -23,9 +24,9 @@ Output
 
 Print of run
 ------------
-Entered GPS time             (w   , tow) = (2304, 424830.000000000000)
-Ephemeris reference GPS time (week, toe) = (2304, 424800.000000000000)
-Number of seconds since toe              =            30.000000000000
+Entered GPS time            : 2024 03 07 22 00 30
+Ephemeris reference GPS time: 2024 03 07 22 00 00
+Diference                   :              0 0 30
 
 ECEF satellite position [m]:
 X = 22151566.575334515
@@ -40,14 +41,14 @@ PL:
 =======================================================================
 
 Program do wyznaczania pozycji satelity GPS w układzie ECEF na
-podstawie przykładowych parametrów orbity tzw. efemerydy nadawanej
-przez satelitę w wiadomości nawigacyjnej oraz podanego czasu
-GPS. Obliczenia są wykonywane dla (w, tow), gdzie w to tydzień GPS
-a tow to czas tygodnia.
+podstawie przykładowych parametrów orbity tzw. efemerydy, okresu
+ważności efemerydy oraz podanego czasu GPS. Obliczenia są wykonywane
+dla (w, tow), gdzie w to tydzień GPS a tow to czas tygodnia.
 
 Wejście
 -------
 - efemeryda GPS
+- okres ważności efemerydy
 - czas GPS
 
 Wyjście
@@ -56,9 +57,9 @@ Wyjście
 
 Wydruk uruchomienia
 -------------------
-Entered GPS time             (w   , tow) = (2304, 424830.000000000000)
-Ephemeris reference GPS time (week, toe) = (2304, 424800.000000000000)
-Number of seconds since toe              =            30.000000000000
+Entered GPS time            : 2024 03 07 22 00 30
+Ephemeris reference GPS time: 2024 03 07 22 00 00
+Diference                   :              0 0 30
 
 ECEF satellite position [m]:
 X = 22151566.575334515
