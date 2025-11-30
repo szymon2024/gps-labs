@@ -268,7 +268,7 @@ main :: IO ()
 main = do
   let 
       eph              = ephExample                              -- Input: GPS Ephemeris
-      curveFitInterval = 4                                       -- Input: ephemeris vailidyty interval
+      curveFitInterval = 4                                       -- Input: ephemeris validity interval
       t                = mkGpsTime 2024 03 07 22 00 30.0         -- Input: GPS Time
       (x, y, z)        = gpsSatPosByRec t eph curveFitInterval   -- Output: ECEF satellite position
                   
