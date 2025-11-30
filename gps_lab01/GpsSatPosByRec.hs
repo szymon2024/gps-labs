@@ -133,10 +133,11 @@ keplerSolve m e = iterate e0 0
       | k > 20 = error "Kepler method iteration count exceeded"
       | abs (eN' - eN) < 1e-12 = eN'
       | otherwise = iterate eN' (k+1)
-          where    
+          where
+            eN'   = eN - f/fDot                             -- iterative formula
             f     = eN - e * sin eN - m  
             fDot  =  1 - e * cos eN                         -- derivative of the function f
-            eN'   = eN - f/fDot                             -- iterative formula
+
 
 -- | Calculates the correct number of seconds between two GPS tows
 --   without week numbers.  Formula based on IS-GPS-200N
