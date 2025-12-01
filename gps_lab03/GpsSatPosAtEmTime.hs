@@ -27,7 +27,7 @@
        satellite-receiver distance.
               
      Input:
-       - receiver time of signal reception          tro            (hand copied from RINEX observation file)
+       - receiver time of signal reception          trr            (hand copied from RINEX observation file)
        - pseudorange for f1 [m]                     pr1            (hand copied from RINEX observation file)
        - pseudorange for f2 [m]                     pr2            (hand copied from RINEX observation file)
        - navigation data record in RINEX 3.04
@@ -39,22 +39,22 @@
          at emission time                           (x, y, z)
 
      Print of run:
-     Receiver clock time of signal reception [w,s]: (2304,348781.000000000000)
-     Emission time by GPS clock              [w,s]: (2304,348780.927812714088)
+     Receiver clock time of signal reception: 2024 03 07 00 53 01
+     Signal emission time by GPS clock      : 2024 03 07 00 53 00.927812714088
 
      ECEF satellite position [m]:
      X =  4460302.794944842
      Y = 17049812.692289740
      Z = 19845264.366251267
-
 -}
 
 {-# LANGUAGE RecordWildCards #-}
 
 module GpsSatPosAtEmTime where
 
-import           Data.Time.Calendar            (fromGregorian, diffDays)
-import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..))
+import           Data.Time.Calendar            (fromGregorian, diffDays, addDays)
+import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..), timeToTimeOfDay)
+import           Data.Time.Format
 import           Data.Fixed                    (Pico)    
 import           Text.Printf                   (printf)
 import qualified Data.ByteString.Char8  as BSC
@@ -228,9 +228,9 @@ emissionTime pr1 pr2 (wr, tr) eph = iterate te0 0
           | abs (diffGpsWeekTow te' te) < 1e-12 = te'
           | otherwise                        = iterate te' (k+1)
           where
-            dtb  = clkCorr te eph
-            dtr  = relCorr te eph
-            dtsv = dtb  + dtr
+            dtc  = clkCorr te eph                           -- clock correction
+            dtr  = relCorr te eph                           -- relativistic correction
+            dtsv = dtc  + dtr
             te' = subSeconds te0 dtsv
 
 -- | Calculates the number of seconds between two (GPS week, tow).
@@ -351,24 +351,38 @@ readNavRecord bs1 = do
       fitIntv = round fitIntvD       
   return (NavRecord {..}, bs')
     where dropLine     = BSC.drop 1 . BSC.dropWhile (/='\n')
-                         . BSC.drop 80
+                         . BSC.drop 80                      -- a line has 80 characters ended with \n or \r\n
           dropLastLine = BSC.drop 1 . BSC.dropWhile (/='\n')
                          . BSC.drop 42                      -- last line can have two, three, four fields
 
 -- | Conversion of GPS time to GPS week and time-of-week
 gpsTimeToWeekTow
     :: GpsTime
-    -> GpsWeekTow                                            -- ^ GPS week, time-of-week
+    -> GpsWeekTow
 gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
-    let gpsStartDate = fromGregorian 1980 1 6                -- The date from which the GPS time is counted
-        days         = diffDays date gpsStartDate            -- Number of days since GPS start date
-        w            = days `div` 7                          -- GPS week
-        dow          = days `mod` 7                          -- GPS day-of-week
+    let gpsStartDate = fromGregorian 1980 1 6               -- the date from which the GPS time is counted
+        days         = diffDays date gpsStartDate           -- number of days since GPS start date
+        (w, dow)     = days `divMod` 7                      -- GPS week, GPS day-of-week
         tow          = fromIntegral ( dow * 86400
                                     + toInteger (h * 3600 + m * 60)
                                     )
                      + s
     in (w, tow)
+
+-- | Converts GPS week and time-of-week (tow) into GPS time
+weekTowToGpsTime
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
+    -> GpsTime                                              -- ^ GPS time
+weekTowToGpsTime (w, tow) =
+    let gpsStartDate = fromGregorian 1980 1 6               -- the date from which the GPS time is counted
+        days         = w * 7                                -- number of days since GPS start date
+        (towInt, towFrac) = properFraction tow
+        (dow,sodInt) = towInt `divMod` 86400
+        date         = addDays (days+dow) gpsStartDate
+        (h,sohInt)   = sodInt `divMod` 3600
+        (m,sInt)     = sohInt `divMod`   60
+        s            = fromIntegral sInt + towFrac
+    in LocalTime date (TimeOfDay (fromInteger h) (fromInteger m) s)
     
 -- | Ephemeris validity check based on fitInterval ephemeris field for
 --   a given observation time
@@ -380,7 +394,16 @@ isEphemerisValid (w, tow) eph =
     abs diffTime <= halfFitIntv
     where
       diffTime = diffGpsWeekTow  (w, tow) (week eph, toe eph)
-      halfFitIntv = realToFrac ((fitIntv eph) `div` 2 * 3600)
+      halfFitIntv = fromIntegral ((fitIntv eph) `div` 2 * 3600)
+
+gpsSatPosAtEmTime trr pr1 pr2 eph =
+    let (wr, tr) = gpsTimeToWeekTow trr
+    in if isEphemerisValid (wr, tr) eph
+       then let te      = emissionTime pr1 pr2 (wr, tr) eph               -- Output: signal emission time by GPS clock [s]
+                (x,y,z) = satPosition te eph                              -- Output: satelite ECEF position [m]
+                in (te, (x, y, z))
+       else error $ "Ephemeris is not valid for " ++
+            formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr
 
 -- Main program:
 --   * Converts receiver time of signal reception
@@ -397,26 +420,25 @@ isEphemerisValid (w, tow) eph =
 --   * prints receiver clock time of signal reception, the emission time, and satellite position.
 main :: IO ()
 main = do
-  let tro        = mkGpsTime 2024 03 07 00 53 01.0000000               -- Input: receiver time of signal reception
+  let trr        = mkGpsTime 2024 03 07 00 53 01.0000000               -- Input: receiver time of signal reception
                                                                        --       (receiver time of observation)
       pr1        = 21548635.724                                        -- Input: pseudorange for f1 e.g. C1C
       pr2        = 21548628.027                                        -- Input: pseudorange for f2 e.g. C2X
       fn         = "nav_record.txt"                                    -- Input: file name
-      (wr, tr)   = gpsTimeToWeekTow tro                                -- receiver GPS week number, time-of-week
   bs <- BSC.readFile fn                                                -- data from "nav_record.txt"
   case readNavRecord bs of
     Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
-    Just (eph, _) ->                                                   -- ephemeris
-       if isEphemerisValid (wr, tr) eph
-       then do
-         let te      = emissionTime pr1 pr2 (wr, tr) eph               -- Output: signal emission time by GPS clock [s]
-             (x,y,z) = satPosition te eph                              -- Output: satelite ECEF position [m]
-         putStrLn $ "Receiver clock time of signal reception [w,s]: " ++ show (wr, tr)
-         putStrLn $ "Emission time by GPS clock              [w,s]: " ++ show te
-         putStrLn ""
+    Just (eph, _) -> do                                                -- ephemeris
+         printf "Receiver clock time of signal reception: %s\n"
+             (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr)
+         let te             = weekTowToGpsTime wte
+             (wte, (x,y,z)) =
+                 gpsSatPosAtEmTime trr pr1 pr2 eph                     -- Output: signal emission time by GPS clock [s],
+                                                                       --         satelite ECEF position [m]
+         printf "Signal emission time by GPS clock      : %s\n\n"
+             (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" te)
          printf "ECEF satellite position [m]:\n"
          printf "X = %18.9f\n" x
          printf "Y = %18.9f\n" y
          printf "Z = %18.9f\n" z
-       else printf "The ephemeris is out of date for the given time\n"
 
