@@ -1,4 +1,4 @@
-2025-11-30
+2025-12-01
 
 EN:
 ======================================================================
@@ -26,7 +26,7 @@ Print of run
 ------------
 Entered GPS time            : 2024 03 07 22 00 30
 Ephemeris reference GPS time: 2024 03 07 22 00 00
-Diference                   :              0 0 30
+Diference                   :            00 00 30
 
 ECEF satellite position [m]:
 X = 22151566.575334515
@@ -59,7 +59,7 @@ Wydruk uruchomienia
 -------------------
 Entered GPS time            : 2024 03 07 22 00 30
 Ephemeris reference GPS time: 2024 03 07 22 00 00
-Diference                   :              0 0 30
+Diference                   :            00 00 30
 
 ECEF satellite position [m]:
 X = 22151566.575334515
