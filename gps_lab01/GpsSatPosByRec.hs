@@ -1,4 +1,4 @@
--- 2025-11-30
+-- 2025-12-01
 
 {- | A program for computing the position of a GPS satellite in the ECEF
      coordinate system based on sample orbital parameters (ephemeris),
@@ -36,7 +36,7 @@
      Print of run:
      Entered GPS time            : 2024 03 07 22 00 30
      Ephemeris reference GPS time: 2024 03 07 22 00 00
-     Diference                   :              0 0 30
+     Diference                   :            00 00 30
 
      ECEF satellite position [m]:
      X = 22151566.575334515
@@ -231,7 +231,8 @@ gpsSatPosByRec t eph curveFitInterval
         let (w, tow) = gpsTimeToWeekTow t
         in if isEphemerisValid (w, tow) (week eph, toe eph) curveFitInterval
            then satPosition tow eph
-           else error $ "Ephemeris is not valid for " ++ show (w, tow)
+           else error $ "Ephemeris is not valid for "
+                    ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t
     | otherwise  =
         error "Curve fit interval must be one of [4,6,8,14,26]"
 
@@ -273,13 +274,13 @@ main = do
       (x, y, z)        = gpsSatPosByRec t eph curveFitInterval   -- Output: ECEF satellite position
                   
   printf "Entered GPS time            : %s\n"
-             (formatTime defaultTimeLocale "%Y %m %d %H %M %S" t)
+             (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t)
   -- ephemeris reference time         
   let teph = weekTowToGpsTime (week eph, toe eph)
   printf "Ephemeris reference GPS time: %s\n"
-             (formatTime defaultTimeLocale "%Y %m %d %H %M %S" teph)
+             (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" teph)
   printf "Diference                   :%20s\n\n"
-             (formatTime defaultTimeLocale "%H %M %S" (diffLocalTime t teph))
+             (formatTime defaultTimeLocale "%2H %2M %S%Q" (diffLocalTime t teph))
                
   printf "ECEF satellite position [m]:\n"
   printf "X = %18.9f\n" x
