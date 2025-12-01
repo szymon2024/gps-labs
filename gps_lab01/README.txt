@@ -8,7 +8,7 @@ EN:
 ======================================================================
 
 A program for computing the position of a GPS satellite in the ECEF
-coordinate system based on sample orbital parameters (ephemerides),
+coordinate system based on sample orbital parameters (ephemeris),
 ephemeris validity interval and GPS time provided as input. The
 program is not intended for post‑processing applications.
 
