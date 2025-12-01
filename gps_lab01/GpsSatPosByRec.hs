@@ -280,7 +280,7 @@ main = do
   printf "Ephemeris reference GPS time: %s\n"
              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" teph)
   printf "Diference                   :%20s\n\n"
-             (formatTime defaultTimeLocale "%2H %2M %S%Q" (diffLocalTime t teph))
+             (formatTime defaultTimeLocale "%2H %2M %2S%Q" (diffLocalTime t teph))
                
   printf "ECEF satellite position [m]:\n"
   printf "X = %18.9f\n" x
