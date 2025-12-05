@@ -23,7 +23,7 @@ SPIS TREŚCI
 
 gps_lab01 - Pozycja satelity GPS wyznaczana przez odbiornik
             na podstawie rozgłoszeniowych parametrów orbity zgodnie
-	        ze specyfikacją IS‑GPS‑200
+            ze specyfikacją IS‑GPS‑200
 
 gps_lab02 - Pozycja satelity GPS na podstawie rozgłoszeniowych
             parametrów orbity
