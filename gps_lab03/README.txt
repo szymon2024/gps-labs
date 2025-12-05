@@ -3,7 +3,7 @@
 EN:
 =====================================================================
   GPS SATELLITE POSITION FOR DUAL-FREQUENCY PSEUDORANGE OBSERVATION
-                      USING BROADCAST EPHEMERIS
+                  USING BROADCAST ORBITAL PARAMETERS
 =====================================================================
 
 The calculated position is of low precision because the pseudorange
@@ -36,7 +36,7 @@ Z = 19845264.366251267
 PL:
 =====================================================================
       POZYCJA SATELITY GPS DLA DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI
-     PSEUDOODLEGŁOŚCI Z WYKORZYSTANIEM EFEMERYDY ROZGŁOSZENIOWEJ
+ PSEUDOODLEGŁOŚCI Z WYKORZYSTANIEM ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
 =====================================================================
 
 Obliczona pozycja jest niskiej precyzji ponieważ pseudoodległość
