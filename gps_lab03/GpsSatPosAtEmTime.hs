@@ -428,6 +428,12 @@ isEphemerisValid (w, tow) r =
       diffTime = diffGpsWeekTow  (w, tow) (week r, toe r)
       halfFitIntv = fromIntegral ((fitIntv r) `div` 2 * 3600)
 
+gpsSatPosAtEmTime
+  :: GpsTime                                                -- receiver time of signal reception
+  -> Double                                                 -- pseudorange for f1
+  -> Double                                                 -- pseudorange for f2
+  -> NavRecord                                              -- GPS navigation record
+  -> (GpsWeekTow, (Double, Double, Double))                 -- emission time, satelite ECEF posistion at emission time
 gpsSatPosAtEmTime trr pr1 pr2 r =
     let wtrr = gpsTimeToWeekTow trr
     in if isEphemerisValid wtrr r
@@ -457,7 +463,7 @@ main = do
             printf "Receiver clock time of signal reception: %s\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr)
             let (wte, (x,y,z)) = gpsSatPosAtEmTime trr pr1 pr2 r        -- Output: signal emission time by GPS clock [s],
-                                                                        --         satelite ECEF position [m]
+                                                                        --         satelite ECEF position [m] at emission time
                 te = weekTowToGpsTime wte
             printf "Signal emission time by GPS clock      : %s\n\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" te)
