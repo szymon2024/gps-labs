@@ -1,11 +1,10 @@
--- 2025-11-27
+-- 2025-12-05
 
 {- | Estimate ECEF satellite position at GPS emission time [s] from
      broadcast ephemeris for dual-frequency pseudorange measurement
      (observation).  The calculated position is of low precision
      because the code pseudorange is of low precision and the orbital
      parameters (ephemeris) are approximate.
-     
    
      NOTE 1:
        Three different clocks must be considered:
@@ -17,6 +16,11 @@
        The signal emission time te is by the GPS clock,
        satellite time of signal emission by satellite clock,
        receiver time of signal reception by receiver clock.
+
+       Epoch refers to a moment in time. The receiver time of signal
+       reception by receiver clock is also called the observation
+       time, observation epoch, receiver time tag, receiver timestamp,
+       measurement time.
 
      NOTE 2:
        Why is emission time calculated? The emission time is
@@ -49,6 +53,7 @@
 -}
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module GpsSatPosAtEmTime where
 
@@ -57,7 +62,7 @@ import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..), t
 import           Data.Time.Format
 import           Data.Fixed                    (Pico)    
 import           Text.Printf                   (printf)
-import qualified Data.ByteString.Char8  as BSC
+import qualified Data.ByteString.Char8  as L8
 import           Control.Monad                 (guard)
 import qualified Data.ByteString.Unsafe as BSU (unsafeUseAsCString)
 import           Foreign                       (Ptr, alloca, peek, minusPtr)
@@ -218,15 +223,15 @@ emissionTime
   -> GpsWeekTow                                             -- ^ receiver time of signal reception [s]
   -> NavRecord                                              -- ^ broadcast ephemeris
   -> GpsWeekTow                                             -- ^ signal emission time [s]
-emissionTime pr1 pr2 (wr, tr) eph = iterate te0 0
+emissionTime pr1 pr2 wtrr eph = iterate te0 0
     where
       pr   = pseudorangeDF pr1 pr2
-      tsv  = subSeconds (wr, tr)  (realToFrac (pr/c))       -- satelite time of signal emission
+      tsv  = subSeconds wtrr  (realToFrac (pr/c))           -- satelite time of signal emission
       te0 = tsv
       iterate te k
           | k >= 10                  = error "Number of time emission iterations exceeded"
           | abs (diffGpsWeekTow te' te) < 1e-12 = te'
-          | otherwise                        = iterate te' (k+1)
+          | otherwise                           = iterate te' (k+1)
           where
             dtc  = clkCorr te eph                           -- clock correction
             dtr  = relCorr te eph                           -- relativistic correction
@@ -264,7 +269,7 @@ foreign import ccall unsafe "stdlib.h strtod"
 
 -- | 2025-11-01 Data.ByteString.Char8 does not have a readDouble function.
 --   Reads Double value from Char8 ByteString.
-readDouble :: BSC.ByteString -> Maybe (Double, BSC.ByteString)
+readDouble :: L8.ByteString -> Maybe (Double, L8.ByteString)
 readDouble bs = unsafePerformIO $
     BSU.unsafeUseAsCString bs $ \cstr -> 
       alloca $ \endPtr -> do
@@ -274,87 +279,114 @@ readDouble bs = unsafePerformIO $
           then return Nothing
           else do
             let offset = end `minusPtr` cstr
-            let rest   = BSC.drop offset bs
+            let rest   = L8.drop offset bs
             return (Just (realToFrac val, rest))
 
 -- | Reads Double value from ByteString field.
 --   Its purpose is to stop reading if it cannot read the entire field.
 --   After reading, the rest may be empty or consist only of spaces.
-readDoubleField :: BSC.ByteString -> Maybe Double
+readDoubleField :: L8.ByteString -> Maybe Double
 readDoubleField bs = do
   (val, rest) <- readDouble bs
-  case BSC.uncons rest of
+  case L8.uncons rest of
     Just (c, _) | c=='D' || c=='d' ->
-      error $ "Unsupported number format with 'D': " ++ BSC.unpack bs
-    _ -> guard (BSC.all (== ' ') rest) >> return val                  
+      error $ "Unsupported number format with 'D': " ++ L8.unpack bs
+    _ -> guard (L8.all (== ' ') rest) >> return val                  
                    
-getField :: Int -> Int -> BSC.ByteString -> BSC.ByteString
-getField start len = BSC.take len . BSC.drop start
+getField :: Int -> Int -> L8.ByteString -> L8.ByteString
+getField start len = L8.take len . L8.drop start
 
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- | Parse a single navigation data record
-readNavRecord :: BSC.ByteString -> Maybe (NavRecord, BSC.ByteString)
-readNavRecord bs1 = do
-  (sys, _) <- BSC.uncons bs1
-  guard (sys == 'G')
-  (prn, _) <- BSC.readInt $ getField  1 2 bs1
-  (y  , _) <- BSC.readInt $ getField  4 4 bs1
-  (mon, _) <- BSC.readInt $ getField  9 2 bs1
-  (d  , _) <- BSC.readInt $ getField 12 2 bs1
-  (h  , _) <- BSC.readInt $ getField 15 2 bs1
-  (m  , _) <- BSC.readInt $ getField 18 2 bs1
-  (s  , _) <- BSC.readInt $ getField 21 2 bs1
+-- | Consumes a line of 80 characters and a line separator
+line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
+line bs =
+    let line = L8.take 80 bs
+        rest = L8.dropWhile (\c -> c == '\r' || c == '\n') (L8.drop 80 bs)
+    in (line, rest)
+
+-- | Consumes last line of GPS navigation block.
+--   Last line can have two, three or four fields.
+lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
+lastLine bs =
+    let line = L8.takeWhile (\c -> not (c == '\r' || c == '\n')) (L8.take 42 bs)
+        rest = L8.dropWhile (\c ->      c == '\r' || c == '\n')  (L8.drop (L8.length line) bs)
+    in (line, rest)
+
+-- | Consumes GPS satellite block of eight lines
+gpsBlockLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+gpsBlockLines bs =
+    let (l1, r1) = line bs
+        (l2, r2) = line r1
+        (l3, r3) = line r2
+        (l4, r4) = line r3
+        (l5, r5) = line r4
+        (l6, r6) = line r5
+        (l7, r7) = line r6
+        (l8, r8) = lastLine r7
+    in ([l1,l2,l3,l4,l5,l6,l7,l8], r8)
+
+-- | Reads GPS navigation record from block lines for GPS satellite
+-- | Expects 8 lines as input
+readGpsNavRecord :: [L8.ByteString] -> Maybe NavRecord
+readGpsNavRecord ls = do
+    guard (length ls == 8)
+    let [l1,l2,l3,l4,l5,l6,l7,l8] = ls
+
+    (prn, _)  <- L8.readInt $ getField  1 2 l1
+    (y  , _)  <- L8.readInt $ getField  4 4 l1
+    (mon, _)  <- L8.readInt $ getField  9 2 l1
+    (d  , _)  <- L8.readInt $ getField 12 2 l1
+    (h  , _)  <- L8.readInt $ getField 15 2 l1
+    (m  , _)  <- L8.readInt $ getField 18 2 l1
+    (s  , _)  <- L8.readInt $ getField 21 2 l1
   
-  let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
+    let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-  af0      <- readDoubleField $ getField 23 19 bs1
-  af1      <- readDoubleField $ getField 42 19 bs1
-  af2      <- readDoubleField $ getField 61 19 bs1
+    af0       <- readDoubleField $ getField 23 19 l1
+    af1       <- readDoubleField $ getField 42 19 l1
+    af2       <- readDoubleField $ getField 61 19 l1
+                 
+    iodeD     <- readDoubleField $ getField  4 19 l2
+    crs       <- readDoubleField $ getField 23 19 l2
+    deltaN    <- readDoubleField $ getField 42 19 l2
+    m0        <- readDoubleField $ getField 61 19 l2
+                 
+    cuc       <- readDoubleField $ getField  4 19 l3
+    e         <- readDoubleField $ getField 23 19 l3
+    cus       <- readDoubleField $ getField 42 19 l3
+    sqrtA     <- readDoubleField $ getField 61 19 l3
 
-  let bs2 = dropLine bs1
-  crs      <- readDoubleField $ getField 23 19 bs2
-  deltaN   <- readDoubleField $ getField 42 19 bs2
-  m0       <- readDoubleField $ getField 61 19 bs2
+    toeD      <- readDoubleField $ getField  4 19 l4
+    cic       <- readDoubleField $ getField 23 19 l4
+    omega0    <- readDoubleField $ getField 42 19 l4
+    cis       <- readDoubleField $ getField 61 19 l4
 
-  let bs3 = dropLine bs2
-  cuc      <- readDoubleField $ getField  4 19 bs3
-  e        <- readDoubleField $ getField 23 19 bs3
-  cus      <- readDoubleField $ getField 42 19 bs3
-  sqrtA    <- readDoubleField $ getField 61 19 bs3
+    i0        <- readDoubleField $ getField  4 19 l5
+    crc       <- readDoubleField $ getField 23 19 l5
+    omega     <- readDoubleField $ getField 42 19 l5
+    omegaDot  <- readDoubleField $ getField 61 19 l5
+                                                               
+    iDot      <- readDoubleField $ getField  4 19 l6
+    weekD     <- readDoubleField $ getField 42 19 l6
 
-  let bs4 = dropLine bs3
-  toeD     <- readDoubleField $ getField  4 19 bs4
-  cic      <- readDoubleField $ getField 23 19 bs4
-  omega0   <- readDoubleField $ getField 42 19 bs4
-  cis      <- readDoubleField $ getField 61 19 bs4
+    svHealthD <- readDoubleField $ getField 23 19 l7
+    iodcD     <- readDoubleField $ getField 61 19 l7
+                     
+    ttom      <- readDoubleField $ getField  4 19 l8
+    fitIntvD  <- readDoubleField $ getField 23 19 l8
 
-  let bs5 = dropLine bs4
-  i0       <- readDoubleField $ getField  4 19 bs5
-  crc      <- readDoubleField $ getField 23 19 bs5
-  omega    <- readDoubleField $ getField 42 19 bs5
-  omegaDot <- readDoubleField $ getField 61 19 bs5                 
-
-  let bs6 = dropLine bs5
-  iDot     <- readDoubleField $ getField  4 19 bs6
-  weekD    <- readDoubleField $ getField 42 19 bs6
-
-  let bs7 = dropLine bs6
-      bs8 = dropLine bs7
-  fitIntvD <- readDoubleField $ getField 23 19 bs8
-
-  let bs'     = dropLastLine bs8
-      toe     = realToFrac toeD
-      week    = round weekD                                 -- conversion is needed for equality comparisons
-      fitIntv = round fitIntvD       
-  return (NavRecord {..}, bs')
-    where dropLine     = BSC.drop 1 . BSC.dropWhile (/='\n')
-                         . BSC.drop 80                      -- a line has 80 characters ended with \n or \r\n
-          dropLastLine = BSC.drop 1 . BSC.dropWhile (/='\n')
-                         . BSC.drop 42                      -- last line can have two, three, four fields
-
+    let iode     = round      iodeD
+        toe      = realToFrac toeD
+        week     = round      weekD                           -- conversion is needed for equality comparisons
+        svHealth = round      svHealthD
+        iodc     = round      iodcD
+        fitIntv  = round      fitIntvD
+              
+    return NavRecord {..}
+    
 -- | Conversion of GPS time to GPS week and time-of-week
 gpsTimeToWeekTow
     :: GpsTime
@@ -390,55 +422,49 @@ isEphemerisValid
   :: GpsWeekTow                                             -- GPS week, time-of-week
   -> NavRecord
   -> Bool
-isEphemerisValid (w, tow) eph =
+isEphemerisValid (w, tow) r =
     abs diffTime <= halfFitIntv
     where
-      diffTime = diffGpsWeekTow  (w, tow) (week eph, toe eph)
-      halfFitIntv = fromIntegral ((fitIntv eph) `div` 2 * 3600)
+      diffTime = diffGpsWeekTow  (w, tow) (week r, toe r)
+      halfFitIntv = fromIntegral ((fitIntv r) `div` 2 * 3600)
 
-gpsSatPosAtEmTime trr pr1 pr2 eph =
-    let (wr, tr) = gpsTimeToWeekTow trr
-    in if isEphemerisValid (wr, tr) eph
-       then let te      = emissionTime pr1 pr2 (wr, tr) eph               -- Output: signal emission time by GPS clock [s]
-                (x,y,z) = satPosition te eph                              -- Output: satelite ECEF position [m]
+gpsSatPosAtEmTime trr pr1 pr2 r =
+    let wtrr = gpsTimeToWeekTow trr
+    in if isEphemerisValid wtrr r
+       then let te      = emissionTime pr1 pr2 wtrr r       -- Output: signal emission time by GPS clock [s]
+                (x,y,z) = satPosition te r                  -- Output: satelite ECEF position [m]
                 in (te, (x, y, z))
        else error $ "Ephemeris is not valid for " ++
             formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr
 
--- Main program:
---   * Converts receiver time of signal reception
---     (called also observation time,
---      observation epoch,
---      receiver time tag,
---      receiver time stamp,
---      measurement time)
---     to receiver GPS week number and time-of-week,
---   * reads broadcast ephemeris from one record file
---     (to use a different navigation record, replace the file content), 
---   * checks ephemeris validity for the given epoch (observation time),
---   * calculates signal emission GPS time and the satellite ECEF position at that time,
---   * prints receiver clock time of signal reception, the emission time, and satellite position.
 main :: IO ()
 main = do
-  let trr        = mkGpsTime 2024 03 07 00 53 01.0000000               -- Input: receiver time of signal reception
-                                                                       --       (receiver time of observation)
-      pr1        = 21548635.724                                        -- Input: pseudorange for f1 e.g. C1C
-      pr2        = 21548628.027                                        -- Input: pseudorange for f2 e.g. C2X
-      fn         = "nav_record.txt"                                    -- Input: file name
-  bs <- BSC.readFile fn                                                -- data from "nav_record.txt"
-  case readNavRecord bs of
-    Nothing  -> putStrLn $ "Can't read navigation record from " ++ fn
-    Just (eph, _) -> do                                                -- ephemeris
-         printf "Receiver clock time of signal reception: %s\n"
-             (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr)
-         let te             = weekTowToGpsTime wte
-             (wte, (x,y,z)) =
-                 gpsSatPosAtEmTime trr pr1 pr2 eph                     -- Output: signal emission time by GPS clock [s],
-                                                                       --         satelite ECEF position [m]
-         printf "Signal emission time by GPS clock      : %s\n\n"
-             (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" te)
-         printf "ECEF satellite position [m]:\n"
-         printf "X = %18.9f\n" x
-         printf "Y = %18.9f\n" y
-         printf "Z = %18.9f\n" z
+  let trr = mkGpsTime 2024 03 07 00 53 01.0000000                       -- Input: receiver time of signal reception
+                                                                        --       (receiver time of observation)
+      pr1 = 21548635.724                                                -- Input: pseudorange for f1 e.g. C1C
+      pr2 = 21548628.027                                                -- Input: pseudorange for f2 e.g. C2X
+      fn  = "nav_record.txt"                                            -- Input: file name
+  bs <- L8.readFile fn                                                  -- bytestring from "nav_record.txt"
+  if L8.take 1 bs == "G"
+  then
+      let (ls, _) = gpsBlockLines bs
+      in
+        case readGpsNavRecord ls of
+          Nothing  ->
+            putStrLn $ "Cannot read a GPS navigation record from "
+                         ++ fn
+          Just r   -> do                                                -- navigation record
+            printf "Receiver clock time of signal reception: %s\n"
+              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr)
+            let (wte, (x,y,z)) = gpsSatPosAtEmTime trr pr1 pr2 r        -- Output: signal emission time by GPS clock [s],
+                                                                        --         satelite ECEF position [m]
+                te = weekTowToGpsTime wte
+            printf "Signal emission time by GPS clock      : %s\n\n"
+              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" te)
+            printf "ECEF satellite position [m]:\n"
+            printf "X = %18.9f\n" x
+            printf "Y = %18.9f\n" y
+            printf "Z = %18.9f\n" z
+   else
+       error $ "Cannot find a GPS navigation record in " ++ fn   
 
