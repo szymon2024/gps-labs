@@ -300,7 +300,7 @@ getField start len = L8.take len . L8.drop start
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- | Consumes a line of 80 characters and a line separator
+-- | Consumes a line of 80 characters and a line separator.
 line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
 line bs =
     let line = L8.take 80 bs
@@ -308,14 +308,15 @@ line bs =
     in (line, rest)
 
 -- | Consumes last line of GPS navigation block.
---   Last line can have two, three or four fields.
+--   Last line can have two, three or four fields
+--   and sometimes it is not completed to 80 characters.
 lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
 lastLine bs =
     let line = L8.takeWhile (\c -> not (c == '\r' || c == '\n')) (L8.take 42 bs)
         rest = L8.dropWhile (\c ->      c == '\r' || c == '\n')  (L8.drop (L8.length line) bs)
     in (line, rest)
 
--- | Consumes GPS satellite block of eight lines
+-- | Consumes GPS satellite block of eight lines.
 gpsBlockLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
 gpsBlockLines bs =
     let (l1, r1) = line bs
