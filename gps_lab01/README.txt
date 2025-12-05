@@ -3,7 +3,7 @@
 EN:
 ======================================================================
           GPS SATELLITE POSITION DETERMINED BY THE RECEIVER
-       FOR GIVEN GPS TIME BASED ON BROADCAST ORBITAL PARAMETERS
+        FOR GIVEN GPS TIME USING BROADCAST ORBITAL PARAMETERS
            IN ACCORDANCE WITH THE IS‑GPS‑200 SPECIFICATION
 ======================================================================
 
@@ -36,8 +36,8 @@ Z =  7260529.645377433
 
 PL:
 ======================================================================
-           POZYCJA SATELITY GPS WYZNACZANA PRZEZ ODBIORNIK
- DLA DANEGO CZASU GPS NA PODSTAWIE ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
+ POZYCJA SATELITY GPS WYZNACZANA PRZEZ ODBIORNIK DLA DANEGO CZASU GPS
+         Z WYKORZYSTANIEM ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
                   ZGODNIE ZE SPECYFIKACJĄ IS‑GPS‑200
 ======================================================================
 
