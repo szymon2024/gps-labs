@@ -1,8 +1,8 @@
-2025-12-01
+2025-12-05
 
 EN:
 ======================================================================
-        COMPUTATION OF GPS SATELLITE POSITION BY THE RECEIVER
+          GPS SATELLITE POSITION DETERMINED BY THE RECEIVER
                 BASED ON BROADCAST ORBITAL PARAMETERS
            IN ACCORDANCE WITH THE IS‑GPS‑200 SPECIFICATION
 ======================================================================
@@ -36,7 +36,7 @@ Z =  7260529.645377433
 
 PL:
 ======================================================================
-           OBLICZANIE POZYCJI SATELITY GPS PRZEZ ODBIORNIK
+           POZYCJA SATELITY GPS WYZNACZANA PRZEZ ODBIORNIK
            NA PODSTAWIE ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
                   ZGODNIE ZE SPECYFIKACJĄ IS‑GPS‑200
 ======================================================================
