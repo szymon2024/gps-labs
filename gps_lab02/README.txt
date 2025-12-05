@@ -3,7 +3,7 @@
 EN:
 ======================================================================
               GPS SATELLITE POSITION FOR GIVEN GPS TIME
-                BASED ON BROADCAST ORBITAL PARAMETERS
+                  USING BROADCAST ORBITAL PARAMETERS
 ======================================================================
 
 A program for computing the position of a GPS satellite in the ECEF
@@ -37,7 +37,7 @@ Z =  7260529.645377433
 PL:
 =======================================================================
               POZYCJA SATELITY GPS DLA DANEGO CZASU GPS
-           NA PODSTAWIE ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
+         Z WYKORZYSTANIEM ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
 =======================================================================
 
 Program do wyznaczania pozycji satelity GPS w układzie ECEF na
