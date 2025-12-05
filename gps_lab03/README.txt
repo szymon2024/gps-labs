@@ -2,8 +2,8 @@
 
 EN:
 =====================================================================
-            GPS SATELLITE POSITION AT SIGNAL EMISSION TIME
- USING BROADCAST EPHEMERIS AND DUAL-FREQUENCY PSEUDORANGE OBSERVATION
+  GPS SATELLITE POSITION FOR DUAL-FREQUENCY PSEUDORANGE OBSERVATION
+                      USING BROADCAST EPHEMERIS
 =====================================================================
 
 The calculated position is of low precision because the pseudorange
@@ -35,9 +35,8 @@ Z = 19845264.366251267
 
 PL:
 =====================================================================
-   POZYCJA SATELITY GPS W CHWILI EMISJI SYGNAŁU Z WYKORZYSTANIEM
-                      EFEMERYDY ROZGŁOSZENIOWEJ
-         I DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI PSEUDOODLEGŁOŚCI
+      POZYCJA SATELITY GPS DLA DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI
+     PSEUDOODLEGŁOŚCI Z WYKORZYSTANIEM EFEMERYDY ROZGŁOSZENIOWEJ
 =====================================================================
 
 Obliczona pozycja jest niskiej precyzji ponieważ pseudoodległość
