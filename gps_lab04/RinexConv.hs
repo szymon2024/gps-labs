@@ -1,4 +1,4 @@
--- 2025-11-26
+-- 2025-12-08
 
 {- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
      in the data section so that scientific notation uses 'E'
@@ -17,8 +17,6 @@
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
-
-module RinexConv where
 
 import qualified Data.ByteString.Lazy.Char8 as L8    
 import           Data.Char                           (isSpace)
