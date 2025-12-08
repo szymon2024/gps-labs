@@ -1,4 +1,4 @@
--- 2025-12-01
+-- 2025-12-08
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -18,7 +18,7 @@
      
      Input:
        - GPS Ephemeris                       ephExample         defined in the code
-       - ephemeris validity interval         curveFitInteval    defined in the code              
+       - ephemeris validity interval         fitIntrv           defined in the code              
        - GPS Time                            t                  defined in the code
 
      Output:
@@ -77,11 +77,11 @@ omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [
 
 -- | Determining the GPS satellite position in ECEF from the GPS
 --   ephemeris and for a GPS time.
-satPosition       
+satPosECEF
     :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
     -> Ephemeris                                            -- ^ ephemeris
     -> (Double, Double, Double)                             -- ^ satellite position in ECEF [m]
-satPosition (w, tow) eph =
+satPosECEF (w, tow) eph =
   let
     a      = sqrtA eph * sqrtA eph                          -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                               -- computed mean motion [rad/sec]       
@@ -198,7 +198,7 @@ gpsSatPos
 gpsSatPos t eph curveFitInterval =
     let (w, tow) = gpsTimeToWeekTow t
     in if isEphemerisValid (w, tow) (week eph, toe eph) curveFitInterval
-       then satPosition (w, tow) eph
+       then satPosECEF (w, tow) eph
        else error $ "Ephemeris is not valid for "
                 ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t
 
@@ -234,10 +234,10 @@ ephExample = Ephemeris
 main :: IO ()
 main = do
   let 
-      eph              = ephExample                              -- Input: GPS Ephemeris
-      curveFitInterval = 4                                       -- Input: ephemeris validity interval
-      t                = mkGpsTime 2024 03 07 22 00 30.0         -- Input: GPS Time
-      (x, y, z)        = gpsSatPos t eph curveFitInterval        -- Output: ECEF satellite position
+      eph       = ephExample                                -- Input: GPS Ephemeris
+      fitIntrv  = 4                                         -- Input: ephemeris validity interval
+      t         = mkGpsTime 2024 03 07 22 00 30.0           -- Input: GPS Time
+      (x, y, z) = gpsSatPos t eph fitIntrv                  -- Output: ECEF satellite position
                   
   printf "Entered GPS time            : %s\n"
              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t)
