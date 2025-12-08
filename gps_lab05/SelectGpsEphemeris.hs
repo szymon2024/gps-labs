@@ -1,6 +1,6 @@
 -- 2025-12-08
 
-{- | The program selects a navigation record (containing ephemeris) from
+{- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS satellite and GPS
      observation time (receiver time of signal reception).
 
@@ -28,7 +28,7 @@
          (observation time)                                 tobs
 
      Output:
-       - navigation record (ephemeris)                      r
+       - navigation record with ephemeris                   r
 
      Print of run:
      Observation time: 2025 08 02 01 00 01.5
