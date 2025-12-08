@@ -57,8 +57,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module GpsSatPosForDfPr where
-
 import           Data.Time.Calendar            (fromGregorian, diffDays, addDays)
 import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..), timeToTimeOfDay)
 import           Data.Time.Format
