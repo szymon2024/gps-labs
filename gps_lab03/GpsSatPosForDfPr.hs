@@ -1,8 +1,8 @@
--- 2025-12-05
+-- 2025-12-08
 
 {- | Estimate ECEF satellite position for dual-frequency pseudorange
      measurement (observation) from broadcast ephemeris. The position
-     is calculated at GPS emission time. The calculation is of low
+     is calculated at GPS transmission time. The calculation is of low
      precision because the code pseudorange is of low precision and
      the orbital parameters (ephemeris) are approximate.
    
@@ -13,8 +13,8 @@
          - receiver clock
        All of them count time in GPS time system.
 
-       The signal emission time te is by the GPS clock,
-       satellite time of signal emission by satellite clock,
+       The signal transmission time te is by the GPS clock,
+       satellite time of signal transmission by satellite clock,
        receiver time of signal reception by receiver clock.
 
        Epoch refers to a moment in time. The receiver time of signal
@@ -23,28 +23,30 @@
        measurement time.
 
      NOTE 2:
-       Why is emission time calculated? The emission time is
+       Why is transmission time calculated? The transmission time is
        calculated to calculate the satellite position for the
-       pseudorange.  It's irrelevant that emission times vary for
+       pseudorange.  It's irrelevant that transmission times vary for
        different satellites for the selected observation time.  What
        matters is that the satellite's position corresponds to the
        satellite-receiver distance.
               
      Input:
-       - receiver time of signal reception          trr            (hand copied from RINEX observation file)
+       - observation time
+         (receiver time of signal reception)        tobs           (hand copied from RINEX observation file)
        - pseudorange for f1 [m]                     pr1            (hand copied from RINEX observation file)
        - pseudorange for f2 [m]                     pr2            (hand copied from RINEX observation file)
        - navigation data record in RINEX 3.04
          format                                     nav_record.txt (hand copied from a RINEX navigation file)
 
      Output:
-       - signal emission time by GPS clock [s]      te
+       - signal transmission time by GPS clock [s]      te
        - satellite position in ECEF [m]
-         at emission time                           (x, y, z)
+         at transmission time                           (x, y, z)
 
      Print of run:
-     Receiver clock time of signal reception: 2024 03 07 00 53 01
-     Signal emission time by GPS clock      : 2024 03 07 00 53 00.927812714088
+     Observation time
+     (receiver clock time of signal reception) : 2024 03 07 00 53 01
+     Signal transmission time by GPS clock     : 2024 03 07 00 53 00.927812714088
 
      ECEF satellite position [m]:
      X =  4460302.794944842
@@ -112,11 +114,11 @@ f2        = 1227.60e6             -- L2 frequency [Hz]
 
 -- | Determining the GPS satellite position in ECEF from the GPS
 --   ephemeris and for a GPS time.
-satPosition         
+satPosECEF
     :: GpsWeekTow                                            -- ^ GPS week, time-of-week
     -> NavRecord                                             -- ^ ephemeris parameters
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-satPosition (w, tow) eph =
+satPosECEF (w, tow) eph =
   let
     a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
     n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
@@ -214,22 +216,22 @@ clkCorr (w, tow) NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^2)
       dt  = realToFrac $ diffGpsWeekTow (w, tow) (week, tocTow)
       (_, tocTow) = gpsTimeToWeekTow toc
             
--- | Iteratively compute signal emission time because the emission
+-- | Iteratively compute signal transmission time because the transmission
 --   time depends on the clock corrections and the clock corrections
---   depend on the emission time.
-emissionTime            
+--   depend on the transmission time.
+transmissionTime            
   :: Double                                                 -- ^ pseudorange pr1 [m]
   -> Double                                                 -- ^ pseudorange pr2 [m]
   -> GpsWeekTow                                             -- ^ receiver time of signal reception [s]
   -> NavRecord                                              -- ^ broadcast ephemeris
-  -> GpsWeekTow                                             -- ^ signal emission time [s]
-emissionTime pr1 pr2 wtrr eph = iterate te0 0
+  -> GpsWeekTow                                             -- ^ signal transmission time [s]
+transmissionTime pr1 pr2 wtobs eph = iterate te0 0
     where
       pr   = pseudorangeDF pr1 pr2
-      tsv  = subSeconds wtrr  (realToFrac (pr/c))           -- satelite time of signal emission
+      tsv  = subSeconds wtobs  (realToFrac (pr/c))           -- satelite time of signal transmission
       te0 = tsv
       iterate te k
-          | k >= 10                  = error "Number of time emission iterations exceeded"
+          | k >= 10                  = error "Number of time transmission iterations exceeded"
           | abs (diffGpsWeekTow te' te) < 1e-12 = te'
           | otherwise                           = iterate te' (k+1)
           where
@@ -434,20 +436,20 @@ gpsSatPosForDfPr
   -> Double                                                 -- pseudorange for f1
   -> Double                                                 -- pseudorange for f2
   -> NavRecord                                              -- GPS navigation record
-  -> (GpsWeekTow, (Double, Double, Double))                 -- emission time, satelite ECEF posistion at emission time
-gpsSatPosForDfPr trr pr1 pr2 r =
-    let wtrr = gpsTimeToWeekTow trr
-    in if isEphemerisValid wtrr r
-       then let te      = emissionTime pr1 pr2 wtrr r       -- Output: signal emission time by GPS clock [s]
-                (x,y,z) = satPosition te r                  -- Output: satelite ECEF position [m]
+  -> (GpsWeekTow, (Double, Double, Double))                 -- transmission time, satelite ECEF posistion at transmission time
+gpsSatPosForDfPr tobs pr1 pr2 r =
+    let wtobs = gpsTimeToWeekTow tobs
+    in if isEphemerisValid wtobs r
+       then let te      = transmissionTime pr1 pr2 wtobs r   -- Output: signal transmission time by GPS clock [s]
+                (x,y,z) = satPosECEF te r                   -- Output: satelite ECEF position [m]
                 in (te, (x, y, z))
        else error $ "Ephemeris is not valid for " ++
-            formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr
+            formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs
 
 main :: IO ()
 main = do
-  let trr = mkGpsTime 2024 03 07 00 53 01.0000000                       -- Input: receiver time of signal reception
-                                                                        --       (receiver time of observation)
+  let tobs = mkGpsTime 2024 03 07 00 53 01.0000000                      -- Input: time of observation
+                                                                        --        (receiver time of signal reception)
       pr1 = 21548635.724                                                -- Input: pseudorange for f1 e.g. C1C
       pr2 = 21548628.027                                                -- Input: pseudorange for f2 e.g. C2X
       fn  = "nav_record.txt"                                            -- Input: file name
@@ -461,12 +463,13 @@ main = do
             putStrLn $ "Cannot read a GPS navigation record from "
                          ++ fn
           Just r   -> do                                                -- navigation record
-            printf "Receiver clock time of signal reception: %s\n"
-              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" trr)
-            let (wte, (x,y,z)) = gpsSatPosForDfPr trr pr1 pr2 r   -- Output: signal emission time by GPS clock [s],
-                                                                        --         satelite ECEF position [m] at emission time
+            printf "Observation time\n"
+            printf "(receiver clock time of signal reception) : %s\n"
+              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
+            let (wte, (x,y,z)) = gpsSatPosForDfPr tobs pr1 pr2 r        -- Output: signal transmission time by GPS clock [s],
+                                                                        --         satelite ECEF position [m] at transmission time
                 te = weekTowToGpsTime wte
-            printf "Signal emission time by GPS clock      : %s\n\n"
+            printf "Signal transmission time by GPS clock     : %s\n\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" te)
             printf "ECEF satellite position [m]:\n"
             printf "X = %18.9f\n" x

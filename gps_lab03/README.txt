@@ -1,4 +1,4 @@
-2025-12-05
+2025-12-08
 
 EN:
 =====================================================================
@@ -12,7 +12,8 @@ approximate.
 
 Input
 -----
-- receiver clock time of signal reception     (hand copied from a RINEX observation file)
+- observation time
+  (receiver clock time of signal reception)   (hand copied from a RINEX observation file)
 - pseudorange for f1 [m]                      (hand copied from a RINEX observation file)
 - pseudorange for f2 [m]                      (hand copied from a RINEX observation file)
 - navigation data record in RINEX 3.04
@@ -20,18 +21,20 @@ Input
 
 Output
 ------
-- signal esmission time by GPS clock [s]
-- satellite position in ECEF [m] at emission time
+- signal transmission time by GPS clock [s]
+- satellite position in ECEF [m] at transmission time
 
 Print of run
 ------------
-Receiver clock time of signal reception: 2024 03 07 00 53 01
-Signal emission time by GPS clock      : 2024 03 07 00 53 00.927812714088
+Observation time
+(receiver clock time of signal reception) : 2024 03 07 00 53 01
+Signal transmission time by GPS clock     : 2024 03 07 00 53 00.927812714088
 
 ECEF satellite position [m]:
 X =  4460302.794944842
 Y = 17049812.692289740
 Z = 19845264.366251267
+
 
 PL:
 =====================================================================
@@ -45,7 +48,8 @@ przybliżeniem.
 
 Wejście
 -------
-- czas odbiornika odbioru sygnału             (skopiowany ręcznie z pliku obserwacyjnego RINEX)
+- czas obserwacji
+  (czas odbiornika odbioru sygnału)           (skopiowany ręcznie z pliku obserwacyjnego RINEX)
 - pseudoodległość dla f1 [m]                  (skopiowana ręcznie z pliku obserwacyjnego RINEX)
 - pseudoodległość dla f2 [m]                  (skopiowana ręcznie z pliku obserwacyjnego RINEX)
 - rekord danych nawigacyjnych w formacie
@@ -53,13 +57,14 @@ Wejście
 
 Wyjście
 ------
-- czas emisji sygnału według zegara GPS [s]
-- pozycja satelity w ECEF [m] w momencie emisji
+- czas transmisji sygnału według zegara GPS [s]
+- pozycja satelity w ECEF [m] w momencie transmisji
 
 Wydruk uruchomienia
 ---------------------
-Receiver clock time of signal reception: 2024 03 07 00 53 01
-Signal emission time by GPS clock      : 2024 03 07 00 53 00.927812714088
+Observation time
+(receiver clock time of signal reception) : 2024 03 07 00 53 01
+Signal transmission time by GPS clock     : 2024 03 07 00 53 00.927812714088
 
 ECEF satellite position [m]:
 X =  4460302.794944842
