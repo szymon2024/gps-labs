@@ -66,8 +66,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
-module SelectGpsEphemeris where
-
 import           Data.Map.Strict                   (Map)
 import qualified Data.Map.Strict    as MS
 import           Data.IntMap.Strict                (IntMap)
@@ -133,6 +131,7 @@ data NavRecord = NavRecord
 
 
 -- Entry point of the program.
+main :: IO ()
 main = do
   let fn = "source.nav"                                     -- Input: RINEX 3.04 navigation file name
   bs <- L8.readFile fn               
