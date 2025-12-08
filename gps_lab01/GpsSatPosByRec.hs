@@ -1,4 +1,4 @@
--- 2025-12-01
+-- 2025-12-08
 
 {- | A program for computing the position of a GPS satellite in the ECEF
      coordinate system based on sample orbital parameters (ephemeris),
@@ -85,11 +85,11 @@ omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [
 -- | Computation of the GPS satellite position in ECEF from the GPS
 --   ephemeris and for a GPS time-of-week based on IS-GPS-200N
 --   20.3.3.4.3 ready-made mathematical formulas.
-satPosition
+satPosECEF
     :: Pico                                                  -- ^ GPS time-of-week [s]
     -> Ephemeris                                             -- ^ ephemeris
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
-satPosition tow eph =
+satPosECEF tow eph =
     let
         a      = sqrtA eph * sqrtA eph                           -- semi-major axis [m]
         n0     = sqrt(mu/(a*a*a))                                -- computed mean motion [rad/sec]       
@@ -230,7 +230,7 @@ gpsSatPosByRec t eph curveFitInterval
       || curveFitInterval == 26 =
         let (w, tow) = gpsTimeToWeekTow t
         in if isEphemerisValid (w, tow) (week eph, toe eph) curveFitInterval
-           then satPosition tow eph
+           then satPosECEF tow eph
            else error $ "Ephemeris is not valid for "
                     ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t
     | otherwise  =
