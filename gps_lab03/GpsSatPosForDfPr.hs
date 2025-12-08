@@ -111,7 +111,7 @@ f1        = 1575.42e6             -- L1 frequency [Hz]
 f2        = 1227.60e6             -- L2 frequency [Hz]
 
 -- | Determining the GPS satellite position in ECEF from the GPS
---   ephemeris and for a GPS time.
+--   ephemeris and for a (GPS week, tow).
 satPosECEF
     :: GpsWeekTow                                            -- ^ GPS week, time-of-week
     -> NavRecord                                             -- ^ ephemeris parameters
