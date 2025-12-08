@@ -37,8 +37,6 @@
 
 {-# LANGUAGE RecordWildCards #-}
 
-module GpsSatPos where
-
 import Data.Time.Calendar  (fromGregorian, diffDays, addDays)
 import Data.Time.LocalTime (LocalTime (..), TimeOfDay(..), timeToTimeOfDay)
 import Text.Printf         (printf)
