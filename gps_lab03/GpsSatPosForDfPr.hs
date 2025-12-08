@@ -223,20 +223,20 @@ transmissionTime
   -> GpsWeekTow                                             -- ^ receiver time of signal reception [s]
   -> NavRecord                                              -- ^ broadcast ephemeris
   -> GpsWeekTow                                             -- ^ signal transmission time [s]
-transmissionTime pr1 pr2 wtobs eph = iterate te0 0
+transmissionTime pr1 pr2 wtobs eph = iterate tt0 0
     where
       pr   = pseudorangeDF pr1 pr2
       tsv  = subSeconds wtobs  (realToFrac (pr/c))           -- satelite time of signal transmission
-      te0 = tsv
-      iterate te k
+      tt0 = tsv
+      iterate tt k
           | k >= 10                  = error "Number of time transmission iterations exceeded"
-          | abs (diffGpsWeekTow te' te) < 1e-12 = te'
-          | otherwise                           = iterate te' (k+1)
+          | abs (diffGpsWeekTow tt' tt) < 1e-12 = tt'
+          | otherwise                           = iterate tt' (k+1)
           where
-            dtc  = clkCorr te eph                           -- clock correction
-            dtr  = relCorr te eph                           -- relativistic correction
+            dtc  = clkCorr tt eph                           -- clock correction
+            dtr  = relCorr tt eph                           -- relativistic correction
             dtsv = dtc  + dtr
-            te' = subSeconds te0 dtsv
+            tt' = subSeconds tt0 dtsv
 
 -- | Calculates the number of seconds between two (GPS week, tow).
 diffGpsWeekTow
@@ -438,9 +438,9 @@ gpsSatPosForDfPr
 gpsSatPosForDfPr tobs pr1 pr2 r =
     let wtobs = gpsTimeToWeekTow tobs
     in if isEphemerisValid wtobs r
-       then let te      = transmissionTime pr1 pr2 wtobs r   -- Output: signal transmission time by GPS clock [s]
-                (x,y,z) = satPosECEF te r                   -- Output: satelite ECEF position [m]
-                in (te, (x, y, z))
+       then let tt      = transmissionTime pr1 pr2 wtobs r  -- Output: signal transmission time by GPS clock [s]
+                (x,y,z) = satPosECEF tt r                   -- Output: satelite ECEF position [m]
+                in (tt, (x, y, z))
        else error $ "Ephemeris is not valid for " ++
             formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs
 
@@ -464,11 +464,11 @@ main = do
             printf "Observation time\n"
             printf "(receiver clock time of signal reception) : %s\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
-            let (wte, (x,y,z)) = gpsSatPosForDfPr tobs pr1 pr2 r        -- Output: signal transmission time by GPS clock [s],
+            let (wtt, (x,y,z)) = gpsSatPosForDfPr tobs pr1 pr2 r        -- Output: signal transmission time by GPS clock [s],
                                                                         --         satelite ECEF position [m] at transmission time
-                te = weekTowToGpsTime wte
+                tt = weekTowToGpsTime wtt
             printf "Signal transmission time by GPS clock     : %s\n\n"
-              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" te)
+              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tt)
             printf "ECEF satellite position [m]:\n"
             printf "X = %18.9f\n" x
             printf "Y = %18.9f\n" y
