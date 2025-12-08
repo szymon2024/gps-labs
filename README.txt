@@ -1,4 +1,4 @@
-2025-12-05
+2025-12-08
 
 EN:
 CONTENTS
@@ -16,6 +16,10 @@ gps_lab03 - GPS satellite position for dual-frequency pseudorange
             
 gps_lab04 - Scientific notation RINEX 3.04 file converter
 
+gps_lab05 - Selection of GPS broadcast ephemeris for the observation
+            time
+
+gps_lab06 - Matching GPS ephemerides to satellite observations
 
 PL:
 SPIS TREŚCI
@@ -33,3 +37,7 @@ gps_lab03 - Pozycja satelity GPS dla dwuczęstotliwościowej obserwacji
             parametrów orbity
             
 gps_lab04 - Konwerter notacji naukowej pliku RINEX 3.04
+
+gps_lab05 - Wybór efemerydy rozgłoszeniowej GPS dla czasu obserwacji
+
+gps_lab06 - Dopasowanie efemeryd GPS do obserwacji satelitarnych
