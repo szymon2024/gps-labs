@@ -44,8 +44,6 @@
      Z =  7260529.645377433
 -}
 
-module GpsSatPosByRec where
-
 import Data.Time.Calendar  (fromGregorian, diffDays, addDays)
 import Data.Time.LocalTime (LocalTime (..), TimeOfDay(..), timeToTimeOfDay)
 import Text.Printf         (printf)
