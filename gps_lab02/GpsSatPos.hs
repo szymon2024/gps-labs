@@ -74,7 +74,7 @@ mu        = 3.986005e14           -- WGS 84 value of earth's universal gravitati
 omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [rad/s]
 
 -- | Determining the GPS satellite position in ECEF from the GPS
---   ephemeris and for a GPS time.
+--   ephemeris and for a (GPS week, tow).
 satPosECEF
     :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
     -> Ephemeris                                            -- ^ ephemeris
