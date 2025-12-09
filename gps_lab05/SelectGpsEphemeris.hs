@@ -6,7 +6,7 @@
 
      Main steps of the algorithm:
      
-     1. The navigation file (RINEX 3.04) is read into a map, excluding
+     1. The navigation file RINEX 3.04 is read into a map, excluding
      the header.
      
      2. The submap containing records for the given PRN is
@@ -175,8 +175,8 @@ skipHeader bs0 = loop bs0
 dropLine :: L8.ByteString -> L8.ByteString
 dropLine = L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
 
--- | Reads GPS navigation records from read body of RINEX 3.04
---   navigation file into a NavMap.
+-- | Reads GPS navigation records from RINEX 3.04 navigation body
+--   into a NavMap.
 readGpsRecords
     :: L8.ByteString                                      -- ^ body of RINEX navigation file
     -> NavMap
@@ -188,17 +188,17 @@ readGpsRecords bs0
       loop m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (ls, rest) = gpsBlockLines bs
+              let (ls, rest) = gpsRecordLines bs
               in case readGpsRecord ls of
                 Just r   -> loop (insertRecord r m) rest
                 Nothing  -> error "Cannot read GPS navigation record"
           | otherwise =
-              let rest = skipBlock bs
+              let rest = skipUnknownRecord bs
               in loop m rest        
 
--- | Consumes GPS satellite block of eight lines.
-gpsBlockLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-gpsBlockLines bs =
+-- | Consumes GPS navigation record eight lines.
+gpsRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+gpsRecordLines bs =
     let (l1, r1) = line bs
         (l2, r2) = line r1
         (l3, r3) = line r2
@@ -296,14 +296,16 @@ insertRecord rec =
       innerKey = (week rec, toe rec)
       val      = rec
 
-skipBlock :: L8.ByteString -> L8.ByteString
-skipBlock bs =
+-- | Skip unknown record reading lines to begining of other record
+skipUnknownRecord :: L8.ByteString -> L8.ByteString
+skipUnknownRecord bs =
   let (ln, rest) = L8.break (== '\n') bs
       rest' = L8.drop 1 rest
       in if isNewRecordLine rest'
-           then rest'              -- wracamy: to początek nowego rekordu
-           else skipBlock rest'
+           then rest'
+           else skipUnknownRecord rest'
 
+-- | Returns True if the bs starts with other sign than ' '                
 isNewRecordLine :: L8.ByteString -> Bool
 isNewRecordLine bs = L8.take 1 bs /= " "
 
