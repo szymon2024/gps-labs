@@ -294,7 +294,7 @@ insertRecord rec =
     IMS.insertWith
         (\_ old -> MS.insert innerKey val old)    -- if outerKey does exist
         outerKey
-        (MS.singleton innerKey val)               -- if the outerKey does not exitst
+        (MS.singleton innerKey val)               -- if the outerKey does not exist
     where
       outerKey = prn rec
       innerKey = (week rec, toe rec)
