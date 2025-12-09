@@ -1,4 +1,4 @@
--- 2025-12-08
+-- 2025-12-09
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS satellite and GPS
@@ -6,8 +6,8 @@
 
      Main steps of the algorithm:
      
-     1. The navigation file RINEX 3.04 is read into a map, excluding
-     the header.
+     1. The navigation file RINEX 3.04 is read into a map (map
+     building from GPS records), excluding the header.
      
      2. The submap containing records for the given PRN is
      selected. If the submap does not exists program terminates.
@@ -32,34 +32,45 @@
 
      Print of run:
      Observation time: 2025 08 02 01 00 01.5
-                  toe: 2025 08 02 02 00 00
-     PRN: 6       toc: 2025 08 02 02 00 00
-     af0:      -4.722196608782e-4
-     af1:      -1.432454155292e-11
-     af2:      0.0
-     iode:     69
-     crs:      -23.6875
-     deltaN:   3.821944913632e-9
-     m0:       -2.959416369262
-     cuc:      -1.28336250782e-6
-     e:        3.335768124089e-3
-     cus:      4.727393388748e-6
-     sqrtA:    5153.617370605
-     toe:      525600.0
-     cic:      8.940696716309e-8
-     omega0:   0.681838248157
-     cis:      4.470348358154e-8
-     i0:       0.9884960063693
-     crc:      305.40625
-     omega:    -0.669483880108
-     omegaDot: -7.833540584123e-9
-     iDot:     -1.753644474903e-10
+             toe: 2025 08 02 02 00 00
+     PRN:  6      toc: 2025 08 02 02 00 00
+     af0:       -4.722196608782E-4
+     af1:      -1.432454155292E-11
+     af2:         0.000000000000E0
+
+     iode:       69
+     crs:        -2.368750000000E1
+     deltaN:     3.821944913632E-9
+     m0:         -2.959416369262E0
+
+     cuc:       -1.283362507820E-6
+     e:          3.335768124089E-3
+     cus:        4.727393388748E-6
+     sqrtA:       5.153617370605E3
+
+     toe:         5.256000000000E5
+     cic:        8.940696716309E-8
+     omega0:     6.818382481570E-1
+     cis:        4.470348358154E-8
+
+     i0:         9.884960063693E-1
+     crc:         3.054062500000E2
+     omega:     -6.694838801080E-1
+     omegaDot:  -7.833540584123E-9
+
+     iDot:     -1.753644474903E-10
+     skipped
      week:     2377
-     svHealth: 0
-     iodc:     69
-     ttom:     518400.0
-     fitIntv:  4
-----------------------------------
+     skipped
+
+     skipped
+     svHealth:    0
+     skipped
+     iodc:       69
+
+     ttom:        5.184000000000E5
+     fitIntv:     4
+     ----------------------------------
 
 -}
 
@@ -74,12 +85,11 @@ import           Data.Char                         (isSpace)
 import           Data.Int                          (Int64)
 import           Control.Monad                     (guard)
 import qualified Data.ByteString.Lazy.Char8 as L8
-import           Data.Time.Calendar                (Day, fromGregorian, diffDays, addDays)
-import           Data.Time.LocalTime               (LocalTime (..), TimeOfDay(..), diffLocalTime)
+import           Data.Time.Calendar                (fromGregorian, diffDays, addDays)
+import           Data.Time.LocalTime               (LocalTime (..), TimeOfDay(..))
 import           Data.Time.Format                  (formatTime, defaultTimeLocale)
 import           Data.Fixed                        (Pico)
-import           Text.Printf                       (printf)
-import           Data.List                         (unfoldr)
+import           Text.Printf                       (PrintfType, printf)
 
 -- For readDouble
 import qualified Data.ByteString.Unsafe     as BSU (unsafeUseAsCString)    
@@ -87,12 +97,7 @@ import           Foreign                           (Ptr, alloca, peek, minusPtr)
 import           Foreign.C.Types                   (CChar, CDouble(CDouble)) 
 import           Foreign.C.String                  (CString)                 
 import           System.IO.Unsafe                  (unsafePerformIO)         
-import           Data.Maybe                        (mapMaybe)
 
--- For NavMap printing
-import           Data.ByteString.Builder
-import           System.IO                         (stdout)
-    
 type GpsTime    = LocalTime
 type GpsWeekTow = (Integer, Pico)                           -- ^ GPS week, time-of-week
 type NavMap     = IntMap (Map GpsWeekTow NavRecord)         -- ^ key1: prn, key2: (week r, toe r)
@@ -134,27 +139,26 @@ data NavRecord = NavRecord
 main :: IO ()
 main = do
   let fn = "source.nav"                                     -- Input: RINEX 3.04 navigation file name
-  bs <- L8.readFile fn               
-  let navMap = readGpsRecords bs
       prn    = 6                                            -- Input: satellite number
       tobs   = mkGpsTime 2025 08 02 01 00 01.5              -- Input: observation time - receiver time of signal reception
+  bs <- L8.readFile fn
+  let navMap = buildNavMap bs
   case selectGpsEphemeris tobs prn navMap of
-    Nothing -> putStrLn "Cannot find valid ephemeris \
-                        \for given prn and observation time"
+    Nothing -> printf "Cannot find valid ephemeris \
+                      \for given prn and observation time"
     Just r  -> do                                           -- Output: GPS navigation record 
-         putStrLn $ "Observation time: "
-                      ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs
-         L8.hPut stdout $ toLazyByteString $ buildEntry r
+         printf "Observation time: %s\n"
+                (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
+         printfRecord r
 
--- | Reads GPS navigation records into a NavMap.
-readGpsRecords :: L8.ByteString -> NavMap
-readGpsRecords bs
+
+-- | Reads GPS navigation records from RINEX 3.04 navigation content into a NavMap.
+buildNavMap :: L8.ByteString -> NavMap  
+buildNavMap bs
     | L8.null bs         = error "Empty file"
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
-    | otherwise =
-        let rest = skipHeader bs
-        in extractGpsRecords rest
+    | otherwise = readGpsNavRecords (skipHeader bs)
       where
         rinexVer = trim $ getField  0 9 bs 
         fileType = trim $ getField 20 1 bs
@@ -170,17 +174,15 @@ skipHeader bs0 = loop bs0
             $ L8.drop 72 bs                                 -- don't check before 60 + length "END OF HEADER"
       | otherwise = loop (dropLine bs)
       where
-        label = trim . L8.takeWhile (not . (`elem` ['\r','\n'])) . L8.drop 60 $ bs                   
-
-dropLine :: L8.ByteString -> L8.ByteString
-dropLine = L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
+        label    = trim . L8.takeWhile (not . (`elem` ['\r','\n'])) . L8.drop 60 $ bs                   
+        dropLine = L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
 
 -- | Extracts GPS navigation records from RINEX 3.04 navigation body
 --   into a NavMap.
-extractGpsRecords
+readGpsNavRecords
     :: L8.ByteString                                      -- ^ body of RINEX navigation file
     -> NavMap
-extractGpsRecords bs0
+readGpsNavRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
     | otherwise   = loop IMS.empty bs0
     where
@@ -188,17 +190,19 @@ extractGpsRecords bs0
       loop m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (ls, rest) = gpsRecordLines bs
-              in case readGpsRecord ls of
+              let (ls, rest) = recordLines bs
+              in case readRecord ls of
                 Just r   -> loop (insertRecord r m) rest
                 Nothing  -> error "Cannot read GPS navigation record"
           | otherwise =
               let rest = skipUnknownRecord bs
               in loop m rest        
 
--- | Consumes GPS navigation record eight lines.
-gpsRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-gpsRecordLines bs =
+-- | Consumes GPS navigation record eight lines.  It is based on the
+--   knowledge that the content of a line should be 80 characters, but
+--   last line often breaks this rule.
+recordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+recordLines bs =
     let (l1, r1) = line bs
         (l2, r2) = line r1
         (l3, r3) = line r2
@@ -212,83 +216,84 @@ gpsRecordLines bs =
 -- | Consumes a line of 80 characters and a line separator.
 line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
 line bs =
-    let line = L8.take 80 bs
+    let l80  = L8.take 80 bs
         rest = L8.dropWhile (\c -> c == '\r' || c == '\n') (L8.drop 80 bs)
-    in (line, rest)
-
--- | Consumes last line of GPS navigation block.
---   Last line can have two, three or four fields
---   and sometimes it is not completed to 80 characters.
+    in (l80, rest)
+       
+-- | Consumes last line of GPS navigation block.  Last line can have
+--   two, three or four fields and sometimes it is not completed to 80
+--   characters.
 lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
 lastLine bs =
-    let line = L8.takeWhile (\c -> not (c == '\r' || c == '\n')) (L8.take 42 bs)
-        rest = L8.dropWhile (\c ->      c == '\r' || c == '\n')  (L8.drop (L8.length line) bs)
-    in (line, rest)       
+    let l    = L8.takeWhile (\c -> not (c == '\r' || c == '\n')) (L8.take 42 bs)
+        rest = L8.dropWhile (\c ->      c == '\r' || c == '\n')  (L8.drop (L8.length l) bs)
+    in (l, rest)       
 
 -- | Reads GPS navigation record from block lines for GPS satellite
--- | Expects 8 lines as input
-readGpsRecord :: [L8.ByteString] -> Maybe NavRecord
-readGpsRecord ls = do
-    guard (length ls == 8)
-    let [l1,l2,l3,l4,l5,l6,l7,l8] = ls
-
-    (prn, _)  <- L8.readInt $ getField  1 2 l1
-    (y  , _)  <- L8.readInt $ getField  4 4 l1
-    (mon, _)  <- L8.readInt $ getField  9 2 l1
-    (d  , _)  <- L8.readInt $ getField 12 2 l1
-    (h  , _)  <- L8.readInt $ getField 15 2 l1
-    (m  , _)  <- L8.readInt $ getField 18 2 l1
-    (s  , _)  <- L8.readInt $ getField 21 2 l1
+--   Expects 8 lines as input.
+--   It does not read fields one after by one, as parsers do,
+--   but by position in the line.
+readRecord :: [L8.ByteString] -> Maybe NavRecord
+readRecord ls =
+  case ls of
+    [l1,l2,l3,l4,l5,l6,l7,l8] -> do
+            (prn, _)  <- L8.readInt $ getField  1 2 l1
+            (y  , _)  <- L8.readInt $ getField  4 4 l1
+            (mon, _)  <- L8.readInt $ getField  9 2 l1
+            (d  , _)  <- L8.readInt $ getField 12 2 l1
+            (h  , _)  <- L8.readInt $ getField 15 2 l1
+            (m  , _)  <- L8.readInt $ getField 18 2 l1
+            (s  , _)  <- L8.readInt $ getField 21 2 l1
   
-    let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
+            let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-    af0       <- readDoubleField $ getField 23 19 l1
-    af1       <- readDoubleField $ getField 42 19 l1
-    af2       <- readDoubleField $ getField 61 19 l1
+            af0       <- readDoubleField $ getField 23 19 l1
+            af1       <- readDoubleField $ getField 42 19 l1
+            af2       <- readDoubleField $ getField 61 19 l1
                  
-    iodeD     <- readDoubleField $ getField  4 19 l2
-    crs       <- readDoubleField $ getField 23 19 l2
-    deltaN    <- readDoubleField $ getField 42 19 l2
-    m0        <- readDoubleField $ getField 61 19 l2
+            iodeD     <- readDoubleField $ getField  4 19 l2
+            crs       <- readDoubleField $ getField 23 19 l2
+            deltaN    <- readDoubleField $ getField 42 19 l2
+            m0        <- readDoubleField $ getField 61 19 l2
                  
-    cuc       <- readDoubleField $ getField  4 19 l3
-    e         <- readDoubleField $ getField 23 19 l3
-    cus       <- readDoubleField $ getField 42 19 l3
-    sqrtA     <- readDoubleField $ getField 61 19 l3
+            cuc       <- readDoubleField $ getField  4 19 l3
+            e         <- readDoubleField $ getField 23 19 l3
+            cus       <- readDoubleField $ getField 42 19 l3
+            sqrtA     <- readDoubleField $ getField 61 19 l3
 
-    toeD      <- readDoubleField $ getField  4 19 l4
-    cic       <- readDoubleField $ getField 23 19 l4
-    omega0    <- readDoubleField $ getField 42 19 l4
-    cis       <- readDoubleField $ getField 61 19 l4
+            toeD      <- readDoubleField $ getField  4 19 l4
+            cic       <- readDoubleField $ getField 23 19 l4
+            omega0    <- readDoubleField $ getField 42 19 l4
+            cis       <- readDoubleField $ getField 61 19 l4
 
-    i0        <- readDoubleField $ getField  4 19 l5
-    crc       <- readDoubleField $ getField 23 19 l5
-    omega     <- readDoubleField $ getField 42 19 l5
-    omegaDot  <- readDoubleField $ getField 61 19 l5
+            i0        <- readDoubleField $ getField  4 19 l5
+            crc       <- readDoubleField $ getField 23 19 l5
+            omega     <- readDoubleField $ getField 42 19 l5
+            omegaDot  <- readDoubleField $ getField 61 19 l5
                                                                
-    iDot      <- readDoubleField $ getField  4 19 l6
-    weekD     <- readDoubleField $ getField 42 19 l6
+            iDot      <- readDoubleField $ getField  4 19 l6
+            weekD     <- readDoubleField $ getField 42 19 l6
 
-    svHealthD <- readDoubleField $ getField 23 19 l7
-    iodcD     <- readDoubleField $ getField 61 19 l7
+            svHealthD <- readDoubleField $ getField 23 19 l7
+            iodcD     <- readDoubleField $ getField 61 19 l7
                      
-    ttom      <- readDoubleField $ getField  4 19 l8
-    fitIntvD  <- readDoubleField $ getField 23 19 l8
+            ttom      <- readDoubleField $ getField  4 19 l8
+            fitIntvD  <- readDoubleField $ getField 23 19 l8
 
-    let iode     = round      iodeD
-        toe      = realToFrac toeD
-        week     = round      weekD                           -- conversion is needed for equality comparisons
-        svHealth = round      svHealthD
-        iodc     = round      iodcD
-        fitIntv  = round      fitIntvD
-              
-    return NavRecord {..}
+            let iode     = round      iodeD
+                toe      = realToFrac toeD
+                week     = round      weekD                           -- conversion is needed for equality comparisons
+                svHealth = round      svHealthD
+                iodc     = round      iodcD
+                fitIntv  = round      fitIntvD
+            return NavRecord {..}
+    _ -> Nothing
 
 -- | Inserts navigation record into NavMap
 insertRecord :: NavRecord -> NavMap -> NavMap                                    
 insertRecord rec =
     IMS.insertWith
-        (\new old -> MS.insert innerKey val old)  -- if outerKey does exist
+        (\_ old -> MS.insert innerKey val old)    -- if outerKey does exist
         outerKey
         (MS.singleton innerKey val)               -- if the outerKey does not exitst
     where
@@ -299,7 +304,7 @@ insertRecord rec =
 -- | Skip unknown record reading lines to begining of other record
 skipUnknownRecord :: L8.ByteString -> L8.ByteString
 skipUnknownRecord bs =
-  let (ln, rest) = L8.break (== '\n') bs
+  let (_, rest) = L8.break (== '\n') bs
       rest' = L8.drop 1 rest
       in if isNewRecordLine rest'
            then rest'
@@ -455,48 +460,73 @@ getField start len = L8.take len . L8.drop start
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- | Builds a textual representation of a navigation record for printing.
---   Produces a Builder that can be efficiently converted to a ByteString.
-buildEntry :: NavRecord -> Builder
-buildEntry NavRecord{..} =
-    string8 "             toe: "  <> string8 (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" toe') <> char8 '\n'
-    <> string8 "PRN: "     <> intDec prn <> string8 "   "
-    <> string8 "    toc: "  <> string8 (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" toc) <> char8 '\n'
-    <> string8 "af0:      " <> doubleDec  af0             <> char8 '\n'
-    <> string8 "af1:      " <> doubleDec  af1             <> char8 '\n'
-    <> string8 "af2:      " <> doubleDec  af2             <> char8 '\n'
-    <> string8 "iode:     " <> intDec     iode            <> char8 '\n'
-    <> string8 "crs:      " <> doubleDec  crs             <> char8 '\n'
-    <> string8 "deltaN:   " <> doubleDec  deltaN          <> char8 '\n'
-    <> string8 "m0:       " <> doubleDec  m0              <> char8 '\n'
-    <> string8 "cuc:      " <> doubleDec  cuc             <> char8 '\n'
-    <> string8 "e:        " <> doubleDec  e               <> char8 '\n'
-    <> string8 "cus:      " <> doubleDec  cus             <> char8 '\n'
-    <> string8 "sqrtA:    " <> doubleDec  sqrtA           <> char8 '\n'
-    <> string8 "toe:      " <> doubleDec (realToFrac toe) <> char8 '\n'
-    <> string8 "cic:      " <> doubleDec  cic             <> char8 '\n'
-    <> string8 "omega0:   " <> doubleDec  omega0          <> char8 '\n'
-    <> string8 "cis:      " <> doubleDec  cis             <> char8 '\n'
-    <> string8 "i0:       " <> doubleDec  i0              <> char8 '\n'
-    <> string8 "crc:      " <> doubleDec  crc             <> char8 '\n'
-    <> string8 "omega:    " <> doubleDec  omega           <> char8 '\n'
-    <> string8 "omegaDot: " <> doubleDec  omegaDot        <> char8 '\n'
-    <> string8 "iDot:     " <> doubleDec  iDot            <> char8 '\n'
-    <> string8 "week:     " <> integerDec week            <> char8 '\n'
-    <> string8 "svHealth: " <> intDec     svHealth        <> char8 '\n'
-    <> string8 "iodc:     " <> intDec     iodc            <> char8 '\n'
-    <> string8 "ttom:     " <> doubleDec  ttom            <> char8 '\n'
-    <> string8 "fitIntv:  " <> intDec     fitIntv         <> char8 '\n'
-    <> string8 "----------------------------------\n"
-    where
-      toe' = weekTowToGpsTime (week, toe)
+printfRecord :: Text.Printf.PrintfType t => NavRecord -> t
+printfRecord NavRecord{..} =
+    printf "             toe: %s\n\
+           \PRN: %2d      toc: %s\n\
+           \af0:      %19.12E\n\
+           \af1:      %19.12E\n\
+           \af2:      %19.12E\n\n\
+            
+           \iode:     %4d\n\
+           \crs:      %19.12E\n\
+           \deltaN:   %19.12E\n\
+           \m0:       %19.12E\n\n\
+            
+           \cuc:      %19.12E\n\
+           \e:        %19.12E\n\
+           \cus:      %19.12E\n\
+           \sqrtA:    %19.12E\n\n\
+            
+           \toe:      %19.12E\n\
+           \cic:      %19.12E\n\
+           \omega0:   %19.12E\n\
+           \cis:      %19.12E\n\n\
+            
+           \i0:       %19.12E\n\
+           \crc:      %19.12E\n\
+           \omega:    %19.12E\n\
+           \omegaDot: %19.12E\n\n\
+            
+           \iDot:     %19.12E\n\
+           \skipped\n\ 
+           \week:     %4d\n\
+           \skipped\n\n\ 
 
-               
-printPrnNavRecords :: Int -> NavMap -> IO ()
-printPrnNavRecords prn navMap =
-  case IMS.lookup prn navMap of
-    Nothing -> putStrLn $ "No records for PRN " ++ show prn
-    Just m  ->
-      L8.hPut stdout $ toLazyByteString $
-        MS.foldr (\r acc -> buildEntry r <> acc) mempty m
+           \skipped\n\ 
+           \svHealth: %4d\n\
+           \skipped\n\
+           \iodc:     %4d\n\n\
+            
+           \ttom:     %19.12E\n\
+           \fitIntv:  %4d\n\
+           \----------------------------------\n"
+     (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" (weekTowToGpsTime (week, toe)))
+     prn (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" toc)
+     af0            
+     af1            
+     af2            
+     iode           
+     crs            
+     deltaN         
+     m0             
+     cuc            
+     e              
+     cus            
+     sqrtA          
+     ((realToFrac toe)::Double)
+     cic            
+     omega0         
+     cis            
+     i0             
+     crc            
+     omega          
+     omegaDot       
+     iDot           
+     week           
+     svHealth       
+     iodc           
+     ttom           
+     fitIntv        
 
+                          
