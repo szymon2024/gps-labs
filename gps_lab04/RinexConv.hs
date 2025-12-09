@@ -1,4 +1,4 @@
--- 2025-12-08
+-- 2025-12-09
 
 {- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
      in the data section so that scientific notation uses 'E'
@@ -21,6 +21,7 @@
 import qualified Data.ByteString.Lazy.Char8 as L8    
 import           Data.Char                           (isSpace)
 import           Data.Int                            (Int64)
+import           Text.Printf
 
 main :: IO ()
 main = do
@@ -28,9 +29,9 @@ main = do
       sn = "source.nav"                                     -- Input: source file name     
       dn = "destination.nav"                                -- Input: destination file name
 
-  putStrLn "Start processing"
+  printf "Start processing\n"
   rinexConvertFile sn dn
-  putStrLn "Processing complete."
+  printf "Processing complete\n"
            
 -- | Convert a RINEX file
 rinexConvertFile
