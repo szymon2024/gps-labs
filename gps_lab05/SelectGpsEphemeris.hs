@@ -230,9 +230,8 @@ lastLine bs =
     in (l, rest)       
 
 -- | Reads GPS navigation record from block lines for GPS satellite
---   Expects 8 lines as input.
---   It does not read fields one after by one, as parsers do,
---   but by position in the line.
+--   Expects 8 lines as input.  It does not read fields one by one, as
+--   parsers do, but by position in the line.
 readRecord :: [L8.ByteString] -> Maybe NavRecord
 readRecord ls =
   case ls of
