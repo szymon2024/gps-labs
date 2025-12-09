@@ -1,4 +1,4 @@
--- 2025-12-08
+-- 2025-12-09
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -38,10 +38,10 @@
 {-# LANGUAGE RecordWildCards #-}
 
 import Data.Time.Calendar  (fromGregorian, diffDays, addDays)
-import Data.Time.LocalTime (LocalTime (..), TimeOfDay(..), timeToTimeOfDay)
+import Data.Time.LocalTime (LocalTime (..), TimeOfDay(..))
 import Text.Printf         (printf)
 import Data.Fixed          (Pico)
-import Data.Time           (DiffTime(..), diffLocalTime)
+import Data.Time           (diffLocalTime)
 import Data.Time.Format    
 
 -- | GPS ephemeris
@@ -116,14 +116,14 @@ keplerSolve
     :: Double                                               -- ^ mean anomaly [rad]
     -> Double                                               -- ^ eccentricity []
     -> Double                                               -- ^ eccentric anomaly [rad]
-keplerSolve m e = iterate e0 0               
+keplerSolve m e = loop e0 0               
   where
     e0 = m + e * sin m
-    iterate :: Double -> Int -> Double
-    iterate eN k
+    loop :: Double -> Int -> Double
+    loop eN k
       | k > 20 = error "Kepler method iteration count exceeded"
       | abs (eN' - eN) < 1e-12 = eN'
-      | otherwise = iterate eN' (k+1)
+      | otherwise = loop eN' (k+1)
           where
             eN'  = eN - f/fDot                              -- iterative formula
             f    = eN - e * sin eN - m  
