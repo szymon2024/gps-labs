@@ -1,4 +1,4 @@
--- 2025-12-08
+-- 2025-12-09
 
 {- | Estimate ECEF satellite position for dual-frequency pseudorange
      measurement (observation) from broadcast ephemeris. The position
@@ -58,7 +58,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Data.Time.Calendar            (fromGregorian, diffDays, addDays)
-import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..), timeToTimeOfDay)
+import           Data.Time.LocalTime           (LocalTime (..), TimeOfDay(..))
 import           Data.Time.Format
 import           Data.Fixed                    (Pico)    
 import           Text.Printf                   (printf)
@@ -107,8 +107,8 @@ mu        = 3.986005e14           -- WGS 84 value of earth's universal gravitati
 omegaEDot = 7.2921151467e-5       -- WGS 84 value of the earth's rotation rate [rad/s]
 c         = 299792458.0           -- speed of light [m/s]
 fRel      = -4.442807633e-10      -- constant F in the relativistic correction [s/sqrt m]
-f1        = 1575.42e6             -- L1 frequency [Hz]
-f2        = 1227.60e6             -- L2 frequency [Hz]
+f1        = 1575.42e6::Double     -- L1 frequency [Hz]
+f2        = 1227.60e6::Double     -- L2 frequency [Hz]
 
 -- | Determining the GPS satellite position in ECEF from the GPS
 --   ephemeris and for a (GPS week, tow).
@@ -152,14 +152,14 @@ keplerSolve
     :: Double                                                   -- ^ mean anomaly
     -> Double                                                   -- ^ eccentricity
     -> Double                                                   -- ^ eccentric anomaly [rad]
-keplerSolve m e = iterate e0 0               
+keplerSolve m e = loop e0 0               
   where
     e0 = m + e * sin m
-    iterate :: Double -> Int -> Double
-    iterate eN k
+    loop :: Double -> Int -> Double
+    loop eN k
       | k > 20 = error "Kepler method iteration count exceeded"
       | abs (eN' - eN) < 1e-12 = eN'
-      | otherwise = iterate eN' (k+1)
+      | otherwise = loop eN' (k+1)
           where    
             f    = eN - e * sin eN - m  
             fDot =  1 - e * cos eN                           -- derivative of the function f
@@ -173,11 +173,7 @@ pseudorangeDF
     -> Double                                                -- ^ pseudorange corrected [m]
 pseudorangeDF pr1 pr2 = (pr2 - g*pr1)/(1 - g)
     where
-      g = (f1/f2)^2
-
--- | Euclidean distance between two 3D positions
-range :: (Double,Double,Double) -> (Double,Double,Double) -> Double
-range (x1,y1,z1) (x2,y2,z2) = sqrt ((x1-x2)^2 + (y1-y2)^2 + (z1-z2)^2)
+      g = (f1/f2)^(2::Int)
 
 -- | Iterative calculation eccentric anomaly
 eAnom
@@ -209,7 +205,7 @@ clkCorr
     :: GpsWeekTow                                           -- ^ GPS week, time-of-week
     -> NavRecord                                            -- ^ ephemeris                                 
     -> Pico                                                 -- ^ dtsv - satellite clock correction [s]
-clkCorr (w, tow) NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^2)
+clkCorr (w, tow) NavRecord{..} = realToFrac (af0 + af1*dt + af2*dt^(2::Int))
     where
       dt  = realToFrac $ diffGpsWeekTow (w, tow) (week, tocTow)
       (_, tocTow) = gpsTimeToWeekTow toc
@@ -223,19 +219,20 @@ transmissionTime
   -> GpsWeekTow                                             -- ^ receiver time of signal reception [s]
   -> NavRecord                                              -- ^ broadcast ephemeris
   -> GpsWeekTow                                             -- ^ signal transmission time [s]
-transmissionTime pr1 pr2 wtobs eph = iterate tt0 0
+transmissionTime pr1 pr2 wtobs eph =  loop tt0 0
     where
       pr   = pseudorangeDF pr1 pr2
       tsv  = subSeconds wtobs  (realToFrac (pr/c))           -- satelite time of signal transmission
       tt0 = tsv
-      iterate tt k
+      loop :: GpsWeekTow -> Int -> GpsWeekTow
+      loop tt k
           | k >= 10                  = error "Number of time transmission iterations exceeded"
           | abs (diffGpsWeekTow tt' tt) < 1e-12 = tt'
-          | otherwise                           = iterate tt' (k+1)
+          | otherwise                           = loop tt' (k+1)
           where
-            dtc  = clkCorr tt eph                           -- clock correction
+            dtb  = clkCorr tt eph                           -- clock correction
             dtr  = relCorr tt eph                           -- relativistic correction
-            dtsv = dtc  + dtr
+            dtsv = dtb  + dtr
             tt' = subSeconds tt0 dtsv
 
 -- | Calculates the number of seconds between two (GPS week, tow).
@@ -289,7 +286,7 @@ readDoubleField :: L8.ByteString -> Maybe Double
 readDoubleField bs = do
   (val, rest) <- readDouble bs
   case L8.uncons rest of
-    Just (c, _) | c=='D' || c=='d' ->
+    Just (ch, _) | ch=='D' || ch=='d' ->
       error $ "Unsupported number format with 'D': " ++ L8.unpack bs
     _ -> guard (L8.all (== ' ') rest) >> return val                  
                    
@@ -299,22 +296,6 @@ getField start len = L8.take len . L8.drop start
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
-
--- | Consumes a line of 80 characters and a line separator.
-line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
-line bs =
-    let line = L8.take 80 bs
-        rest = L8.dropWhile (\c -> c == '\r' || c == '\n') (L8.drop 80 bs)
-    in (line, rest)
-
--- | Consumes last line of GPS navigation block.
---   Last line can have two, three or four fields
---   and sometimes it is not completed to 80 characters.
-lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
-lastLine bs =
-    let line = L8.takeWhile (\c -> not (c == '\r' || c == '\n')) (L8.take 42 bs)
-        rest = L8.dropWhile (\c ->      c == '\r' || c == '\n')  (L8.drop (L8.length line) bs)
-    in (line, rest)
 
 -- | Consumes GPS satellite block of eight lines.
 gpsBlockLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
@@ -329,64 +310,71 @@ gpsBlockLines bs =
         (l8, r8) = lastLine r7
     in ([l1,l2,l3,l4,l5,l6,l7,l8], r8)
 
+-- | Consumes a line of 80 characters and a line separator.
+line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
+line bs =
+    let l80  = L8.take 80 bs
+        rest = L8.dropWhile (\ch -> ch == '\r' || ch == '\n') (L8.drop 80 bs)
+    in (l80, rest)
+
+-- | Consumes last line of GPS navigation block.
+--   Last line can have two, three or four fields
+--   and sometimes it is not completed to 80 characters.
+lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
+lastLine bs =
+    let l    = L8.takeWhile (\ch -> not (ch == '\r' || ch == '\n')) (L8.take 42 bs)
+        rest = L8.dropWhile (\ch ->      ch == '\r' || ch == '\n')  (L8.drop (L8.length l) bs)
+    in (l, rest)
+
 -- | Reads GPS navigation record from block lines for GPS satellite
 -- | Expects 8 lines as input
-readGpsNavRecord :: [L8.ByteString] -> Maybe NavRecord
-readGpsNavRecord ls = do
-    guard (length ls == 8)
-    let [l1,l2,l3,l4,l5,l6,l7,l8] = ls
-
-    (prn, _)  <- L8.readInt $ getField  1 2 l1
-    (y  , _)  <- L8.readInt $ getField  4 4 l1
-    (mon, _)  <- L8.readInt $ getField  9 2 l1
-    (d  , _)  <- L8.readInt $ getField 12 2 l1
-    (h  , _)  <- L8.readInt $ getField 15 2 l1
-    (m  , _)  <- L8.readInt $ getField 18 2 l1
-    (s  , _)  <- L8.readInt $ getField 21 2 l1
+readRecord :: [L8.ByteString] -> Maybe NavRecord
+readRecord ls =
+    case ls of
+      [l1,l2,l3,l4,l5,l6,_,l8] -> do
+              (prn, _)  <- L8.readInt $ getField  1 2 l1
+              (y  , _)  <- L8.readInt $ getField  4 4 l1
+              (mon, _)  <- L8.readInt $ getField  9 2 l1
+              (d  , _)  <- L8.readInt $ getField 12 2 l1
+              (h  , _)  <- L8.readInt $ getField 15 2 l1
+              (m  , _)  <- L8.readInt $ getField 18 2 l1
+              (s  , _)  <- L8.readInt $ getField 21 2 l1
   
-    let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
+              let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-    af0       <- readDoubleField $ getField 23 19 l1
-    af1       <- readDoubleField $ getField 42 19 l1
-    af2       <- readDoubleField $ getField 61 19 l1
+              af0       <- readDoubleField $ getField 23 19 l1
+              af1       <- readDoubleField $ getField 42 19 l1
+              af2       <- readDoubleField $ getField 61 19 l1
                  
-    iodeD     <- readDoubleField $ getField  4 19 l2
-    crs       <- readDoubleField $ getField 23 19 l2
-    deltaN    <- readDoubleField $ getField 42 19 l2
-    m0        <- readDoubleField $ getField 61 19 l2
+              crs       <- readDoubleField $ getField 23 19 l2
+              deltaN    <- readDoubleField $ getField 42 19 l2
+              m0        <- readDoubleField $ getField 61 19 l2
                  
-    cuc       <- readDoubleField $ getField  4 19 l3
-    e         <- readDoubleField $ getField 23 19 l3
-    cus       <- readDoubleField $ getField 42 19 l3
-    sqrtA     <- readDoubleField $ getField 61 19 l3
+              cuc       <- readDoubleField $ getField  4 19 l3
+              e         <- readDoubleField $ getField 23 19 l3
+              cus       <- readDoubleField $ getField 42 19 l3
+              sqrtA     <- readDoubleField $ getField 61 19 l3
 
-    toeD      <- readDoubleField $ getField  4 19 l4
-    cic       <- readDoubleField $ getField 23 19 l4
-    omega0    <- readDoubleField $ getField 42 19 l4
-    cis       <- readDoubleField $ getField 61 19 l4
+              toeD      <- readDoubleField $ getField  4 19 l4
+              cic       <- readDoubleField $ getField 23 19 l4
+              omega0    <- readDoubleField $ getField 42 19 l4
+              cis       <- readDoubleField $ getField 61 19 l4
 
-    i0        <- readDoubleField $ getField  4 19 l5
-    crc       <- readDoubleField $ getField 23 19 l5
-    omega     <- readDoubleField $ getField 42 19 l5
-    omegaDot  <- readDoubleField $ getField 61 19 l5
+              i0        <- readDoubleField $ getField  4 19 l5
+              crc       <- readDoubleField $ getField 23 19 l5
+              omega     <- readDoubleField $ getField 42 19 l5
+              omegaDot  <- readDoubleField $ getField 61 19 l5
                                                                
-    iDot      <- readDoubleField $ getField  4 19 l6
-    weekD     <- readDoubleField $ getField 42 19 l6
+              iDot      <- readDoubleField $ getField  4 19 l6
+              weekD     <- readDoubleField $ getField 42 19 l6
 
-    svHealthD <- readDoubleField $ getField 23 19 l7
-    iodcD     <- readDoubleField $ getField 61 19 l7
-                     
-    ttom      <- readDoubleField $ getField  4 19 l8
-    fitIntvD  <- readDoubleField $ getField 23 19 l8
+              fitIntvD  <- readDoubleField $ getField 23 19 l8
 
-    let iode     = round      iodeD
-        toe      = realToFrac toeD
-        week     = round      weekD                           -- conversion is needed for equality comparisons
-        svHealth = round      svHealthD
-        iodc     = round      iodcD
-        fitIntv  = round      fitIntvD
-              
-    return NavRecord {..}
+              let toe      = realToFrac toeD
+                  week     = round      weekD                           -- conversion is needed for equality comparisons
+                  fitIntv  = round      fitIntvD
+              return NavRecord {..}
+      _ -> Nothing
     
 -- | Conversion of GPS time to GPS week and time-of-week
 gpsTimeToWeekTow
@@ -456,10 +444,9 @@ main = do
   then
       let (ls, _) = gpsBlockLines bs
       in
-        case readGpsNavRecord ls of
+        case readRecord ls of
           Nothing  ->
-            putStrLn $ "Cannot read a GPS navigation record from "
-                         ++ fn
+            printf "Cannot read a GPS navigation record from %s\n" fn
           Just r   -> do                                                -- navigation record
             printf "Observation time\n"
             printf "(receiver clock time of signal reception) : %s\n"
