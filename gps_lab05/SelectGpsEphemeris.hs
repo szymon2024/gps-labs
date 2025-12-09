@@ -135,7 +135,7 @@ main :: IO ()
 main = do
   let fn = "source.nav"                                     -- Input: RINEX 3.04 navigation file name
   bs <- L8.readFile fn               
-  let navMap = readNavRinex304 bs
+  let navMap = readGpsRecords bs
       prn    = 6                                            -- Input: satellite number
       tobs   = mkGpsTime 2025 08 02 01 00 01.5              -- Input: observation time - receiver time of signal reception
   case selectGpsEphemeris tobs prn navMap of
@@ -146,15 +146,15 @@ main = do
                       ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs
          L8.hPut stdout $ toLazyByteString $ buildEntry r
 
--- | Read RINEX 3.04 navigation file into a NavMap.
-readNavRinex304 :: L8.ByteString -> NavMap
-readNavRinex304 bs
+-- | Reads GPS navigation records into a NavMap.
+readGpsRecords :: L8.ByteString -> NavMap
+readGpsRecords bs
     | L8.null bs         = error "Empty file"
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
     | otherwise =
         let rest = skipHeader bs
-        in readGpsRecords rest
+        in extractGpsRecords rest
       where
         rinexVer = trim $ getField  0 9 bs 
         fileType = trim $ getField 20 1 bs
@@ -175,12 +175,12 @@ skipHeader bs0 = loop bs0
 dropLine :: L8.ByteString -> L8.ByteString
 dropLine = L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
 
--- | Reads GPS navigation records from RINEX 3.04 navigation body
+-- | Extracts GPS navigation records from RINEX 3.04 navigation body
 --   into a NavMap.
-readGpsRecords
+extractGpsRecords
     :: L8.ByteString                                      -- ^ body of RINEX navigation file
     -> NavMap
-readGpsRecords bs0
+extractGpsRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
     | otherwise   = loop IMS.empty bs0
     where
