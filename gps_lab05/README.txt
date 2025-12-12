@@ -1,4 +1,4 @@
-2025-12-09
+2025-12-13
 
 EN:
 ======================================================================
@@ -13,8 +13,9 @@ svHealth==0, for which the observation time is within fitIntrv.
 Input
 -----
   - RINEX 3.04 navigation file name
-  - satellite number
   - receiver time of signal reception (GPS observation time)
+  - satellite number
+
                                        
 Output
 ------
@@ -77,8 +78,8 @@ obserwacji mieści się w fitIntrv.
 Wejście
 -------
   - nazwa pliku nawigacyjnego RINEX 3.04
+  - czas odbiornika odbioru sygnału (czas GPS obserwacji)  
   - numer satelity GPS
-  - czas odbiornika odbioru sygnału (czas GPS obserwacji)
                                        
 Output
 ------
