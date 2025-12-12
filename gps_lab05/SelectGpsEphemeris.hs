@@ -4,9 +4,9 @@
      the RINEX 3.04 navigation file for a given GPS observation time
      (receiver time of signal reception) and GPS satellite.
 
-     A navigation file data has a key: PRN, toc, iode. However, this
-     program does not apply this to select a navigation
-     record. Instead, it takes as an index: PRN, (week, toe), iode.
+     The navigation file data has the key: PRN, toc, iode. However,
+     this program does not use this key to select a navigation
+     record. Instead, it indexes records by: PRN, (week, toe), iode.
      To make this possible, the type NavMap = IntMap (Map GpsWeekTow
      [(Int, NavRecord)]) has been defined.
 
