@@ -1,4 +1,4 @@
--- 2025-12-09
+-- 2025-12-13
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -34,8 +34,6 @@
      Y = 13275548.286060918
      Z =  7260529.645377433
 -}
-
-{-# LANGUAGE RecordWildCards #-}
 
 import Data.Time.Calendar  (fromGregorian, diffDays, addDays)
 import Data.Time.LocalTime (LocalTime (..), TimeOfDay(..))
