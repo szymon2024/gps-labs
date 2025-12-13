@@ -71,7 +71,7 @@ import           Foreign.C.String              (CString)
 import           System.IO.Unsafe              (unsafePerformIO)
 
 
--- | GPS navigation data (a subset of fields from RINEX 3.04 navigation file)
+-- | GPS navigation record (a subset of fields from RINEX 3.04 navigation file)
 data NavRecord = NavRecord
   { prn      :: Int               -- ^ satellite number
   , toc      :: GpsTime           -- ^ clock data reference time
