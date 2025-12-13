@@ -1,4 +1,4 @@
--- 2025-12-09
+-- 2025-12-13
 
 {- | A program for computing the position of a GPS satellite in the ECEF
      coordinate system based on sample orbital parameters (ephemeris),
@@ -27,7 +27,8 @@
      
      Input:
        - GPS Ephemeris                        ephExample         defined in the code
-       - ephemeris validity interval          curveFitInteval    defined in the code       
+       - ephemeris validity interval          curveFitInteval    defined in the code
+         (in RINEX it is called fit interval)
        - GPS Time                             t                  defined in the code
 
      Output:
@@ -219,6 +220,7 @@ gpsSatPosByRec
     :: GpsTime
     -> Ephemeris                                             -- ^ ephemeris
     -> Int                                                   -- ^ curve fit interval [h]
+                                                             --   (in RINEX it is called fit interval)
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
 gpsSatPosByRec t eph curveFitInterval
     |    curveFitInterval ==  4
@@ -268,6 +270,7 @@ main = do
   let 
       eph              = ephExample                              -- Input: GPS Ephemeris
       curveFitInterval = 4                                       -- Input: ephemeris validity interval
+                                                                 --        (in RINEX it is called fit interval)
       t                = mkGpsTime 2024 03 07 22 00 30.0         -- Input: GPS Time
       (x, y, z)        = gpsSatPosByRec t eph curveFitInterval   -- Output: ECEF satellite position
                   
