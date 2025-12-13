@@ -73,29 +73,29 @@ import           System.IO.Unsafe              (unsafePerformIO)
 
 -- | GPS navigation record (a subset of fields from RINEX 3.04 navigation file)
 data NavRecord = NavRecord
-  { prn      :: Int               -- ^ satellite number
-  , toc      :: GpsTime           -- ^ clock data reference time
-  , af0      :: Double            -- ^ satellite clock bias correction coefficient [s]
-  , af1      :: Double            -- ^ satellite clock drift correction coefficient [s/s]
-  , af2      :: Double            -- ^ satellite clock drift rate correction coefficient [s/s^2]
-  , crs      :: Double            -- ^ orbital radius correction [m]
-  , deltaN   :: Double            -- ^ mean motion difference [rad/s]
-  , m0       :: Double            -- ^ mean anomaly at toe epoch [rad]
-  , cuc      :: Double            -- ^ cosine correction to argument of latitude [rad]
-  , e        :: Double            -- ^ eccentricity []
-  , cus      :: Double            -- ^ sine correction to argument of latitude [rad]
-  , sqrtA    :: Double            -- ^ square root of semi-major axis [m^0.5]
-  , toe      :: Pico              -- ^ time of ephemeris in GPS week (time-of-week of ephemeris) [s]
-  , cic      :: Double            -- ^ cosine correction to inclination [rad]
-  , omega0   :: Double            -- ^ longitude of ascending node at toe [rad]
-  , cis      :: Double            -- ^ sine correction to inclination [rad]
-  , i0       :: Double            -- ^ inclination angle at reference epoch [rad]
-  , crc      :: Double            -- ^ cosine correction to orbital radius [m]
-  , omega    :: Double            -- ^ argument of perigee [rad]
-  , omegaDot :: Double            -- ^ rate of node's right ascension [rad/s]
-  , iDot     :: Double            -- ^ rate of inclination angle [rad/s]
-  , week     :: Integer           -- ^ GPS week to go with toe
-  , fitIntv  :: Int               -- ^ fit interval, ephemeris validity interval related to toe [h]
+  { prn          :: Int               -- ^ satellite number
+  , toc          :: GpsTime           -- ^ clock data reference time
+  , af0          :: Double            -- ^ satellite clock bias correction coefficient [s]
+  , af1          :: Double            -- ^ satellite clock drift correction coefficient [s/s]
+  , af2          :: Double            -- ^ satellite clock drift rate correction coefficient [s/s^2]
+  , crs          :: Double            -- ^ orbital radius correction [m]
+  , deltaN       :: Double            -- ^ mean motion difference [rad/s]
+  , m0           :: Double            -- ^ mean anomaly at toe epoch [rad]
+  , cuc          :: Double            -- ^ cosine correction to argument of latitude [rad]
+  , e            :: Double            -- ^ eccentricity []
+  , cus          :: Double            -- ^ sine correction to argument of latitude [rad]
+  , sqrtA        :: Double            -- ^ square root of semi-major axis [m^0.5]
+  , toe          :: Pico              -- ^ time of ephemeris in GPS week (time-of-week of ephemeris) [s]
+  , cic          :: Double            -- ^ cosine correction to inclination [rad]
+  , omega0       :: Double            -- ^ longitude of ascending node at toe [rad]
+  , cis          :: Double            -- ^ sine correction to inclination [rad]
+  , i0           :: Double            -- ^ inclination angle at reference epoch [rad]
+  , crc          :: Double            -- ^ cosine correction to orbital radius [m]
+  , omega        :: Double            -- ^ argument of perigee [rad]
+  , omegaDot     :: Double            -- ^ rate of node's right ascension [rad/s]
+  , iDot         :: Double            -- ^ rate of inclination angle [rad/s]
+  , week         :: Integer           -- ^ GPS week to go with toe
+  , fitInterval  :: Int               -- ^ fit interval, ephemeris validity interval related to toe [h]
   } deriving (Show)
 
 type GpsTime    = LocalTime
@@ -368,11 +368,11 @@ readRecord ls =
               iDot      <- readDoubleField $ getField  4 19 l6
               weekD     <- readDoubleField $ getField 42 19 l6
 
-              fitIntvD  <- readDoubleField $ getField 23 19 l8
+              fitIntervalD  <- readDoubleField $ getField 23 19 l8
 
-              let toe      = realToFrac toeD
-                  week     = round      weekD                           -- conversion is needed for equality comparisons
-                  fitIntv  = round      fitIntvD
+              let toe          = realToFrac toeD
+                  week         = round      weekD           -- conversion is needed for equality comparisons
+                  fitInterval  = round      fitIntervalD
               return NavRecord {..}
       _ -> Nothing
     
@@ -405,17 +405,17 @@ weekTowToGpsTime (w, tow) =
         s            = fromIntegral sInt + towFrac
     in LocalTime date (TimeOfDay (fromInteger h) (fromInteger m) s)
     
--- | Ephemeris validity check based on fitInterval ephemeris field for
+-- | Ephemeris validity check based on fit interval ephemeris field for
 --   a given observation time
 isEphemerisValid
   :: GpsWeekTow                                             -- GPS week, time-of-week
   -> NavRecord
   -> Bool
 isEphemerisValid (w, tow) r =
-    abs diffTime <= halfFitIntv
+    abs diffTime <= halfFitInterval
     where
-      diffTime = diffGpsWeekTow  (w, tow) (week r, toe r)
-      halfFitIntv = fromIntegral ((fitIntv r) `div` 2 * 3600)
+      diffTime        = diffGpsWeekTow  (w, tow) (week r, toe r)
+      halfFitInterval = fromIntegral ((fitInterval r) `div` 2 * 3600)
 
 gpsSatPosForDfPr
   :: GpsTime                                                -- receiver time of signal reception
