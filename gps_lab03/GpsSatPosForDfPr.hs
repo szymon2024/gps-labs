@@ -114,7 +114,7 @@ f2        = 1227.60e6::Double     -- L2 frequency [Hz]
 --   ephemeris and for a (GPS week, tow).
 satPosECEF
     :: GpsWeekTow                                            -- ^ GPS week, time-of-week
-    -> NavRecord                                             -- ^ ephemeris parameters
+    -> NavRecord                                             -- ^ navigation record containing ephemeris parameters
     -> (Double, Double, Double)                              -- ^ satellite position in ECEF [m]
 satPosECEF (w, tow) eph =
   let
@@ -447,7 +447,7 @@ main = do
         case readRecord ls of
           Nothing  ->
             printf "Cannot read a GPS navigation record from %s\n" fn
-          Just r   -> do                                                -- navigation record
+          Just r   -> do                                                -- navigation record containing ephemeris
             printf "Observation time\n"
             printf "(receiver clock time of signal reception) : %s\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
