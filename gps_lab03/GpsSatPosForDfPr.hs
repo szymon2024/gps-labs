@@ -1,4 +1,4 @@
--- 2025-12-09
+-- 2025-12-13
 
 {- | Estimate ECEF satellite position for dual-frequency pseudorange
      measurement (observation) from broadcast ephemeris. The position
@@ -13,14 +13,14 @@
          - receiver clock
        All of them count time in GPS time system.
 
-       The signal transmission time te is by the GPS clock,
+       The signal transmission time tt is by the GPS clock,
        satellite time of signal transmission by satellite clock,
        receiver time of signal reception by receiver clock.
 
-       Epoch refers to a moment in time. The receiver time of signal
-       reception by receiver clock is also called the observation
-       time, observation epoch, receiver time tag, receiver timestamp,
-       measurement time.
+       The term "epoch" refers to a moment in time. The receiver time
+       of signal reception by receiver clock is also called the
+       observation time, observation epoch, receiver time tag,
+       receiver timestamp, measurement time.
 
      NOTE 2:
        Why is transmission time calculated? The transmission time is
@@ -39,7 +39,7 @@
          format                                     nav_record.txt (hand copied from a RINEX navigation file)
 
      Output:
-       - signal transmission time by GPS clock [s]      te
+       - signal transmission time by GPS clock [s]      tt
        - satellite position in ECEF [m]
          at transmission time                           (x, y, z)
 
