@@ -19,7 +19,8 @@ gps_lab04 - Scientific notation RINEX 3.04 file converter
 gps_lab05 - Selection of GPS broadcast ephemeris for the observation
             time
 
-gps_lab06 - Matching ephemerides to GPS satellite observations
+gps_lab06 - Matching broadcast ephemerides to GPS satellite
+            observations
 
 
 PL:
@@ -41,4 +42,5 @@ gps_lab04 - Konwerter notacji naukowej pliku RINEX 3.04
 
 gps_lab05 - Wybór efemerydy rozgłoszeniowej GPS dla czasu obserwacji
 
-gps_lab06 - Dopasowanie efemeryd do obserwacji satelitarnych GPS
+gps_lab06 - Dopasowanie efemeryd rozgłoszeniowych do obserwacji
+            satelitarnych GPS
