@@ -1,4 +1,4 @@
--- 2025-12-13
+-- 2025-12-14
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time
@@ -7,8 +7,8 @@
      The navigation file data has the key: PRN, toc, iode. However,
      this program does not use this key to select a navigation
      record. Instead, it indexes records by: PRN, (week, toe), iode.
-     To make this possible, the type NavMap = IntMap (Map GpsWeekTow
-     [(Int, NavRecord)]) has been defined.
+     To make this possible, the type NavMap = IntMap (Map EphWeekTow
+     [(Iode, NavRecord)]) has been defined.
 
      Main steps of the algorithm:
      
@@ -103,11 +103,6 @@ import           Foreign.C.Types                   (CChar, CDouble(CDouble))
 import           Foreign.C.String                  (CString)                 
 import           System.IO.Unsafe                  (unsafePerformIO)         
 
-type GpsTime    = LocalTime
-type GpsWeekTow = (Integer, Pico)                            -- ^ GPS week, time-of-week
-type NavMap     = IntMap (Map GpsWeekTow [(Int, NavRecord)]) -- ^ key1: prn, key2: (week r, toe r)
-                                                             --   value: list of (iode, r)
-
 -- | GPS navigation data record from RINEX 3.04 navigation file.
 data NavRecord = NavRecord
   { prn          :: Int               -- ^ satellite number
@@ -138,6 +133,12 @@ data NavRecord = NavRecord
   , ttom         :: Double            -- ^ transmission time of message - time stamp given by receiver [s]
   , fitInterval  :: Int               -- ^ fit interval, ephemeris validity interval related to toe [h]
   } deriving (Show)
+    
+type GpsTime    = LocalTime
+type GpsWeekTow = (Integer, Pico)                            -- ^ GPS week, time-of-week
+type EphWeekTow = GpsWeekTow
+type Iode       = Int
+type NavMap     = IntMap (Map EphWeekTow [(Iode, NavRecord)])
 
 
 -- Entry point of the program.
@@ -150,7 +151,7 @@ main = do
   let navMap = buildNavMap bs
   case selectGpsEphemeris tobs prn navMap of
     Nothing -> printf "Cannot find valid ephemeris \
-                      \for given prn and observation time"
+                      \for given prn and observation time\n"
     Just r  -> do                                           -- Output: GPS navigation record 
          printf "Observation time: %s\n"
                 (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
@@ -164,7 +165,8 @@ buildNavMap bs
     | L8.null bs         = error "Empty file"
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
-    | otherwise = readHealthyGpsNavRecords (skipHeader bs)
+    | otherwise = let body = skipHeader bs
+                  in readHealthyGpsNavRecords body
       where
         rinexVer = trim $ getField  0 9 bs 
         fileType = trim $ getField 20 1 bs
@@ -180,17 +182,17 @@ skipHeader bs0 = loop bs0
       | label bs == "END OF HEADER" = dropLastLine bs
       | otherwise                   = loop (dropLine bs)
       where
-        label        = trim . L8.takeWhile (not . (`elem` ['\r','\n'])) . L8.drop 60
-        dropLine     =      L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
+        label        = trim . L8.takeWhile (not . (`L8.elem` "\r\n")) . L8.drop 60
+        dropLine     =        L8.dropWhile        (`L8.elem` "\r\n")  . L8.drop 80
         -- The last line very ofthen is not completed to 80 characters
-        dropLastLine = L8.dropWhile (`elem` ['\r','\n'])
-                     . L8.dropWhile (not . (`elem` ['\r','\n']))
+        dropLastLine = L8.dropWhile        (`L8.elem` "\r\n")
+                     . L8.dropWhile (not . (`L8.elem` "\r\n"))
                      . L8.drop 72                           -- don't check before 60 + length "END OF HEADER"
 
--- | Extracts GPS navigation records from RINEX 3.04 navigation body
--- into a NavMap.
+-- | Extracts GPS navigation records for healthy satellites from RINEX
+-- 3.04 navigation body into a NavMap.
 readHealthyGpsNavRecords
-    :: L8.ByteString                                        -- ^ body of RINEX navigation file
+    :: L8.ByteString                                        -- ^ body of RINEX 3.04 navigation file
     -> NavMap
 readHealthyGpsNavRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
@@ -213,8 +215,8 @@ readHealthyGpsNavRecords bs0
 --   knowledge that the content of a line should be 80 characters, but
 --   last line often breaks this rule.
 recordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-recordLines bs =
-    let (l1, r1) = line bs
+recordLines body =
+    let (l1, r1) = line body
         (l2, r2) = line r1
         (l3, r3) = line r2
         (l4, r4) = line r3
@@ -223,22 +225,17 @@ recordLines bs =
         (l7, r7) = line r6
         (l8, r8) = lastLine r7
     in ([l1,l2,l3,l4,l5,l6,l7,l8], r8)
-
--- | Consumes a line of 80 characters and a line separator.
-line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
-line bs =
-    let l80  = L8.take 80 bs
-        rest = L8.dropWhile (\c -> c == '\r' || c == '\n') (L8.drop 80 bs)
-    in (l80, rest)
-       
--- | Consumes last line of GPS navigation block.  Last line can have
---   two, three or four fields and sometimes it is not completed to 80
---   characters.
-lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
-lastLine bs =
-    let l    = L8.takeWhile (\c -> not (c == '\r' || c == '\n')) (L8.take 42 bs)
-        rest = L8.dropWhile (\c ->      c == '\r' || c == '\n')  (L8.drop (L8.length l) bs)
-    in (l, rest)       
+    where
+      line bs = (L8.take 80 bs, L8.dropWhile (`L8.elem` "\r\n") (L8.drop 80 bs))
+      --   Last line can have two, three or four fields and sometimes
+      --   it is not completed to 80 characters.
+      lastLine =
+          (\(l42, rest1) ->
+               let (lRest, rest2) = L8.break (`L8.elem` "\r\n") rest1
+                   l    = l42 <> lRest
+                   rest = L8.dropWhile (`L8.elem` "\r\n") rest2
+               in (l, rest)
+          ) . L8.splitAt 42
 
 -- | Reads GPS navigation record from record lines for GPS satellite.
 --   Expects 8 lines as input.  It does not read fields one by one, as
@@ -313,8 +310,8 @@ skipUnknownRecord bs =
 isNewRecordLine :: L8.ByteString -> Bool
 isNewRecordLine bs = L8.take 1 bs /= " "
 
--- | Inserting a record into NavMap = IntMap (Map GpsWeekTow [(Int,
--- NavRecord)]). It is needed to build the NavMap.
+-- | Inserting a record into type NavMap = IntMap (Map EphWeekTow
+-- [(Iode, NavRecord)]). It is needed to build the NavMap.
 -- IMS.alter checks if there is already an entry for a
 -- given PRN.
 --   If not, it creates a new map with one entry (week, toe)
@@ -340,7 +337,9 @@ insertRecord r@NavRecord{..} navMap =
 
                        
 -- | Selects a navigation record for a given observation time and
--- satellite PRN from NavMap.
+-- satellite PRN from NavMap. The navigation record with the nearest
+-- (week, toe) to the specified observation time and the maximum iode
+-- is selected.
 selectGpsEphemeris
     :: GpsTime
     -> IMS.Key
