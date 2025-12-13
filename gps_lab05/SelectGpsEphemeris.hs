@@ -176,20 +176,21 @@ skipHeader :: L8.ByteString -> L8.ByteString
 skipHeader bs0 = loop bs0
   where
     loop bs
-      | L8.null bs = error "Cannot find header"
-      | label == "END OF HEADER"
-          =   L8.dropWhile (`elem` ['\r','\n'])
-            . L8.dropWhile (not . (`elem` ['\r','\n']))
-            $ L8.drop 72 bs                                 -- don't check before 60 + length "END OF HEADER"
-      | otherwise = loop (dropLine bs)
+      | L8.null bs                  = error "Cannot find header"
+      | label bs == "END OF HEADER" = dropLastLine bs
+      | otherwise                   = loop (dropLine bs)
       where
-        label    = trim . L8.takeWhile (not . (`elem` ['\r','\n'])) . L8.drop 60 $ bs                   
-        dropLine = L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
+        label        = trim . L8.takeWhile (not . (`elem` ['\r','\n'])) . L8.drop 60
+        dropLine     =      L8.dropWhile (\c -> c == '\r' || c == '\n') . L8.drop 80
+        -- The last line very ofthen is not completed to 80 characters
+        dropLastLine = L8.dropWhile (`elem` ['\r','\n'])
+                     . L8.dropWhile (not . (`elem` ['\r','\n']))
+                     . L8.drop 72                           -- don't check before 60 + length "END OF HEADER"
 
 -- | Extracts GPS navigation records from RINEX 3.04 navigation body
 -- into a NavMap.
 readHealthyGpsNavRecords
-    :: L8.ByteString                                      -- ^ body of RINEX navigation file
+    :: L8.ByteString                                        -- ^ body of RINEX navigation file
     -> NavMap
 readHealthyGpsNavRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
