@@ -37,43 +37,43 @@
      Observation time: 2025 08 02 01 00 01.5
                   toe: 2025 08 02 02 00 00
      PRN:  6      toc: 2025 08 02 02 00 00
-     af0:       -4.722196608782E-4
-     af1:      -1.432454155292E-11
-     af2:         0.000000000000E0
+     af0:         -4.722196608782E-4
+     af1:        -1.432454155292E-11
+     af2:           0.000000000000E0
 
-     iode:       69
-     crs:        -2.368750000000E1
-     deltaN:     3.821944913632E-9
-     m0:         -2.959416369262E0
+     iode:         69
+     crs:          -2.368750000000E1
+     deltaN:       3.821944913632E-9
+     m0:           -2.959416369262E0
 
-     cuc:       -1.283362507820E-6
-     e:          3.335768124089E-3
-     cus:        4.727393388748E-6
-     sqrtA:       5.153617370605E3
+     cuc:         -1.283362507820E-6
+     e:            3.335768124089E-3
+     cus:          4.727393388748E-6
+     sqrtA:         5.153617370605E3
 
-     toe:         5.256000000000E5
-     cic:        8.940696716309E-8
-     omega0:     6.818382481570E-1
-     cis:        4.470348358154E-8
+     toe:           5.256000000000E5
+     cic:          8.940696716309E-8
+     omega0:       6.818382481570E-1
+     cis:          4.470348358154E-8
 
-     i0:         9.884960063693E-1
-     crc:         3.054062500000E2
-     omega:     -6.694838801080E-1
-     omegaDot:  -7.833540584123E-9
+     i0:           9.884960063693E-1
+     crc:           3.054062500000E2
+     omega:       -6.694838801080E-1
+     omegaDot:    -7.833540584123E-9
 
-     iDot:     -1.753644474903E-10
+     iDot:       -1.753644474903E-10
      skipped
-     week:     2377
+     week:       2377
      skipped
 
      skipped
-     svHealth:    0
+     svHealth:      0
      skipped
-     iodc:       69
+     iodc:         69
 
-     ttom:        5.184000000000E5
-     fitIntv:     4
-     ----------------------------------
+     ttom:          5.184000000000E5
+     fitInterval:     4
+----------------------------------
 
 -}
 
@@ -110,33 +110,33 @@ type NavMap     = IntMap (Map GpsWeekTow [(Int, NavRecord)]) -- ^ key1: prn, key
 
 -- | GPS navigation data record from RINEX 3.04 navigation file.
 data NavRecord = NavRecord
-  { prn      :: Int               -- ^ satellite number
-  , toc      :: GpsTime           -- ^ clock data reference time
-  , af0      :: Double            -- ^ SV clock bias correction coefficient [s]
-  , af1      :: Double            -- ^ SV clock drift correction coefficient [s/s]
-  , af2      :: Double            -- ^ SV clock drift rate correction coefficient [s/s^2]
-  , iode     :: Int               -- ^ issue-of-data, ephemeris; ephemeris data issue number,
-  , crs      :: Double            -- ^ orbital radius correction [m]
-  , deltaN   :: Double            -- ^ mean motion difference [rad/s]
-  , m0       :: Double            -- ^ mean anomaly at toe epoch [rad]
-  , cuc      :: Double            -- ^ latitude argument correction [rad]
-  , e        :: Double            -- ^ eccentricity []
-  , cus      :: Double            -- ^ latitude argument correction [rad]
-  , sqrtA    :: Double            -- ^ sqare root of semi-major axis [m^0.5]
-  , toe      :: Pico              -- ^ time of ephemeris in GPS week (time-of-week of ephemeris) [s]
-  , cic      :: Double            -- ^ inclination correction [rad]
-  , omega0   :: Double            -- ^ longitude of ascending node at toe epoch [rad]
-  , cis      :: Double            -- ^ inclination correction [rad]
-  , i0       :: Double            -- ^ inclination at reference epoch [rad]
-  , crc      :: Double            -- ^ orbital radius corrcetion [m]
-  , omega    :: Double            -- ^ argument of perigee [rad]
-  , omegaDot :: Double            -- ^ rate of node's right ascension [rad/s]
-  , iDot     :: Double            -- ^ rate of inclination angle [rad/s]
-  , week     :: Integer           -- ^ number of GPS week for toe and toc
-  , svHealth :: Int               -- ^ SV health, 0 means ok
-  , iodc     :: Int               -- ^ issue-of-data, clock; clock data issue number
-  , ttom     :: Double            -- ^ transmission time of message - time stamp given by receiver [s]
-  , fitIntv  :: Int               -- ^ fit interval, ephemeris validity interval related to toe [h]
+  { prn          :: Int               -- ^ satellite number
+  , toc          :: GpsTime           -- ^ clock data reference time
+  , af0          :: Double            -- ^ SV clock bias correction coefficient [s]
+  , af1          :: Double            -- ^ SV clock drift correction coefficient [s/s]
+  , af2          :: Double            -- ^ SV clock drift rate correction coefficient [s/s^2]
+  , iode         :: Int               -- ^ issue-of-data, ephemeris; ephemeris data issue number,
+  , crs          :: Double            -- ^ orbital radius correction [m]
+  , deltaN       :: Double            -- ^ mean motion difference [rad/s]
+  , m0           :: Double            -- ^ mean anomaly at toe epoch [rad]
+  , cuc          :: Double            -- ^ latitude argument correction [rad]
+  , e            :: Double            -- ^ eccentricity []
+  , cus          :: Double            -- ^ latitude argument correction [rad]
+  , sqrtA        :: Double            -- ^ sqare root of semi-major axis [m^0.5]
+  , toe          :: Pico              -- ^ time of ephemeris in GPS week (time-of-week of ephemeris) [s]
+  , cic          :: Double            -- ^ inclination correction [rad]
+  , omega0       :: Double            -- ^ longitude of ascending node at toe epoch [rad]
+  , cis          :: Double            -- ^ inclination correction [rad]
+  , i0           :: Double            -- ^ inclination at reference epoch [rad]
+  , crc          :: Double            -- ^ orbital radius corrcetion [m]
+  , omega        :: Double            -- ^ argument of perigee [rad]
+  , omegaDot     :: Double            -- ^ rate of node's right ascension [rad/s]
+  , iDot         :: Double            -- ^ rate of inclination angle [rad/s]
+  , week         :: Integer           -- ^ number of GPS week for toe and toc
+  , svHealth     :: Int               -- ^ SV health, 0 means ok
+  , iodc         :: Int               -- ^ issue-of-data, clock; clock data issue number
+  , ttom         :: Double            -- ^ transmission time of message - time stamp given by receiver [s]
+  , fitInterval  :: Int               -- ^ fit interval, ephemeris validity interval related to toe [h]
   } deriving (Show)
 
 
@@ -287,14 +287,14 @@ readRecord ls =
             iodcD     <- readDoubleField $ getField 61 19 l7
                      
             ttom      <- readDoubleField $ getField  4 19 l8
-            fitIntvD  <- readDoubleField $ getField 23 19 l8
+            fitIntervalD  <- readDoubleField $ getField 23 19 l8
 
-            let iode     = round      iodeD
-                toe      = realToFrac toeD
-                week     = round      weekD                           -- conversion is needed for equality comparisons
-                svHealth = round      svHealthD
-                iodc     = round      iodcD
-                fitIntv  = round      fitIntvD
+            let iode         = round      iodeD
+                toe          = realToFrac toeD
+                week         = round      weekD             -- conversion is needed for equality comparisons
+                svHealth     = round      svHealthD
+                iodc         = round      iodcD
+                fitInterval  = round      fitIntervalD
             return NavRecord {..}
     _ -> Nothing
 
@@ -408,17 +408,17 @@ diffGpsWeekTow (w2,tow2) (w1,tow1) =
       dw   = w2   - w1
       dtow = tow2 - tow1
 
--- | Ephemeris validity check based on fitInterval ephemeris field for
+-- | Ephemeris validity check based on fit interval ephemeris field for
 --   a given observation time
 isEphemerisValid
   :: GpsWeekTow                                             -- GPS week, time-of-week
   -> NavRecord
   -> Bool
 isEphemerisValid (w, tow) r =
-    abs diffTime <= halfFitIntv
+    abs diffTime <= halfFitInterval
     where
-      diffTime = diffGpsWeekTow  (w, tow) (week r, toe r)
-      halfFitIntv = realToFrac ((fitIntv r) `div` 2 * 3600)
+      diffTime        = diffGpsWeekTow  (w, tow) (week r, toe r)
+      halfFitInterval = realToFrac ((fitInterval r) `div` 2 * 3600)
 
 -- | Function import: double strtod(const char *nptr, char **endptr)
 foreign import ccall unsafe "stdlib.h strtod"
@@ -468,42 +468,42 @@ printfRecord :: Text.Printf.PrintfType t => NavRecord -> t
 printfRecord NavRecord{..} =
     printf "             toe: %s\n\
            \PRN: %2d      toc: %s\n\
-           \af0:      %19.12E\n\
-           \af1:      %19.12E\n\
-           \af2:      %19.12E\n\n\
-            
-           \iode:     %4d\n\
-           \crs:      %19.12E\n\
-           \deltaN:   %19.12E\n\
-           \m0:       %19.12E\n\n\
-            
-           \cuc:      %19.12E\n\
-           \e:        %19.12E\n\
-           \cus:      %19.12E\n\
-           \sqrtA:    %19.12E\n\n\
-            
-           \toe:      %19.12E\n\
-           \cic:      %19.12E\n\
-           \omega0:   %19.12E\n\
-           \cis:      %19.12E\n\n\
-            
-           \i0:       %19.12E\n\
-           \crc:      %19.12E\n\
-           \omega:    %19.12E\n\
-           \omegaDot: %19.12E\n\n\
-            
-           \iDot:     %19.12E\n\
-           \skipped\n\ 
-           \week:     %4d\n\
-           \skipped\n\n\ 
-
-           \skipped\n\ 
-           \svHealth: %4d\n\
-           \skipped\n\
-           \iodc:     %4d\n\n\
-            
-           \ttom:     %19.12E\n\
-           \fitIntv:  %4d\n\
+           \af0:        %19.12E\n\   
+           \af1:        %19.12E\n\  
+           \af2:        %19.12E\n\n\
+                                    
+           \iode:       %4d\n\      
+           \crs:        %19.12E\n\  
+           \deltaN:     %19.12E\n\  
+           \m0:         %19.12E\n\n\
+                                    
+           \cuc:        %19.12E\n\  
+           \e:          %19.12E\n\  
+           \cus:        %19.12E\n\  
+           \sqrtA:      %19.12E\n\n\
+                                    
+           \toe:        %19.12E\n\  
+           \cic:        %19.12E\n\  
+           \omega0:     %19.12E\n\  
+           \cis:        %19.12E\n\n\
+                                    
+           \i0:         %19.12E\n\  
+           \crc:        %19.12E\n\  
+           \omega:      %19.12E\n\  
+           \omegaDot:   %19.12E\n\n\
+                                    
+           \iDot:       %19.12E\n\  
+           \skipped\n\              
+           \week:       %4d\n\      
+           \skipped\n\n\          
+                                    
+           \skipped\n\              
+           \svHealth:   %4d\n\      
+           \skipped\n\              
+           \iodc:       %4d\n\n\    
+                                    
+           \ttom:       %19.12E\n\ 
+           \fitInterval:  %4d\n\
            \----------------------------------\n"
      (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" (weekTowToGpsTime (week, toe)))
      prn (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" toc)
@@ -531,6 +531,6 @@ printfRecord NavRecord{..} =
      svHealth       
      iodc           
      ttom           
-     fitIntv        
+     fitInterval        
 
                           
