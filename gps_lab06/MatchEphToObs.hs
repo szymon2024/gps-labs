@@ -30,14 +30,12 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module MatchEphToObs where
-
 import           Data.Map.Strict                   (Map)
 import qualified Data.Map.Strict            as MS
 import           Data.IntMap.Strict                (IntMap)
 import qualified Data.IntMap.Strict         as IMS
 import qualified Data.ByteString.Lazy.Char8 as L8
-import           Data.Time.Calendar                (fromGregorian, diffDays, addDays)
+import           Data.Time.Calendar                (fromGregorian, diffDays)
 import           Data.Time.LocalTime               (LocalTime (..), TimeOfDay(..))
 import           Data.Fixed                        (Pico)
 import           Data.Int                          (Int64)
@@ -444,22 +442,6 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
                                     )
                      + s
     in (w, tow)
-
--- | Converts GPS week and time-of-week (tow) into GPS time
-weekTowToGpsTime
-    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
-    -> GpsTime                                              -- ^ GPS time
-weekTowToGpsTime (w, tow) =
-    let gpsStartDate = fromGregorian 1980 1 6               -- the date from which the GPS time is counted
-        days         = w * 7                                -- number of days since GPS start date
-        (towInt, towFrac) = properFraction tow
-        (dow,sodInt) = towInt `divMod` 86400
-        date         = addDays (days+dow) gpsStartDate
-        (h,sohInt)   = sodInt `divMod` 3600
-        (m,sInt)     = sohInt `divMod`   60
-        s            = fromIntegral sInt + towFrac
-    in LocalTime date (TimeOfDay (fromInteger h) (fromInteger m) s)      
-
 
 attachEphemerides :: NavMap -> ObsMap -> ObsMap
 attachEphemerides navMap =
