@@ -466,7 +466,7 @@ mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 -- | Prints a navigation record                          
 printfRecord :: Text.Printf.PrintfType t => NavRecord -> t
 printfRecord NavRecord{..} =
-    printf "             toe: %s\n\
+    printf "  Ephemeris time: %s\n\
            \PRN: %2d      toc: %s\n\
            \af0:        %19.12E\n\   
            \af1:        %19.12E\n\  
