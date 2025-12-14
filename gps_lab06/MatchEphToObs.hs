@@ -380,16 +380,12 @@ readEpochObservations (l:ls) = do
   (h  , _) <- L8.readInt      $ getField 13  2 l
   (m  , _) <- L8.readInt      $ getField 16  2 l
   s        <- readDoubleField $ getField 19 11 l
-
   let tobs = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
-
   (n  , _) <- L8.readInt $ getField 33  3 l                -- number of satellites observed in current epoch
                                                            -- (observation time)
   let (obsLines, rest) = splitAt n ls
       gpsLines = filter (\line -> L8.take 1 line == "G") obsLines
-                 
   prns    <- mapM (\line -> fmap fst (L8.readInt (getField 1 2 line))) gpsLines
-             
   return ((tobs, prns), rest)
                
 -- | Makes GpsTime from numbers.
