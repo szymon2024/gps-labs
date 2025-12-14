@@ -98,8 +98,6 @@ import           Data.Time.LocalTime               (LocalTime (..), TimeOfDay(..
 import           Data.Time.Format                  (formatTime, defaultTimeLocale)
 import           Data.Fixed                        (Pico)
 import           Text.Printf                       (PrintfType, printf)
-import           Data.Function                     (on)
-import           Data.List                         (maximumBy)     
 
 -- to readDouble
 import qualified Data.ByteString.Unsafe     as BSU (unsafeUseAsCString)    
