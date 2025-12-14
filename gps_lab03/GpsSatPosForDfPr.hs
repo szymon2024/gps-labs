@@ -1,4 +1,4 @@
--- 2025-12-13
+-- 2025-12-14
 
 {- | Estimate ECEF satellite position for dual-frequency pseudorange
      measurement (observation) from broadcast ephemeris. The position
@@ -63,6 +63,8 @@ import           Data.Time.Format
 import           Data.Fixed                    (Pico)    
 import           Text.Printf                   (printf)
 import qualified Data.ByteString.Char8  as L8
+import           Data.Char                     (isSpace)
+    
 import           Control.Monad                 (guard)
 import qualified Data.ByteString.Unsafe as BSU (unsafeUseAsCString)
 import           Foreign                       (Ptr, alloca, peek, minusPtr)
@@ -332,13 +334,13 @@ readRecord :: [L8.ByteString] -> Maybe NavRecord
 readRecord ls =
     case ls of
       [l1,l2,l3,l4,l5,l6,_,l8] -> do
-              (prn, _)  <- L8.readInt $ getField  1 2 l1
-              (y  , _)  <- L8.readInt $ getField  4 4 l1
-              (mon, _)  <- L8.readInt $ getField  9 2 l1
-              (d  , _)  <- L8.readInt $ getField 12 2 l1
-              (h  , _)  <- L8.readInt $ getField 15 2 l1
-              (m  , _)  <- L8.readInt $ getField 18 2 l1
-              (s  , _)  <- L8.readInt $ getField 21 2 l1
+              (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1             -- trim is needed by readInt
+              (y  , _)  <- L8.readInt $ trim $ getField  4 4 l1
+              (mon, _)  <- L8.readInt $ trim $ getField  9 2 l1
+              (d  , _)  <- L8.readInt $ trim $ getField 12 2 l1
+              (h  , _)  <- L8.readInt $ trim $ getField 15 2 l1
+              (m  , _)  <- L8.readInt $ trim $ getField 18 2 l1
+              (s  , _)  <- L8.readInt $ trim $ getField 21 2 l1
   
               let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
@@ -375,7 +377,11 @@ readRecord ls =
                   fitInterval  = round      fitIntervalD
               return NavRecord {..}
       _ -> Nothing
-    
+
+-- | Trim leading and trailing whitespace from a ByteString.              
+trim :: L8.ByteString -> L8.ByteString
+trim = L8.dropWhile isSpace . L8.dropWhileEnd isSpace
+
 -- | Conversion of GPS time to GPS week and time-of-week
 gpsTimeToWeekTow
     :: GpsTime
