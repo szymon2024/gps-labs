@@ -24,7 +24,7 @@ Output
 Print of run
 ------------
 Observation time: 2025 08 02 01 00 01.5
-             toe: 2025 08 02 02 00 00
+  Ephemeris time: 2025 08 02 02 00 00
 PRN:  6      toc: 2025 08 02 02 00 00
 af0:         -4.722196608782E-4
 af1:        -1.432454155292E-11
@@ -88,7 +88,7 @@ Output
 Wydruk uruchomienia
 -------------------
 Observation time: 2025 08 02 01 00 01.5
-             toe: 2025 08 02 02 00 00
+  Ephemeris time: 2025 08 02 02 00 00
 PRN:  6      toc: 2025 08 02 02 00 00
 af0:         -4.722196608782E-4
 af1:        -1.432454155292E-11
