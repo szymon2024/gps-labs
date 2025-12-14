@@ -1,4 +1,4 @@
--- 2025-12-14
+-- 2025-12-15
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time
@@ -7,25 +7,25 @@
      Navigation file entries are keyed by PRN, toc, and iode. However,
      this program does not use this key to select a navigation
      record. Instead, it builds
-     @
+
      type NavMap = IntMap (Map EphWeekTow NavRecord)
-     @
+
      from navigation records correspongind to healthy satellites.
-     For each @(week, toe)@ only the record with the
+     For each (week, toe) only the record with the
      maximum IODE is retained.
 
      Main steps of the algorithm:
      
      1. Building a map of healthy navigation records, keeping only the
-     record with the maximum IODE for each @(week, toe)@ from the
-     body of a rinex 3.04 navigation file.
+     record with the maximum IODE for each (week, toe) from the body
+     of a rinex 3.04 navigation file.
      
-     2. Select the navigation record whose @(week, toe)@ is nearest to
+     2. Select the navigation record whose (week, toe) is nearest to
      the specified observation time. If no record can be selected, the
      program terminates.
 
-     3. Check whether the selected record lies within the @fitInterval@
-     relative to @(week, toe)@. If the condition is satisfied, the
+     3. Check whether the selected record lies within the fitInterval
+     relative to (week, toe). If the condition is satisfied, the
      record is printed; otherwise, the program terminates.
 
      Input:
