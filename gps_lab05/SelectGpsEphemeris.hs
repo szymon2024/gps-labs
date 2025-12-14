@@ -4,24 +4,29 @@
      the RINEX 3.04 navigation file for a given GPS observation time
      (receiver time of signal reception) and GPS satellite.
 
-     The navigation file data has the key: PRN, toc, iode. However,
+     Navigation file entries are keyed by PRN, toc, and iode. However,
      this program does not use this key to select a navigation
-     record. Instead, it indexes records by: PRN, (week, toe), iode.
-     To make this possible, the type NavMap = IntMap (Map EphWeekTow
-     [(Iode, NavRecord)]) has been defined.
+     record. Instead, it builds
+     @
+     type NavMap = IntMap (Map EphWeekTow NavRecord)
+     @
+     from navigation records correspongind to healthy satellites.
+     For each @(week, toe)@ only the record with the
+     maximum IODE is retained.
 
      Main steps of the algorithm:
      
-     1. Building a map of healthy navigation records from the body of
-     a rinex 3.04 navigation file.
+     1. Building a map of healthy navigation records, keeping only the
+     record with the maximum IODE for each @(week, toe)@ from the
+     body of a rinex 3.04 navigation file.
      
-     2. The navigation record with the nearest (week, toe) to the
-     specified observation time and the maximum iode is selected. If
-     no record can be selected, the program terminates.
+     2. Select the navigation record whose @(week, toe)@ is nearest to
+     the specified observation time. If no record can be selected, the
+     program terminates.
 
-     3. The program then checks whether the selected record lies
-     within the fitInterval relative to (week, toe).  If the record satisfies
-     this condition, it is printed. Otherwise the program terminates.
+     3. Check whether the selected record lies within the @fitInterval@
+     relative to @(week, toe)@. If the condition is satisfied, the
+     record is printed; otherwise, the program terminates.
 
      Input:
        - RINEX 3.04 navigation file name                    fn
@@ -96,14 +101,14 @@ import           Text.Printf                       (PrintfType, printf)
 import           Data.Function                     (on)
 import           Data.List                         (maximumBy)     
 
--- For readDouble
+-- to readDouble
 import qualified Data.ByteString.Unsafe     as BSU (unsafeUseAsCString)    
 import           Foreign                           (Ptr, alloca, peek, minusPtr)
 import           Foreign.C.Types                   (CChar, CDouble(CDouble)) 
 import           Foreign.C.String                  (CString)                 
 import           System.IO.Unsafe                  (unsafePerformIO)         
 
--- | GPS navigation data record from RINEX 3.04 navigation file.
+-- | GPS navigation data record from RINEX 3.04 navigation file (subset of fields).
 data NavRecord = NavRecord
   { prn          :: Int               -- ^ satellite number
   , toc          :: GpsTime           -- ^ clock data reference time
@@ -135,12 +140,13 @@ data NavRecord = NavRecord
   } deriving (Show)
     
 type GpsTime    = LocalTime
-type GpsWeekTow = (Integer, Pico)                            -- ^ GPS week, time-of-week
+type GpsWeekTow = (Integer, Pico)                      -- ^ GPS week, time-of-week
 type EphWeekTow = GpsWeekTow
-type Iode       = Int
-type NavMap     = IntMap (Map EphWeekTow [(Iode, NavRecord)])
-
-
+type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellite identifie)
+                                                       --   key2:  (week, toe)
+                                                       --   value: navigation record for a healthy satellite
+                                                       --          and with max iode for (week, toe)
+                                                              
 -- Entry point of the program.
 main :: IO ()
 main = do
@@ -158,8 +164,9 @@ main = do
          printfRecord r
 
 
--- | Build a navigation map from healthy GPS navigation records of
--- RINEX 3.04 navigation body.
+-- | Build a navigation map from GPS navigation records of RINEX 3.04
+-- navigation body for healthy satellites and with max iode for (week,
+-- toe).
 buildNavMap :: L8.ByteString -> NavMap  
 buildNavMap bs
     | L8.null bs         = error "Empty file"
@@ -204,9 +211,10 @@ readHealthyGpsNavRecords bs0
           | L8.take 1 bs == "G" =
               let (ls, rest) = recordLines bs
               in case readRecord ls of
-                Just r | svHealth r == 0 -> loop (insertRecord r m) rest
+                Just r | svHealth r == 0 -> loop (insertNavRecord r m) rest
                        | otherwise       -> loop m rest
-                Nothing  -> error "Cannot read GPS navigation record"
+                Nothing  -> error $ "Cannot read GPS navigation record"
+                                    ++ L8.unpack (L8.unlines ls)
           | otherwise =
               let rest = skipUnknownRecord bs
               in loop m rest        
@@ -244,13 +252,13 @@ readRecord :: [L8.ByteString] -> Maybe NavRecord
 readRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
-            (prn, _)  <- L8.readInt $ getField  1 2 l1
-            (y  , _)  <- L8.readInt $ getField  4 4 l1
-            (mon, _)  <- L8.readInt $ getField  9 2 l1
-            (d  , _)  <- L8.readInt $ getField 12 2 l1
-            (h  , _)  <- L8.readInt $ getField 15 2 l1
-            (m  , _)  <- L8.readInt $ getField 18 2 l1
-            (s  , _)  <- L8.readInt $ getField 21 2 l1
+            (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1              -- trim is needed by readInt
+            (y  , _)  <- L8.readInt $ trim $ getField  4 4 l1
+            (mon, _)  <- L8.readInt $ trim $ getField  9 2 l1
+            (d  , _)  <- L8.readInt $ trim $ getField 12 2 l1
+            (h  , _)  <- L8.readInt $ trim $ getField 15 2 l1
+            (m  , _)  <- L8.readInt $ trim $ getField 18 2 l1
+            (s  , _)  <- L8.readInt $ trim $ getField 21 2 l1
   
             let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
@@ -310,56 +318,54 @@ skipUnknownRecord bs =
 isNewRecordLine :: L8.ByteString -> Bool
 isNewRecordLine bs = L8.take 1 bs /= " "
 
--- | Inserting a record into type NavMap = IntMap (Map EphWeekTow
--- [(Iode, NavRecord)]). It is needed to build the NavMap.
--- IMS.alter checks if there is already an entry for a
--- given PRN.
---   If not, it creates a new map with one entry (week, toe)
--- [(iode, r)]).
---   If so, it updates the existing map.
--- MS.alter checks if there is already a list of records
--- for a given (week, toe)
---   If not, it creates a new list with one element.
---   If so, it appends (iode, r) to the beginning of the list.
-insertRecord :: NavRecord -> NavMap -> NavMap
-insertRecord r@NavRecord{..} navMap =
-    IMS.alter updatePrn prn navMap
+-- | Insert a navigation record into a 'NavMap'.
+-- If there is no entry for the given PRN or epoch, the record is
+-- inserted. If an entry already exists, the record is replaced only
+-- if the new record has a greater IODE than the existing one.
+--
+-- This ensures that for each @(week, toe)@ only the navigation
+-- record with the maximum IODE is kept.
+insertNavRecord :: NavRecord -> NavMap -> NavMap
+insertNavRecord r =
+  IMS.alter updatePrn key1
   where
+    key1 = prn r
+    key2 = (week r, toe r)
     updatePrn Nothing =
-        Just (MS.singleton (week, toe) [(iode, r)])
-    updatePrn (Just wtoeMap) =
-        Just (MS.alter updateWtoe (week, toe) wtoeMap)
+        Just (MS.singleton key2 r)
+    updatePrn (Just subMap) =
+        Just (MS.alter (chooseNewer r) key2 subMap)
 
-    updateWtoe Nothing =
-        Just [(iode, r)]
-    updateWtoe (Just rs) =
-        Just ((iode, r) : rs)
+    chooseNewer :: NavRecord -> Maybe NavRecord -> Maybe NavRecord
+    chooseNewer new Nothing    = Just new
+    chooseNewer new (Just old) =
+        if iode new > iode old
+        then Just new
+        else Just old
 
                        
 -- | Selects a navigation record for a given observation time and
 -- satellite PRN from NavMap. The navigation record with the nearest
--- (week, toe) to the specified observation time and the maximum iode
--- is selected.
+-- (week, toe) to the specified observation time is selected.
 selectGpsEphemeris
     :: GpsTime
     -> IMS.Key
     -> NavMap
     -> Maybe NavRecord
 selectGpsEphemeris tobs prn navMap = do
-    wtoeMap <- IMS.lookup prn navMap
+    subMap <- IMS.lookup prn navMap
     let wtobs  = gpsTimeToWeekTow tobs
-        past   = MS.lookupLE wtobs wtoeMap
-        future = MS.lookupGE wtobs wtoeMap
+        past   = MS.lookupLE wtobs subMap
+        future = MS.lookupGE wtobs subMap
         closest = case (past, future) of
-          (Just (wtoeP, rsP), Just (wtoeF, rsF)) ->
+          (Just (wtoeP, rP), Just (wtoeF, rF)) ->
               if abs (diffGpsWeekTow wtobs wtoeP) <= abs (diffGpsWeekTow wtoeF wtobs)
-              then Just (wtoeP, rsP)
-              else Just (wtoeF, rsF)
+              then Just (wtoeP, rP)
+              else Just (wtoeF, rF)
           (Just p, Nothing)  -> Just p
           (Nothing, Just f)  -> Just f
-          (Nothing, Nothing) -> Nothing                                
-    (_, iodeList) <- closest
-    let (_, r) = maximumBy (compare `on` fst) iodeList
+          (Nothing, Nothing) -> Nothing                              
+    (_, r) <- closest
     if isEphemerisValid wtobs r
       then Just r
       else Nothing
