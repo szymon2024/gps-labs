@@ -173,7 +173,7 @@ buildNavMap bs
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
     | otherwise = let body = skipHeader bs
-                  in readHealthyGpsNavRecords body
+                  in readFilteredGpsNavRecords body
       where
         rinexVer = trim $ getField  0 9 bs 
         fileType = trim $ getField 20 1 bs
@@ -196,12 +196,13 @@ skipHeader bs0 = loop bs0
                      . L8.dropWhile (not . (`L8.elem` "\r\n"))
                      . L8.drop 72                           -- don't check before 60 + length "END OF HEADER"
 
--- | Extracts GPS navigation records for healthy satellites from RINEX
--- 3.04 navigation body into a NavMap.
-readHealthyGpsNavRecords
+-- | Extracts GPS navigation records of healthy satellites and with
+-- max iode for (week, toe) from RINEX 3.04 navigation body into a
+-- NavMap.
+readFilteredGpsNavRecords
     :: L8.ByteString                                        -- ^ body of RINEX 3.04 navigation file
     -> NavMap
-readHealthyGpsNavRecords bs0
+readFilteredGpsNavRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
     | otherwise   = loop IMS.empty bs0
     where
