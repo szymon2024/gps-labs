@@ -17,12 +17,12 @@
     to GPS observations using selectGpsEphemeris function.
 
     Input:
-      - RINEX 3.04 navigation file name                     fnNav
-      - RINEX 3.04 observation file name                    fnObs
+      - RINEX 3.04 navigation file name                fnNav     defined in the code
+      - RINEX 3.04 observation file name               fnObs     defined in the code
 
     Output:
       - GPS observations with attached navigation
-        records containing ephemerides                      obsMap'
+        records containing ephemerides                 obsMap'
         
     
     Print of run:
@@ -160,7 +160,8 @@ readFilteredGpsNavRecords bs0
               in case readRecord ls of
                 Just r | svHealth r == 0 -> loop (insertNavRecord r m) rest
                        | otherwise       -> loop m rest
-                Nothing  -> error "Cannot read GPS navigation record"
+                Nothing  -> error $ "Cannot read GPS navigation record"
+                                    ++ L8.unpack (L8.unlines ls)
           | otherwise =
               let rest = skipUnknownRecord bs
               in loop m rest        
@@ -198,13 +199,13 @@ readRecord :: [L8.ByteString] -> Maybe NavRecord
 readRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
-            (prn, _)  <- L8.readInt $ getField  1 2 l1
-            (y  , _)  <- L8.readInt $ getField  4 4 l1
-            (mon, _)  <- L8.readInt $ getField  9 2 l1
-            (d  , _)  <- L8.readInt $ getField 12 2 l1
-            (h  , _)  <- L8.readInt $ getField 15 2 l1
-            (m  , _)  <- L8.readInt $ getField 18 2 l1
-            (s  , _)  <- L8.readInt $ getField 21 2 l1
+            (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1               -- trim is needed by readInt
+            (y  , _)  <- L8.readInt $ trim $ getField  4 4 l1
+            (mon, _)  <- L8.readInt $ trim $ getField  9 2 l1
+            (d  , _)  <- L8.readInt $ trim $ getField 12 2 l1
+            (h  , _)  <- L8.readInt $ trim $ getField 15 2 l1
+            (m  , _)  <- L8.readInt $ trim $ getField 18 2 l1
+            (s  , _)  <- L8.readInt $ trim $ getField 21 2 l1
   
             let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
