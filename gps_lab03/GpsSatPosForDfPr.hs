@@ -248,7 +248,7 @@ diffGpsWeekTow (w2,tow2) (w1,tow1) =
       dw   = w2   - w1
       dtow = tow2 - tow1
 
--- | Substract seconds from GPS time.
+-- | Substract seconds from (GPS week,tow).
 diffSeconds :: GpsWeekTow -> Pico -> GpsWeekTow
 diffSeconds (week, tow) secs =
     let ds = tow - secs
