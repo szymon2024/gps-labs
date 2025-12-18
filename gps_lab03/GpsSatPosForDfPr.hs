@@ -1,4 +1,4 @@
--- 2025-12-14
+-- 2025-12-18
 
 {- | Estimate ECEF satellite position for dual-frequency pseudorange
      measurement (observation) from broadcast ephemeris. The position
@@ -224,7 +224,7 @@ transmissionTime
 transmissionTime pr1 pr2 wtobs eph =  loop tt0 0
     where
       pr   = pseudorangeDF pr1 pr2
-      tsv  = subSeconds wtobs  (realToFrac (pr/c))           -- satelite time of signal transmission
+      tsv  = diffSeconds wtobs  (realToFrac (pr/c))           -- satelite time of signal transmission
       tt0 = tsv
       loop :: GpsWeekTow -> Int -> GpsWeekTow
       loop tt k
@@ -235,7 +235,7 @@ transmissionTime pr1 pr2 wtobs eph =  loop tt0 0
             dtb  = clkCorr tt eph                           -- clock correction
             dtr  = relCorr tt eph                           -- relativistic correction
             dtsv = dtb  + dtr
-            tt' = subSeconds tt0 dtsv
+            tt' = diffSeconds tt0 dtsv
 
 -- | Calculates the number of seconds between two (GPS week, tow).
 diffGpsWeekTow
@@ -248,19 +248,13 @@ diffGpsWeekTow (w2,tow2) (w1,tow1) =
       dw   = w2   - w1
       dtow = tow2 - tow1
 
--- | Substract seconds from GPS time. It is only used to calculate the
---   signal propagation time. It uses the information that the
---   propagation time is less than 1 second.
-subSeconds
-    :: GpsWeekTow                                            -- ^ GPS week, time-of-week [s]
-    -> Pico                                                  -- ^ seconds [s]
-    -> GpsWeekTow                                            -- ^ GPS week, time-of-week [s]
-subSeconds (w, tow) t
-   | t < 1      = if tow - t >= 0
-                  then (w  ,          tow - t)
-                  else (w-1, 604800 + tow - t)
-   | otherwise  = error "Cannot substract equal or more than 1 s"
-
+-- | Substract seconds from GPS time.
+diffSeconds :: GpsWeekTow -> Pico -> GpsWeekTow
+diffSeconds (week, tow) secs =
+    let ds = tow - secs
+        k = floor (ds / 604800)
+        tow' = ds - fromIntegral k * 604800
+    in (week + k, tow')
 
 -- | Function import: double strtod(const char *nptr, char **endptr)
 foreign import ccall unsafe "stdlib.h strtod"
