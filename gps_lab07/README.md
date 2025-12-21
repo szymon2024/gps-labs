@@ -15,7 +15,7 @@ arrows, and colors based on the fitInterval field from the RINEX file.
 
 Due to the large number of satellites or a long time span in the
 navigation file, the resulting sky plot may become cluttered. In such
-cases, the prnFilter parameter can be used to display only the
+cases, the prnFilter parameter can be used to plot only the
 trajectories of selected satellites.
 
 This project was developed with assistance from Microsoft Copilot.
@@ -50,7 +50,7 @@ kolorami wynikającymi z pola fitInterval w pliku RINEX.
 
 Ze względu na dużą liczbę satelitów lub długi zakres czasowy pliku
 nawigacyjnego, wynikowy wykres może stać się nieczytelny. W takich
-przypadkach parametr prnFilter może zostać użyty do wyświetlenia
+przypadkach parametr prnFilter może zostać użyty do narysowania
 jedynie trajektorii wybranych satelitów.
 
 Projekt powstał przy wsparciu Microsoft Copilot.
