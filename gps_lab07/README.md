@@ -51,7 +51,7 @@ kolorami wynikającymi z pola fitInterval w pliku RINEX.
 Ze względu na dużą liczbę satelitów lub długi zakres czasowy pliku
 nawigacyjnego, wynikowy wykres może stać się nieczytelny. W takich
 przypadkach parametr prnFilter może zostać użyty do narysowania
-jedynie trajektorii wybranych satelitów.
+jedynie trajektorji wybranych satelitów.
 
 Projekt powstał przy wsparciu Microsoft Copilot.
 
