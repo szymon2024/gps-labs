@@ -3,7 +3,7 @@
 
 EN:
 ======================================================================
-    SKY PLOT OF GPS TRAJECTORIES FROM RINEX 3.04 NAVIGATION FILE
+SKY PLOT OF GPS SATELLITE TRAJECTORIES FROM RINEX 3.04 NAVIGATION FILE
 ======================================================================
 
 This program generates a sky plot of computed GPS satellite
@@ -36,7 +36,8 @@ Output
 ```
 PL:
 ======================================================================
-  WYKRES NIEBA Z TRAJEKTORIAMI GPS Z PLIKU NAWIGACYJNEGO RINEX 3.04
+               WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS
+                   Z PLIKU NAWIGACYJNEGO RINEX 3.04
 ======================================================================
 
 Ten program generuje wykres nieba (sky plot) obliczonych trajektorji
@@ -52,7 +53,7 @@ nawigacyjnego, wynikowy wykres może stać się nieczytelny. W takich
 przypadkach parametr prnFilter może zostać użyty do wyświetlenia
 jedynie trajektorii wybranych satelitów.
 
-Projekt powstał przy wsparciu Microsoft Copilot.
+This project was developed with assistance from Microsoft Copilot.
 
 Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 -------
