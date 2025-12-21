@@ -147,8 +147,8 @@ main = do
   bs <- L8.readFile fn
   let
       navMap    = navGpsMapFromRinex bs
-      prnfilter = \prn _ -> prn >=1 && prn <=32              -- Input: filter by satellite prn
-      step      = (90::Pico)
+      prnfilter = \prn _ -> prn >=1 && prn <=32             -- Input: filter by satellite prn
+      step      = (90::Pico)                                -- [s] 
       skyMap    = skyPoints obsWGS84 step
                     (IMS.filterWithKey prnfilter navMap)
       title  = "Sky Plot of GPS Satellite \
