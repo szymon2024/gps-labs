@@ -1,10 +1,11 @@
 -- 2025-12-21
-{- | The program creates sky plot of computed GPS satellites orbits from
-   RINEX 3.04 navigation file. A sky plot is polar representation of
-   satellite azimuth (0-360°) and elevation (0-90°) from the observer
-   position. Every satellite orbit is drawn as sequence of intervals,
-   with a satellite PRN marker and a direction arrow. The color of each
-   orbit corresponds to the fitInterval field from the RINEX file.
+{- | The program creates sky plot of computed GPS satellites
+   trajectories from RINEX 3.04 navigation file. A sky plot is polar
+   representation of satellite azimuth (0-360°) and elevation (0-90°)
+   from the observer position. Every satellite orbit is drawn as
+   sequence of intervals, with a satellite PRN marker and a direction
+   arrow. The color of each orbit corresponds to the fitInterval field
+   from the RINEX file.
 
    Due to the large number of satellites or a long time span in the
    RINEX navigation file, the resulting sky plot may become
@@ -299,7 +300,7 @@ svgGrid =
 svgLegend :: TB.Builder
 svgLegend =
   let x0 = 20::Int
-      y0 = 20
+      y0 = 60
       dy = 25
       entry (i, color, label) =
         "<rect x=\"" <> TB.decimal x0
