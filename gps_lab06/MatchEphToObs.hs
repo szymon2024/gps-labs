@@ -156,8 +156,8 @@ navReadFilteredGpsRecords bs0
       loop m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (ls, rest) = navRecordLines bs
-              in case navReadGpsRecord ls of
+              let (ls, rest) = navGpsRecordLines bs
+              in case navGpsReadRecord ls of
                 Just r | svHealth r == 0 -> loop (navInsertRecord r m) rest
                        | otherwise       -> loop m rest
                 Nothing  -> error $ "Cannot read GPS navigation record"
@@ -169,8 +169,8 @@ navReadFilteredGpsRecords bs0
 -- | Consumes GPS navigation record eight lines.  It is based on the
 --   knowledge that the content of a line should be 80 characters, but
 --   last line often breaks this rule.
-navRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-navRecordLines body =
+navGpsRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+navGpsRecordLines body =
     let (l1, r1) = line body
         (l2, r2) = line r1
         (l3, r3) = line r2
@@ -195,8 +195,8 @@ navRecordLines body =
 -- | Reads GPS navigation record from record lines for GPS satellite.
 --   Expects 8 lines as input.  It does not read fields one by one, as
 --   parsers do, but by position in the line.
-navReadGpsRecord :: [L8.ByteString] -> Maybe NavRecord
-navReadGpsRecord ls =
+navGpsReadRecord :: [L8.ByteString] -> Maybe NavRecord
+navGpsReadRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
             (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1               -- trim is needed by readInt
