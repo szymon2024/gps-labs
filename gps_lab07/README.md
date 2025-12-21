@@ -40,7 +40,7 @@ PL:
                    Z PLIKU NAWIGACYJNEGO RINEX 3.04
 ======================================================================
 
-Ten program generuje wykres nieba (sky plot) obliczonych trajektorji
+Ten program generuje wykres nieba (sky plot) obliczonych trajektorii
 satelitów GPS, korzystając z danych z pliku nawigacyjnego RINEX
 3.04. Wykres nieba to diagram biegunowy przedstawiający azymut
 satelity (0–360°) oraz elewację (0–90°) względem pozycji
@@ -51,7 +51,7 @@ kolorami wynikającymi z pola fitInterval w pliku RINEX.
 Ze względu na dużą liczbę satelitów lub długi zakres czasowy pliku
 nawigacyjnego, wynikowy wykres może stać się nieczytelny. W takich
 przypadkach parametr prnFilter może zostać użyty do narysowania
-jedynie trajektorji wybranych satelitów.
+jedynie trajektorii wybranych satelitów.
 
 Projekt powstał przy wsparciu Microsoft Copilot.
 
