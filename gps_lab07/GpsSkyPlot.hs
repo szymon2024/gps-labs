@@ -146,12 +146,12 @@ main = do
       fn = "rinex.nav"                                      -- Input: rinex navigation file name
   bs <- L8.readFile fn
   let
-      navMap    = navMapFromRinex bs
-      prnfilter = \prn _ -> prn >=1 && prn <=5              -- Input: filter by satellite prn
+      navMap    = navGpsMapFromRinex bs
+      prnfilter = \prn _ -> prn >=1 && prn <=36              -- Input: filter by satellite prn
       step      = (90::Pico)
       skyMap    = skyPoints obsWGS84 step
                     (IMS.filterWithKey prnfilter navMap)
-      title  = "Sky Plot of Filtered GPS Satellite \
+      title  = "Sky Plot of GPS Satellite \
                 \Trajectories from the " <> T.pack fn       -- Input: title of plot
   TIO.writeFile "skyplot.svg"
          (svgCreateContent title skyMap)                    -- Output: skyplot.svg file         
@@ -545,13 +545,13 @@ wgs84ToECEF (latDeg, lonDeg, h) = (x, y, z)
 -- | Build a navigation map from GPS navigation records of RINEX 3.04
 -- navigation body for healthy satellites and with max iode for (week,
 -- toe).
-navMapFromRinex :: L8.ByteString -> NavMap  
-navMapFromRinex bs
+navGpsMapFromRinex :: L8.ByteString -> NavMap  
+navGpsMapFromRinex bs
     | L8.null bs         = error "Empty file"
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
     | otherwise = let body = skipHeader bs
-                  in navReadFilteredGpsRecords body
+                  in navGpsReadFilteredRecords body
       where
         rinexVer = trim $ getField  0 9 bs 
         fileType = trim $ getField 20 1 bs
@@ -577,10 +577,10 @@ skipHeader bs0 = loop bs0
 -- | Extracts GPS navigation records of healthy satellites and with
 -- max iode for (week, toe) from RINEX 3.04 navigation body into a
 -- NavMap.
-navReadFilteredGpsRecords
+navGpsReadFilteredRecords
     :: L8.ByteString                                        -- ^ body of RINEX 3.04 navigation file
     -> NavMap
-navReadFilteredGpsRecords bs0
+navGpsReadFilteredRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
     | otherwise   = loop IMS.empty bs0
     where
@@ -588,9 +588,9 @@ navReadFilteredGpsRecords bs0
       loop m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (ls, rest) = navRecordLines bs
-              in case navReadRecord ls of
-                Just r | svHealth r == 0 -> loop (navInsertRecord r m) rest
+              let (ls, rest) = navGpsRecordLines bs
+              in case navGpsReadRecord ls of
+                Just r | svHealth r == 0 -> loop (navGpsInsertRecord r m) rest
                        | otherwise       -> loop m rest
                 Nothing  -> error $ "Cannot read GPS navigation record"
                                     ++ L8.unpack (L8.unlines ls)
@@ -601,8 +601,8 @@ navReadFilteredGpsRecords bs0
 -- | Consumes GPS navigation record eight lines.  It is based on the
 --   knowledge that the content of a line should be 80 characters, but
 --   last line often breaks this rule.
-navRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-navRecordLines body =
+navGpsRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+navGpsRecordLines body =
     let (l1, r1) = line body
         (l2, r2) = line r1
         (l3, r3) = line r2
@@ -627,8 +627,8 @@ navRecordLines body =
 -- | Reads GPS navigation record from record lines for GPS satellite.
 --   Expects 8 lines as input.  It does not read fields one by one, as
 --   parsers do, but by position in the line.
-navReadRecord :: [L8.ByteString] -> Maybe NavRecord
-navReadRecord ls =
+navGpsReadRecord :: [L8.ByteString] -> Maybe NavRecord
+navGpsReadRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
             (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1              -- trim is needed by readInt
@@ -704,8 +704,8 @@ navIsNewRecordLine bs = L8.take 1 bs /= " "
 --
 -- This ensures that for each @(week, toe)@ only the navigation
 -- record with the maximum IODE is kept.
-navInsertRecord :: NavRecord -> NavMap -> NavMap
-navInsertRecord r =
+navGpsInsertRecord :: NavRecord -> NavMap -> NavMap
+navGpsInsertRecord r =
   IMS.alter updatePrn key1
   where
     key1 = prn r
