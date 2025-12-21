@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800">
 <style>text { font-family: 'Segoe UI',Arial, sans-serif; fill: #222222; }</style>
 <rect width="100%" height="100%" fill="white"/>
-<text x="400" y="30" text-anchor="middle" font-size="20">Sky Plot of GPS Satellite Trajectories from the rinex.nav</text>
+<text x="400" y="30" text-anchor="middle" font-size="20">Sky Plot of Filtered GPS Satellite Trajectories from the rinex.nav</text>
 <rect x="1" y="1" width="798" height="798" fill="none" stroke="gray" stroke-width="2" />
 <defs>
 <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
