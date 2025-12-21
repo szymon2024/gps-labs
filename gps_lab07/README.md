@@ -18,7 +18,7 @@ navigation file, the resulting sky plot may become cluttered. In such
 cases, the prnFilter parameter can be used to display only the
 trajectories of selected satellites.
 
-Projekt powstał przy wsparciu Microsoft Copilot.
+This project was developed with assistance from Microsoft Copilot.
 
 Input (to modify directly in the source code)
 -----
@@ -53,7 +53,7 @@ nawigacyjnego, wynikowy wykres może stać się nieczytelny. W takich
 przypadkach parametr prnFilter może zostać użyty do wyświetlenia
 jedynie trajektorii wybranych satelitów.
 
-This project was developed with assistance from Microsoft Copilot.
+Projekt powstał przy wsparciu Microsoft Copilot.
 
 Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 -------
