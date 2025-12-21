@@ -1,4 +1,4 @@
-<pre>
+\\\
 2025-12-21
 
 EN:
@@ -28,7 +28,7 @@ Input (to modify directly in the source code)
 Output
 ------
   - sky plot SVG file skyplot.svg
-</pre>
+\\\
 
 <pre>
 PL:
