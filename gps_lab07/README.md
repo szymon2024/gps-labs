@@ -9,7 +9,7 @@ SKY PLOT OF GPS SATELLITE TRAJECTORIES FROM RINEX 3.04 NAVIGATION FILE
 This program generates a sky plot of computed GPS satellite
 trajectories using data from a RINEX 3.04 navigation file. A sky plot
 is a polar diagram showing satellite azimuth (0–360°) and elevation
-(0–90°) relative to the observer’s position. Each trajectory orbit is
+(0–90°) relative to the observer’s position. Each trajectory is
 drawn as a sequence of time intervals, with PRN markers, direction
 arrows, and colors based on the fitInterval field from the RINEX file.
 
