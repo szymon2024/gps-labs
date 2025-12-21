@@ -1,4 +1,4 @@
-2025-12-15
+2025-12-21
 
 EN:
 CONTENTS
@@ -22,6 +22,7 @@ gps_lab05 - Selection of GPS broadcast ephemeris for the observation
 gps_lab06 - Matching broadcast ephemerides to GPS satellite
             observations
 
+gps_lab07 - Sky plot of GPS trajectories from RINEX 3.04 navigation file
 
 PL:
 SPIS TREŚCI
@@ -44,3 +45,5 @@ gps_lab05 - Wybór efemerydy rozgłoszeniowej GPS dla czasu obserwacji
 
 gps_lab06 - Dopasowanie efemeryd rozgłoszeniowych do obserwacji
             satelitarnych GPS
+	    
+gps_lab07 - Wykres nieba z trajektoriami GPS z pliku nawigacyjnego RINEX 3.04
