@@ -18,6 +18,8 @@ navigation file, the resulting sky plot may become cluttered. In such
 cases, the prnFilter parameter can be used to display only the
 trajectories of selected satellites.
 
+This project was developed with assistance from Microsoft Copilot.
+
 Input (to modify directly in the source code)
 -----
   - observer position WGS84 coordinates
@@ -49,6 +51,8 @@ Ze względu na dużą liczbę satelitów lub długi zakres czasowy pliku
 nawigacyjnego, wynikowy wykres może stać się nieczytelny. W takich
 przypadkach parametr prnFilter może zostać użyty do wyświetlenia
 jedynie trajektorii wybranych satelitów.
+
+Projekt powstał przy wsparciu Microsoft Copilot.
 
 Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 -------
