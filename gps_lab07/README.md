@@ -29,7 +29,7 @@ Output
 ------
   - sky plot SVG file skyplot.svg
 ```
-
+![Example sky plot](skyplot.svg)
 ```
 PL:
 ======================================================================
