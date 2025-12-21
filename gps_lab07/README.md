@@ -18,7 +18,7 @@ navigation file, the resulting sky plot may become cluttered. In such
 cases, the prnFilter parameter can be used to display only the
 trajectories of selected satellites.
 
-This project was developed with assistance from Microsoft Copilot.
+Projekt powstał przy wsparciu Microsoft Copilot.
 
 Input (to modify directly in the source code)
 -----
