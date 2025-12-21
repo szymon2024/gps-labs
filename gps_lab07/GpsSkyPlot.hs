@@ -22,10 +22,10 @@
    1. Read navigation records from RINEX 3.04 navigation file into a   
    map (navMapFromRinex function).                                       
                                                                         
-   2. Compute (azimuth, elevation) points with a specific time step      
-   for each ephemeris (skyPoints function). The time step is             
-   determined based on the ephemeris validity interval, and              
-   overlapping intervals are trimmed.                                    
+   2. Compute (azimuth, elevation) points with a specific time step
+   (in seconds) for each ephemeris (skyPoints function). The time step
+   is determined based on the ephemeris validity interval, and
+   overlapping intervals are trimmed.
                                                                         
    3. Generate an SVG file containing the sky plot by transforming       
    the computed points into the drawing area.                                
@@ -44,9 +44,12 @@
    3. Discard the point if the satellite is below the horizon u<=0.      
                                                                         
    4. Convert the ENU vector to azimuth and elevation angles (enuToAzEl  
-   function).                                                            
+   function).
+
+   NOTE: Increasing the step size will cause trajectories ending close
+   to elevation 0° to deviate further from the edge of grid 0°.
                                                                         
-   This project was developed with assistance from Microsoft Copilot.    
+   This project was developed with assistance from Microsoft Copilot.
 
    Input (to modify directly in the source code):
      - observer position WGS84 coordinates                  obsWGS84
@@ -145,10 +148,11 @@ main = do
   let
       navMap    = navMapFromRinex bs
       prnfilter = \prn _ -> prn >=1 && prn <=5              -- Input: filter by satellite prn
-      skyMap    = skyPoints obsWGS84 (90::Pico)
+      step      = (90::Pico)
+      skyMap    = skyPoints obsWGS84 step
                     (IMS.filterWithKey prnfilter navMap)
       title  = "Sky Plot of Filtered GPS Satellite \
-                \Trajectories from the " <> T.pack fn                 -- Input: title of plot
+                \Trajectories from the " <> T.pack fn       -- Input: title of plot
   TIO.writeFile "skyplot.svg"
          (svgCreateContent title skyMap)                    -- Output: skyplot.svg file         
 
