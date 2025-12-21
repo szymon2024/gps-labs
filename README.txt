@@ -22,7 +22,7 @@ gps_lab05 - Selection of GPS broadcast ephemeris for the observation
 gps_lab06 - Matching broadcast ephemerides to GPS satellite
             observations
 
-gps_lab07 - Sky plot of gps satellite trajectories from RINEX 3.04
+gps_lab07 - Sky plot of GPS satellite trajectories from RINEX 3.04
             navigation file
 
 PL:
