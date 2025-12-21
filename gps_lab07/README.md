@@ -1,4 +1,5 @@
-\2025-12-21
+<pre>
+2025-12-21
 
 EN:
 ======================================================================
@@ -27,9 +28,9 @@ Input (to modify directly in the source code)
 Output
 ------
   - sky plot SVG file skyplot.svg
-\
+</pre>
 
-\
+<pre>
 PL:
 ======================================================================
   WYKRES NIEBA Z TRAJEKTORIAMI GPS Z PLIKU NAWIGACYJNEGO RINEX 3.04
@@ -58,4 +59,4 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 Wyjście
 -------
   - wykres nieba w pliku SVG skyplot.svg
-\
+</pre>
