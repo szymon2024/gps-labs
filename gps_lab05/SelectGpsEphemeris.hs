@@ -1,4 +1,4 @@
--- 2025-12-15
+-- 2025-12-21
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time
@@ -142,8 +142,8 @@ type GpsWeekTow = (Integer, Pico)                      -- ^ GPS week, time-of-we
 type EphWeekTow = GpsWeekTow
 type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellite identifie)
                                                        --   key2:  (week, toe)
-                                                       --   value: navigation record for a healthy satellite
-                                                       --          and with max iode for (week, toe)
+                                                       --   value2: navigation record for a healthy satellite
+                                                       --           and with max iode for (week, toe)
                                                               
 -- Entry point of the program.
 main :: IO ()
@@ -152,8 +152,8 @@ main = do
       tobs   = mkGpsTime 2025 08 02 01 00 01.5              -- Input: observation time - receiver time of signal reception
       prn    = 6                                            -- Input: satellite number
   bs <- L8.readFile fn
-  let navMap = buildNavMap bs
-  case selectGpsEphemeris tobs prn navMap of
+  let navMap = navMapFromRinex bs
+  case navSelectGpsEphemeris tobs prn navMap of
     Nothing -> printf "Cannot find valid ephemeris \
                       \for given prn and observation time\n"
     Just r  -> do                                           -- Output: GPS navigation record 
@@ -165,13 +165,13 @@ main = do
 -- | Build a navigation map from GPS navigation records of RINEX 3.04
 -- navigation body for healthy satellites and with max iode for (week,
 -- toe).
-buildNavMap :: L8.ByteString -> NavMap  
-buildNavMap bs
+navMapFromRinex :: L8.ByteString -> NavMap  
+navMapFromRinex bs
     | L8.null bs         = error "Empty file"
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
     | otherwise = let body = skipHeader bs
-                  in readFilteredGpsNavRecords body
+                  in navReadFilteredGpsRecords body
       where
         rinexVer = trim $ getField  0 9 bs 
         fileType = trim $ getField 20 1 bs
@@ -197,10 +197,10 @@ skipHeader bs0 = loop bs0
 -- | Extracts GPS navigation records of healthy satellites and with
 -- max iode for (week, toe) from RINEX 3.04 navigation body into a
 -- NavMap.
-readFilteredGpsNavRecords
+navReadFilteredGpsRecords
     :: L8.ByteString                                        -- ^ body of RINEX 3.04 navigation file
     -> NavMap
-readFilteredGpsNavRecords bs0
+navReadFilteredGpsRecords bs0
     | L8.null bs0 = error "Cannot find navigation data in the file"
     | otherwise   = loop IMS.empty bs0
     where
@@ -208,21 +208,21 @@ readFilteredGpsNavRecords bs0
       loop m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (ls, rest) = recordLines bs
-              in case readRecord ls of
-                Just r | svHealth r == 0 -> loop (insertNavRecord r m) rest
+              let (ls, rest) = navRecordLines bs
+              in case navReadRecord ls of
+                Just r | svHealth r == 0 -> loop (navInsertRecord r m) rest
                        | otherwise       -> loop m rest
                 Nothing  -> error $ "Cannot read GPS navigation record"
                                     ++ L8.unpack (L8.unlines ls)
           | otherwise =
-              let rest = skipUnknownRecord bs
+              let rest = navSkipUnknownRecord bs
               in loop m rest        
 
 -- | Consumes GPS navigation record eight lines.  It is based on the
 --   knowledge that the content of a line should be 80 characters, but
 --   last line often breaks this rule.
-recordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-recordLines body =
+navRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+navRecordLines body =
     let (l1, r1) = line body
         (l2, r2) = line r1
         (l3, r3) = line r2
@@ -247,8 +247,8 @@ recordLines body =
 -- | Reads GPS navigation record from record lines for GPS satellite.
 --   Expects 8 lines as input.  It does not read fields one by one, as
 --   parsers do, but by position in the line.
-readRecord :: [L8.ByteString] -> Maybe NavRecord
-readRecord ls =
+navReadRecord :: [L8.ByteString] -> Maybe NavRecord
+navReadRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
             (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1              -- trim is needed by readInt
@@ -305,17 +305,17 @@ readRecord ls =
 
 -- | Skip unknown record reading lines to begining of other record.
 -- Used to skip records of constellations other than GPS.
-skipUnknownRecord :: L8.ByteString -> L8.ByteString
-skipUnknownRecord bs =
+navSkipUnknownRecord :: L8.ByteString -> L8.ByteString
+navSkipUnknownRecord bs =
   let (_, rest) = L8.break (== '\n') bs
       rest' = L8.drop 1 rest
-      in if isNewRecordLine rest'
+      in if navIsNewRecordLine rest'
            then rest'
-           else skipUnknownRecord rest'
+           else navSkipUnknownRecord rest'
 
 -- | Returns True if the bs starts with other sign than ' '                
-isNewRecordLine :: L8.ByteString -> Bool
-isNewRecordLine bs = L8.take 1 bs /= " "
+navIsNewRecordLine :: L8.ByteString -> Bool
+navIsNewRecordLine bs = L8.take 1 bs /= " "
 
 -- | Insert a navigation record into a 'NavMap'.
 -- If there is no entry for the given PRN or epoch, the record is
@@ -324,8 +324,8 @@ isNewRecordLine bs = L8.take 1 bs /= " "
 --
 -- This ensures that for each @(week, toe)@ only the navigation
 -- record with the maximum IODE is kept.
-insertNavRecord :: NavRecord -> NavMap -> NavMap
-insertNavRecord r =
+navInsertRecord :: NavRecord -> NavMap -> NavMap
+navInsertRecord r =
   IMS.alter updatePrn key1
   where
     key1 = prn r
@@ -346,12 +346,12 @@ insertNavRecord r =
 -- | Selects a navigation record for a given observation time and
 -- satellite PRN from NavMap. The navigation record with the nearest
 -- (week, toe) to the specified observation time is selected.
-selectGpsEphemeris
+navSelectGpsEphemeris
     :: GpsTime
     -> IMS.Key
     -> NavMap
     -> Maybe NavRecord
-selectGpsEphemeris tobs prn navMap = do
+navSelectGpsEphemeris tobs prn navMap = do
     subMap <- IMS.lookup prn navMap
     let wtobs  = gpsTimeToWeekTow tobs
         past   = MS.lookupLE wtobs subMap

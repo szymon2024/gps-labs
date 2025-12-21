@@ -1,4 +1,4 @@
-2025-12-15
+2025-12-21
 
 EN:
 ======================================================================
@@ -82,7 +82,7 @@ Wejście
   - czas odbiornika odbioru sygnału (czas GPS obserwacji)  
   - numer satelity GPS
                                        
-Output
+Wyjście
 ------
   - rekord nawigacyjny z efemerydą
                                        
