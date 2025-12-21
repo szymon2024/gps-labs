@@ -2,14 +2,14 @@
 {- | The program creates sky plot of computed GPS satellites
    trajectories from RINEX 3.04 navigation file. A sky plot is polar
    representation of satellite azimuth (0-360°) and elevation (0-90°)
-   from the observer position. Every satellite orbit is drawn as
+   from the observer position. Every satellite trajectory is drawn as
    sequence of intervals, with a satellite PRN marker and a direction
    arrow. The color of each orbit corresponds to the fitInterval field
    from the RINEX file.
 
    Due to the large number of satellites or a long time span in the
    RINEX navigation file, the resulting sky plot may become
-   cluttered. In such cases, the prnFilter can be adjusted to display
+   cluttered. In such cases, the prnFilter can be adjusted to plot
    only the trajectories of selected satellites.
 
    Before computing sky‑plot points, the program detects overlapping
@@ -144,10 +144,10 @@ main = do
   bs <- L8.readFile fn
   let
       navMap    = navMapFromRinex bs
-      prnfilter = \prn _ -> prn >=1 && prn <=32             -- Input: filter by satellite prn
+      prnfilter = \prn _ -> prn >=1 && prn <=5              -- Input: filter by satellite prn
       skyMap    = skyPoints obsWGS84 (90::Pico)
                     (IMS.filterWithKey prnfilter navMap)
-      title  = "Sky Plot of GPS Satellite \
+      title  = "Sky Plot of Filtered GPS Satellite \
                 \Trajectories from the " <> T.pack fn                 -- Input: title of plot
   TIO.writeFile "skyplot.svg"
          (svgCreateContent title skyMap)                    -- Output: skyplot.svg file         
