@@ -1,5 +1,5 @@
 <div style="width: 70ch;">
-```
+<pre>
 2025-12-22
 
 EN:
@@ -35,7 +35,7 @@ Output
 ```
 ![sky plot example](skyplot.svg)
 ![filtered sky plot example](skyplotFiltered.svg)
-```
+</pre>
 </div>
 PL:
 ======================================================================
