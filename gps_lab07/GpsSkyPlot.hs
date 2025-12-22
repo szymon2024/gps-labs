@@ -161,17 +161,20 @@ main = do
 -- | The viewport (drawing) in svg file will be 800px by 800px. The
 -- upper-left corner is (0,0).
 svgWidth, svgHeight :: Int
-svgWidth = 800
-svgHeight = 800
+svgWidth = 600
+svgHeight = 600
+
+svgTitleHeight :: Int
+svgTitleHeight = 30
 
 -- | viewport center for svg file
 svgCx, svgCy :: Double
-svgCx = fromIntegral svgWidth / 2
-svgCy = fromIntegral svgHeight / 2
+svgCx = fromIntegral  svgWidth / 2
+svgCy = fromIntegral svgHeight / 2 + fromIntegral svgTitleHeight
 
 -- | maximum radius of sky plot for svg file
 svgRMax :: Double
-svgRMax = 330
+svgRMax = svgCx - 2 * fromIntegral svgTitleHeight
 
 -- | Convert degrees to radians
 deg2rad :: Double -> Double
@@ -287,7 +290,7 @@ svgGrid =
           [ "<text x=\"" <> TB.realFloat (svgCx+dx)
             <> "\" y=\"" <> TB.realFloat (svgCy+dy)
             <> "\" font-size=\"16\" text-anchor=\"middle\">" <> TB.fromText lbl <> "</text>\n"
-          | (dx,dy,lbl) <- [(0,-svgRMax-10,"N"),(svgRMax+20,0,"E"),(0,svgRMax+30,"S"),(-svgRMax-20,0,"W")]
+          | (dx,dy,lbl) <- [(0,-svgRMax-10,"N"),(svgRMax+15,0,"E"),(0,svgRMax+20,"S"),(-svgRMax-20,0,"W")]
           ]
 
       ringLabels =
@@ -306,7 +309,7 @@ svgGrid =
 svgLegend :: TB.Builder
 svgLegend =
   let x0 = 20::Int
-      y0 = 60
+      y0 = svgTitleHeight + 20
       dy = 25
       entry (i, color, label) =
         "<rect x=\"" <> TB.decimal x0
@@ -337,7 +340,8 @@ svgCreateContent title skyMap =
     "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" <> TB.decimal svgWidth <> "\" height=\"" <> TB.decimal svgHeight <> "\">\n"
     <> "<style>text { font-family: 'Segoe UI',Arial, sans-serif; fill: #222222; }</style>\n"
     <> "<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n"
-    <> "<text x=\"400\" y=\"30\" text-anchor=\"middle\" font-size=\"20\">" <> TB.fromText title <> "</text>\n"
+    <> "<text x=\"" <> TB.realFloat svgCx <> "\" y=\"" <> TB.decimal svgTitleHeight
+    <> "\" text-anchor=\"middle\" font-size=\"20\">" <> TB.fromText title <> "</text>\n"
     <> svgFrame
     <> svgArrowMarker
     <> svgSatelliteMarker (IMS.keys skyMap)
