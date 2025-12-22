@@ -61,6 +61,7 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
   - tytuł wykresu
 
 Wyjście
+-------
   - wykres nieba w pliku SVG skyplot.svg
 
 ![filtered sky plot example](skyplotFiltered.svg)
