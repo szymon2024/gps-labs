@@ -1,3 +1,4 @@
+<div style="width: 70ch; background: #f6f8fa; padding: 8px;">
 ```
 2025-12-22
 
@@ -32,6 +33,7 @@ Output
 ------
   - sky plot SVG file skyplot.svg
 ```
+</div>
 ![sky plot example](skyplot.svg)
 ![sky plot filtered example](skyplotFiltered.svg)
 ```
