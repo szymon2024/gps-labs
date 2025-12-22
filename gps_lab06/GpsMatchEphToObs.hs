@@ -1,9 +1,9 @@
--- 2025-12-22
+-- 2025-12-23
 
-{-| The program matches GPS ephemerides from a RINEX 3.04 NAV file to
-    satellite observations from a RINEX 3.04 OBS file. Filtered
-    navigation records with ephemerides are attached to the
-    corresponding observations.
+{-| The program matches navigation records from a RINEX 3.04 NAV file
+    containing epehemerides to satellite observations from a RINEX
+    3.04 OBS file. Filtered navigation records with ephemerides are
+    attached to the corresponding observations.
 
     Main steps of the algorithm:
 
@@ -23,7 +23,7 @@
 
     Output:
       - GPS observations with attached navigation
-        records containing ephemerides                 ors'
+        records containing ephemerides                 obsNavRs
         
     
     Print of run:
@@ -97,28 +97,36 @@ type NavMap     = IntMap (Map EphWeekTow NavRecord)       -- ^ key1:  prn (satel
                                                           --           and with max iode for (week, toe)
 type ObsTime   = GpsTime                                  -- ^ observation time (epoch)
                                                           --   (don't confuse with observing time)
-data Observation = Ob
-    { obPrn  :: Int
+data Observation = Obs
+    { obsPrn  :: Int
     }
-type ObsRecord = (ObsTime, [(Observation, Maybe NavRecord)])
+type ObsRecord         = (ObsTime, [Observation])
+type ObsRecordWithNavs = (ObsTime, [(Observation, Maybe NavRecord)])
 
 main :: IO ()
 main = do
-  let fnNav = "source.nav"                                  -- Input: RINEX 3.04 navigation file name
-      fnObs = "source.obs"                                  -- Input: RINEX 3.04 observation file name
-  bsNav <- L8.readFile fnNav
-  bsObs <- L8.readFile fnObs
+  let navFn = "source.nav"                                  -- Input: RINEX 3.04 navigation file name
+      obsFn = "source.obs"                                  -- Input: RINEX 3.04 observation file name
+  navBs <- L8.readFile navFn
+  obsBs <- L8.readFile obsFn
 
-  let navMap = navGpsMapFromRinex bsNav
-      ors    = obsGpsFromRinex bsObs
-      ors'   = obsGpsAttachEphemerides navMap ors           -- Output: observations with attached ephemerides
-      totalObs xs = sum [length prnObs | (_, prnObs) <- xs]
-      obsWithoutEphemerides xs = sum [length obs
-                               | (_, obs) <- xs
-                               , (_, r)   <- obs
-                               , r == Nothing ]
-  printf "Total observations: %d\n" (totalObs ors')
-  printf "Without matched ephemerides: %d\n" (obsWithoutEphemerides ors')
+  let navMap   = navGpsMapFromRinex navBs
+      obsRs    = obsGpsRecordsFromRinex obsBs
+      obsNavRs = obsGpsAttachNav navMap obsRs               -- Output: observations with attached ephemerides
+                 
+      totalObs =
+        foldl' (\acc (_, obs) -> acc + length obs) 0 obsRs
+               
+      obsWithoutEphemerides =
+        foldl' (\acc (_, xs) ->
+                acc + foldl' count 0 xs
+               ) (0::Integer) obsNavRs
+          where
+            count n (_, Nothing) = n + 1
+            count n _            = n
+                              
+  printf "Total observations: %d\n" totalObs
+  printf "Without matched ephemerides: %d\n" obsWithoutEphemerides
 
 -- | Build a navigation map from healthy GPS navigation records of
 -- RINEX 3.04 navigation body.
@@ -352,8 +360,8 @@ isEphemerisValid (w, tow) eph =
       diffTime        = diffGpsWeekTow  (w, tow) (week eph, toe eph)
       halfFitInterval = realToFrac ((fitInterval eph) `div` 2 * 3600)                  
                    
-obsGpsFromRinex :: L8.ByteString -> [ObsRecord]
-obsGpsFromRinex bs
+obsGpsRecordsFromRinex :: L8.ByteString -> [ObsRecord]
+obsGpsRecordsFromRinex bs
   | L8.null bs         = error "Empty file"
   | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
   | fileType /= "O"    = error "Not an observation file"
@@ -386,16 +394,16 @@ obsGpsReadRecord (l:ls) = do
   (h  , _) <- L8.readInt      $ getField 13  2 l
   (m  , _) <- L8.readInt      $ getField 16  2 l
   s        <- readDoubleField $ getField 19 11 l
-  let tob = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
+  let !tob = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
   (n  , _) <- L8.readInt $ getField 33  3 l                -- number of satellites observed in current epoch
                                                            -- (observation time)
   let (obsLines, rest) = splitAt n ls
-      gpsLines = filter (\line -> L8.take 1 line == "G") obsLines
-  prns <- mapM  (L8.readInt . getField 1 2 ) gpsLines
-  let r = [(Ob prn, Nothing)
-          | (prn, _) <- prns
-          ]
-  return ((tob, r), rest)
+      gpsLines = filter (\line -> L8.head line == 'G') obsLines  -- head faster than take 1
+  prns <- mapM (\line -> fst <$> L8.readInt (getField 1 2 line)) gpsLines
+          
+  let obs = map Obs prns
+            
+  return ((tob, obs), rest)
                
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
@@ -455,14 +463,14 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     in (w, tow)
 
 -- | Attach navigation records with ephemerides to observations
-obsGpsAttachEphemerides :: NavMap -> [ObsRecord] -> [ObsRecord]
-obsGpsAttachEphemerides navMap ors =
- [ (tob, [ (ob, r')
-         | (ob, _ ) <- obs
-         , let r' = navGpsSelectEphemeris tob (obPrn ob) navMap
+obsGpsAttachNav :: NavMap -> [ObsRecord] -> [ObsRecordWithNavs]
+obsGpsAttachNav navMap obsRs =
+ [ (tob, [ (ob, r)
+         | ob <- obs
+         , let r = navGpsSelectEphemeris tob (obsPrn ob) navMap
          ]
    )
- | (tob, obs) <- ors
+ | (tob, obs) <- obsRs
  ]
 
 
