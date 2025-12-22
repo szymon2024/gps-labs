@@ -1,4 +1,5 @@
--- 2025-12-21
+-- 2025-12-22
+
 {- | The program creates sky plot of computed GPS satellites
    trajectories from RINEX 3.04 navigation file. A sky plot is polar
    representation of satellite azimuth (0-360°) and elevation (0-90°)
@@ -47,7 +48,8 @@
    function).
 
    NOTE: Increasing the step size will cause trajectories ending close
-   to elevation 0° to deviate further from the edge of grid 0°.
+   to elevation 0° to deviate further from the edge of grid 0° because
+   the program does not compute a point for elevation 0.
                                                                         
    This project was developed with assistance from Microsoft Copilot.
 
