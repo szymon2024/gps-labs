@@ -1,3 +1,4 @@
+<details></details>
 <pre style="display: inline-block;">
 2025-12-22
 
@@ -32,6 +33,7 @@ Output
 ------
   - sky plot SVG file skyplot.svg
 </pre>
+</details>
 ![sky plot example](skyplot.svg)
 ![sky plot filtered example](skyplotFiltered.svg)
 ```
