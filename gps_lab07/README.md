@@ -28,7 +28,7 @@ Input (to modify directly in the source code)
 
 Output
 ------
-  - sky plot SVG file skyplot.svg
+  sky plot SVG file skyplot.svg
 
 ![sky plot example](skyplot.svg)
 
@@ -38,7 +38,6 @@ PL:
                WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS
                    Z PLIKU NAWIGACYJNEGO RINEX 3.04
 ======================================================================
-
 Ten program generuje wykres nieba (sky plot) obliczonych trajektorii
 satelitów GPS, korzystając z danych z pliku nawigacyjnego RINEX
 3.04. Wykres nieba to diagram biegunowy przedstawiający azymut
@@ -64,6 +63,6 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 
 Wyjście
 -------
-  - wykres nieba w pliku SVG skyplot.svg
+  wykres nieba w pliku SVG skyplot.svg
 
 ![filtered sky plot example](skyplotFiltered.svg)
