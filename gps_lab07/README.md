@@ -1,4 +1,4 @@
-<pre></pre>
+<pre>
 <div style="width: 70ch;">
 2025-12-22
 
