@@ -30,7 +30,7 @@ Output
 ------
   sky plot SVG file skyplot.svg
 
-![sky plot example](skyplot.svg)
+  ![sky plot example](skyplot.svg)
 
 
 PL:
@@ -65,4 +65,4 @@ Wyjście
 -------
   wykres nieba w pliku SVG skyplot.svg
 
-![filtered sky plot example](skyplotFiltered.svg)
+  ![filtered sky plot example](skyplotFiltered.svg)
