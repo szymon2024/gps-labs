@@ -1,3 +1,4 @@
+<div style="width: 70ch;">
 ```
 2025-12-22
 
@@ -35,6 +36,7 @@ Output
 ![sky plot example](skyplot.svg)
 ![filtered sky plot example](skyplotFiltered.svg)
 ```
+</div>
 PL:
 ======================================================================
                WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS
