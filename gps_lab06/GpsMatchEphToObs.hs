@@ -18,8 +18,8 @@
     to GPS observations using navGpsSelectEphemeris function.
 
     Input:
-      - RINEX 3.04 navigation file name                fnNav     defined in the code
-      - RINEX 3.04 observation file name               fnObs     defined in the code
+      - RINEX 3.04 navigation file name                navFn     defined in the code
+      - RINEX 3.04 observation file name               obsFn     defined in the code
 
     Output:
       - GPS observations with attached navigation
