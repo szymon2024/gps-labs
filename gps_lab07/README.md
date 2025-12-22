@@ -32,8 +32,8 @@ Output
 ------
   - sky plot SVG file skyplot.svg
 ```
-![Example sky plot](skyplot.svg)
-![Example sky plot filtered](skyplotFiltered.svg)
+![sky plot example](skyplot.svg)
+![sky plot filtered example](skyplotFiltered.svg)
 ```
 PL:
 ======================================================================
