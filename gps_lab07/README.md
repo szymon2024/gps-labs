@@ -1,5 +1,5 @@
 <div style="width: 70ch; background: #f6f8fa; padding: 8px;">
-```
+<pre>
 2025-12-22
 
 EN:
@@ -32,7 +32,7 @@ Input (to modify directly in the source code)
 Output
 ------
   - sky plot SVG file skyplot.svg
-```
+</pre>
 </div>
 ![sky plot example](skyplot.svg)
 ![sky plot filtered example](skyplotFiltered.svg)
