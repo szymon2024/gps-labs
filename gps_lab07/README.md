@@ -1,4 +1,4 @@
-<pre style="width: 70ch;">
+<pre style="width: 400px;">
 2025-12-22
 
 EN:
