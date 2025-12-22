@@ -1,4 +1,4 @@
--- 2025-12-21
+-- 2025-12-22
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time
@@ -31,7 +31,7 @@
      Input:
        - RINEX 3.04 navigation file name                    fn
        - receiver time of signal reception
-         (observation time)                                 tobs
+         (observation time)                                 tob
        - satellite number                                   prn       
 
 
@@ -149,16 +149,16 @@ type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellit
 main :: IO ()
 main = do
   let fn = "source.nav"                                     -- Input: RINEX 3.04 navigation file name
-      tobs   = mkGpsTime 2025 08 02 01 00 01.5              -- Input: observation time - receiver time of signal reception
+      tob   = mkGpsTime 2025 08 02 01 00 01.5              -- Input: observation time - receiver time of signal reception
       prn    = 6                                            -- Input: satellite number
   bs <- L8.readFile fn
   let navMap = navGpsMapFromRinex bs
-  case navGpsSelectEphemeris tobs prn navMap of
+  case navGpsSelectEphemeris tob prn navMap of
     Nothing -> printf "Cannot find valid ephemeris \
                       \for given prn and observation time\n"
     Just r  -> do                                           -- Output: GPS navigation record 
          printf "Observation time: %s\n"
-                (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
+                (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tob)
          printfRecord r
 
 
@@ -351,21 +351,21 @@ navGpsSelectEphemeris
     -> IMS.Key
     -> NavMap
     -> Maybe NavRecord
-navGpsSelectEphemeris tobs prn navMap = do
+navGpsSelectEphemeris tob prn navMap = do
     subMap <- IMS.lookup prn navMap
-    let wtobs  = gpsTimeToWeekTow tobs
-        past   = MS.lookupLE wtobs subMap
-        future = MS.lookupGE wtobs subMap
+    let t  = gpsTimeToWeekTow tob
+        past   = MS.lookupLE t subMap
+        future = MS.lookupGE t subMap
         closest = case (past, future) of
           (Just (wtoeP, rP), Just (wtoeF, rF)) ->
-              if abs (diffGpsWeekTow wtobs wtoeP) <= abs (diffGpsWeekTow wtoeF wtobs)
+              if abs (diffGpsWeekTow t wtoeP) <= abs (diffGpsWeekTow wtoeF t)
               then Just (wtoeP, rP)
               else Just (wtoeF, rF)
           (Just p, Nothing)  -> Just p
           (Nothing, Just f)  -> Just f
           (Nothing, Nothing) -> Nothing                              
     (_, r) <- closest
-    if isEphemerisValid wtobs r
+    if isEphemerisValid t r
       then Just r
       else Nothing
 
