@@ -1,5 +1,5 @@
 <div style="width: 70ch;">
-  <pre>
+  ```
 2025-12-22
 
 EN:
@@ -32,11 +32,11 @@ Input (to modify directly in the source code)
 Output
 ------
   - sky plot SVG file skyplot.svg
-```
+  ```
+</div>
 ![sky plot example](skyplot.svg)
 ![filtered sky plot example](skyplotFiltered.svg)
-  </pre>
-</div>
+```
 PL:
 ======================================================================
                WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS
