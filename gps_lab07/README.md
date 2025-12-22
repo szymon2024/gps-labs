@@ -1,4 +1,4 @@
-<pre style="width: 400px;">
+```
 2025-12-22
 
 EN:
@@ -31,7 +31,7 @@ Input (to modify directly in the source code)
 Output
 ------
   - sky plot SVG file skyplot.svg
-</pre>
+```
 ![sky plot example](skyplot.svg)
 ![filtered sky plot example](skyplotFiltered.svg)
 ```
