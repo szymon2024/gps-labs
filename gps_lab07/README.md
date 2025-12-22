@@ -1,9 +1,8 @@
 2025-12-22
 
 EN:
-======================================================================
+
 SKY PLOT OF GPS SATELLITE TRAJECTORIES FROM RINEX 3.04 NAVIGATION FILE
-======================================================================
 
 This program generates a sky plot of computed GPS satellite
 trajectories using data from a RINEX 3.04 navigation file. A sky plot
@@ -32,7 +31,7 @@ Output
   - sky plot SVG file skyplot.svg
 
 ![sky plot example](skyplot.svg)
-![filtered sky plot example](skyplotFiltered.svg)
+
 
 PL:
 ======================================================================
@@ -64,5 +63,5 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
   - tytuł wykresu
 
 Wyjście
--------
   - wykres nieba w pliku SVG skyplot.svg
+![filtered sky plot example](skyplotFiltered.svg)
