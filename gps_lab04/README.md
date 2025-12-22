@@ -2,7 +2,7 @@
 
 EN:
 ======================================================================
-            SCIENTIFIC NOTATION RINEX 3.04 FILE CONVERTER
+  SCIENTIFIC NOTATION RINEX 3.04 FILE CONVERTER
 ======================================================================
 
 This programm creates copy of a RINEX 3.04 file, replacing the letter
@@ -23,7 +23,7 @@ Output
 
 PL:  
 ======================================================================
-              KONWERTER NOTACJI NAUKOWEJ PLIKU RINEX 3.04
+  KONWERTER NOTACJI NAUKOWEJ PLIKU RINEX 3.04
 ======================================================================
 
 Ten program tworzy kopię pliku RINEX 3.04 zastępując literę 'D'
