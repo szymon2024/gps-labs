@@ -1,4 +1,3 @@
-```
 2025-12-22
 
 EN:
@@ -31,10 +30,10 @@ Input (to modify directly in the source code)
 Output
 ------
   - sky plot SVG file skyplot.svg
-```
+
 ![sky plot example](skyplot.svg)
 ![filtered sky plot example](skyplotFiltered.svg)
-```
+
 PL:
 ======================================================================
                WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS
@@ -67,4 +66,3 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 Wyjście
 -------
   - wykres nieba w pliku SVG skyplot.svg
-```
