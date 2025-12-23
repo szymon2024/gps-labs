@@ -297,7 +297,7 @@ takeField start len = L8.take len . L8.drop start
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- | Read GPS satellite navigation record of eight lines.
+-- | Read GPS satellite navigation record eight lines.
 readRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
 readRecordLines bs0 =
     let (l1, bs1) = readLine bs0
