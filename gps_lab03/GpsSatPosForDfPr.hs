@@ -32,7 +32,7 @@
               
      Input:
        - observation time
-         (receiver time of signal reception)        tob           (hand copied from RINEX observation file)
+         (receiver time of signal reception)        tobs           (hand copied from RINEX observation file)
        - pseudorange for f1 [m]                     pr1            (hand copied from RINEX observation file)
        - pseudorange for f2 [m]                     pr2            (hand copied from RINEX observation file)
        - navigation data record in RINEX 3.04
