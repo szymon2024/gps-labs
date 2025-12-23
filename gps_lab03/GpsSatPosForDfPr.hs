@@ -290,85 +290,93 @@ readDoubleField bs = do
       error $ "Unsupported number format with 'D': " ++ L8.unpack bs
     _ -> guard (L8.all (== ' ') rest) >> return val                  
                    
-getField :: Int -> Int -> L8.ByteString -> L8.ByteString
-getField start len = L8.take len . L8.drop start
+takeField :: Int -> Int -> L8.ByteString -> L8.ByteString
+takeField start len = L8.take len . L8.drop start
 
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- | Consumes GPS satellite block of eight lines.
-gpsBlockLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-gpsBlockLines bs =
-    let (l1, r1) = line bs
-        (l2, r2) = line r1
-        (l3, r3) = line r2
-        (l4, r4) = line r3
-        (l5, r5) = line r4
-        (l6, r6) = line r5
-        (l7, r7) = line r6
-        (l8, r8) = lastLine r7
-    in ([l1,l2,l3,l4,l5,l6,l7,l8], r8)
+-- | Read GPS satellite navigation record of eight lines.
+readRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+readRecordLines bs0 =
+    let (l1, bs1) = readLine bs0
+        (l2, bs2) = readLine bs1
+        (l3, bs3) = readLine bs2
+        (l4, bs4) = readLine bs3
+        (l5, bs5) = readLine bs4
+        (l6, bs6) = readLine bs5
+        (l7, bs7) = readLine bs6
+        (l8, bs8) = readLastLine bs7
+    in ([l1,l2,l3,l4,l5,l6,l7,l8], bs8)
+    where
+      -- Read a line of 80 characters and a line separator.
+      readLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
+      readLine bs =
+          let (line, bs') = L8.splitAt 80 bs
+              dropLineSep  = L8.dropWhile (`L8.elem` "\r\n")
+          in (line, dropLineSep bs')
 
--- | Consumes a line of 80 characters and a line separator.
-line :: L8.ByteString -> (L8.ByteString, L8.ByteString)
-line bs =
-    let l80  = L8.take 80 bs
-        rest = L8.dropWhile (\ch -> ch == '\r' || ch == '\n') (L8.drop 80 bs)
-    in (l80, rest)
+      --   Last line can have two, three or four fields
+      --   and sometimes it is not completed to 80 characters.
+      readLastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
+      readLastLine bs =
+          let (part1, bs1) = L8.splitAt 42 bs                         -- read the part containing two fields
+              (part2, bs2) = L8.break     (`L8.elem` "\r\n") bs1
+              dropLineSep  = L8.dropWhile (`L8.elem` "\r\n")
+          in (part1 <> part2, dropLineSep bs2)
 
--- | Consumes last line of GPS navigation block.
---   Last line can have two, three or four fields
---   and sometimes it is not completed to 80 characters.
-lastLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
-lastLine bs =
-    let l    = L8.takeWhile (\ch -> not (ch == '\r' || ch == '\n')) (L8.take 42 bs)
-        rest = L8.dropWhile (\ch ->      ch == '\r' || ch == '\n')  (L8.drop (L8.length l) bs)
-    in (l, rest)
+-- | Read GPS satellite navigation record
+readRecord :: L8.ByteString -> (NavRecord, L8.ByteString)
+readRecord bs =
+    let (ls, bs') = readRecordLines bs
+    in case getRecord ls of
+         Just r  -> (r, bs')
+         Nothing -> error "Unable to get GPS navigation record from record lines."
 
--- | Reads GPS navigation record from block lines for GPS satellite
--- | Expects 8 lines as input
-readRecord :: [L8.ByteString] -> Maybe NavRecord
-readRecord ls =
+-- | Get GPS navigation record from GPS record lines.  Expects 8 lines
+-- as input.
+getRecord :: [L8.ByteString] -> Maybe NavRecord
+getRecord ls =
     case ls of
       [l1,l2,l3,l4,l5,l6,_,l8] -> do
-              (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1             -- trim is needed by readInt
-              (y  , _)  <- L8.readInt $ trim $ getField  4 4 l1
-              (mon, _)  <- L8.readInt $ trim $ getField  9 2 l1
-              (d  , _)  <- L8.readInt $ trim $ getField 12 2 l1
-              (h  , _)  <- L8.readInt $ trim $ getField 15 2 l1
-              (m  , _)  <- L8.readInt $ trim $ getField 18 2 l1
-              (s  , _)  <- L8.readInt $ trim $ getField 21 2 l1
+              (prn, _)  <- L8.readInt $ trim $ takeField  1 2 l1       -- trim is needed by readInt
+              (y  , _)  <- L8.readInt $ trim $ takeField  4 4 l1
+              (mon, _)  <- L8.readInt $ trim $ takeField  9 2 l1
+              (d  , _)  <- L8.readInt $ trim $ takeField 12 2 l1
+              (h  , _)  <- L8.readInt $ trim $ takeField 15 2 l1
+              (m  , _)  <- L8.readInt $ trim $ takeField 18 2 l1
+              (s  , _)  <- L8.readInt $ trim $ takeField 21 2 l1
   
               let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-              af0       <- readDoubleField $ getField 23 19 l1
-              af1       <- readDoubleField $ getField 42 19 l1
-              af2       <- readDoubleField $ getField 61 19 l1
+              af0       <- readDoubleField $ takeField 23 19 l1
+              af1       <- readDoubleField $ takeField 42 19 l1
+              af2       <- readDoubleField $ takeField 61 19 l1
                  
-              crs       <- readDoubleField $ getField 23 19 l2
-              deltaN    <- readDoubleField $ getField 42 19 l2
-              m0        <- readDoubleField $ getField 61 19 l2
+              crs       <- readDoubleField $ takeField 23 19 l2
+              deltaN    <- readDoubleField $ takeField 42 19 l2
+              m0        <- readDoubleField $ takeField 61 19 l2
                  
-              cuc       <- readDoubleField $ getField  4 19 l3
-              e         <- readDoubleField $ getField 23 19 l3
-              cus       <- readDoubleField $ getField 42 19 l3
-              sqrtA     <- readDoubleField $ getField 61 19 l3
+              cuc       <- readDoubleField $ takeField  4 19 l3
+              e         <- readDoubleField $ takeField 23 19 l3
+              cus       <- readDoubleField $ takeField 42 19 l3
+              sqrtA     <- readDoubleField $ takeField 61 19 l3
 
-              toeD      <- readDoubleField $ getField  4 19 l4
-              cic       <- readDoubleField $ getField 23 19 l4
-              omega0    <- readDoubleField $ getField 42 19 l4
-              cis       <- readDoubleField $ getField 61 19 l4
+              toeD      <- readDoubleField $ takeField  4 19 l4
+              cic       <- readDoubleField $ takeField 23 19 l4
+              omega0    <- readDoubleField $ takeField 42 19 l4
+              cis       <- readDoubleField $ takeField 61 19 l4
 
-              i0        <- readDoubleField $ getField  4 19 l5
-              crc       <- readDoubleField $ getField 23 19 l5
-              omega     <- readDoubleField $ getField 42 19 l5
-              omegaDot  <- readDoubleField $ getField 61 19 l5
+              i0        <- readDoubleField $ takeField  4 19 l5
+              crc       <- readDoubleField $ takeField 23 19 l5
+              omega     <- readDoubleField $ takeField 42 19 l5
+              omegaDot  <- readDoubleField $ takeField 61 19 l5
                                                                
-              iDot      <- readDoubleField $ getField  4 19 l6
-              weekD     <- readDoubleField $ getField 42 19 l6
+              iDot      <- readDoubleField $ takeField  4 19 l6
+              weekD     <- readDoubleField $ takeField 42 19 l6
 
-              fitIntervalD  <- readDoubleField $ getField 23 19 l8
+              fitIntervalD  <- readDoubleField $ takeField 23 19 l8
 
               let toe          = realToFrac toeD
                   week         = round      weekD           -- conversion is needed for equality comparisons
@@ -446,25 +454,21 @@ main = do
       fn   = "nav_record.txt"                               -- Input: file name
   bs <- L8.readFile fn                                      -- bytestring from "nav_record.txt"
   if L8.take 1 bs == "G"
-  then
-      let (ls, _) = gpsBlockLines bs
-      in
-        case readRecord ls of
-          Nothing  ->
-            printf "Cannot read a GPS navigation record from %s\n" fn
-          Just r   -> do                                                -- navigation record containing ephemeris
-            printf "Observation time\n"
-            printf "(receiver clock time of signal reception) : %s\n"
+  then do
+      let (r, _) = readRecord bs
+          (wtt, (x,y,z)) = gpsSatPosForDfPr tobs pr1 pr2 r  -- Output: signal transmission time by GPS clock,
+                                                            --         satelite ECEF position [m] at transmission time
+          tt = weekTowToGpsTime wtt
+               
+      printf "Observation time\n"
+      printf "(receiver clock time of signal reception) : %s\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
-            let (wtt, (x,y,z)) = gpsSatPosForDfPr tobs pr1 pr2 r        -- Output: signal transmission time by GPS clock [s],
-                                                                        --         satelite ECEF position [m] at transmission time
-                tt = weekTowToGpsTime wtt
-            printf "Signal transmission time by GPS clock     : %s\n\n"
+      printf "Signal transmission time by GPS clock     : %s\n\n"
               (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tt)
-            printf "ECEF satellite position [m]:\n"
-            printf "X = %18.9f\n" x
-            printf "Y = %18.9f\n" y
-            printf "Z = %18.9f\n" z
+      printf "ECEF satellite position [m]:\n"
+      printf "X = %18.9f\n" x
+      printf "Y = %18.9f\n" y
+      printf "Z = %18.9f\n" z
    else
-       error $ "Cannot find a GPS navigation record in " ++ fn   
+      printf "Cannot find a GPS navigation record in %s\n" fn   
 
