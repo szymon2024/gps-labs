@@ -1,4 +1,4 @@
-2025-12-22
+2025-12-23
 
 EN:
 ======================================================================
@@ -14,7 +14,7 @@ within the fitInterval.
 Input
 -----
   - RINEX 3.04 navigation file name
-  - receiver time of signal reception (GPS observation time)
+  - GPS observation time (receiver time of signal reception)
   - satellite number
 
                                        
@@ -80,7 +80,7 @@ maksymalnym IODE, dla której czas obserwacji mieści się w fitInterval.
 Wejście
 -------
   - nazwa pliku nawigacyjnego RINEX 3.04
-  - czas odbiornika odbioru sygnału (czas GPS obserwacji)  
+  - czas GPS obserwacji (czas odbiornika odbioru sygnału  )
   - numer satelity GPS
                                        
 Wyjście

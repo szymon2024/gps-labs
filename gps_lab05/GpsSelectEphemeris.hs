@@ -1,4 +1,4 @@
--- 2025-12-22
+-- 2025-12-23
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time
@@ -30,8 +30,8 @@
 
      Input:
        - RINEX 3.04 navigation file name                    fn
-       - receiver time of signal reception
-         (observation time)                                 tob
+       - observation time
+         (receiver time of signal reception)                tobs
        - satellite number                                   prn       
 
 
@@ -40,7 +40,7 @@
 
      Print of run:
      Observation time: 2025 08 02 01 00 01.5
-      Ephemeris time : 2025 08 02 02 00 00
+       Ephemeris time: 2025 08 02 02 00 00
      PRN:  6      toc: 2025 08 02 02 00 00
      af0:         -4.722196608782E-4
      af1:        -1.432454155292E-11
@@ -140,7 +140,7 @@ data NavRecord = NavRecord
 type GpsTime    = LocalTime
 type GpsWeekTow = (Integer, Pico)                      -- ^ GPS week, time-of-week
 type EphWeekTow = GpsWeekTow
-type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellite identifie)
+type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellite identifier)
                                                        --   key2:  (week, toe)
                                                        --   value2: navigation record for a healthy satellite
                                                        --           and with max iode for (week, toe)
@@ -148,17 +148,17 @@ type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellit
 -- Entry point of the program.
 main :: IO ()
 main = do
-  let fn = "source.nav"                                     -- Input: RINEX 3.04 navigation file name
-      tob   = mkGpsTime 2025 08 02 01 00 01.5              -- Input: observation time - receiver time of signal reception
-      prn    = 6                                            -- Input: satellite number
+  let fn   = "source.nav"                                   -- Input: RINEX 3.04 navigation file name
+      tobs = mkGpsTime 2025 08 02 01 00 01.5                -- Input: observation time (receiver time of signal reception)
+      prn  = 6                                              -- Input: satellite number
   bs <- L8.readFile fn
   let navMap = navGpsMapFromRinex bs
-  case navGpsSelectEphemeris tob prn navMap of
+  case navGpsSelectEphemeris tobs prn navMap of
     Nothing -> printf "Cannot find valid ephemeris \
                       \for given prn and observation time\n"
     Just r  -> do                                           -- Output: GPS navigation record 
          printf "Observation time: %s\n"
-                (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tob)
+                (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" tobs)
          printfRecord r
 
 
@@ -187,8 +187,8 @@ skipHeader bs0 = loop bs0
       | label bs == "END OF HEADER" = dropLastLine bs
       | otherwise                   = loop (dropLine bs)
       where
-        label        = trim . L8.takeWhile (not . (`L8.elem` "\r\n")) . L8.drop 60
-        dropLine     =        L8.dropWhile        (`L8.elem` "\r\n")  . L8.drop 80
+        label    = trim . L8.takeWhile (not . (`L8.elem` "\r\n")) . L8.drop 60
+        dropLine =        L8.dropWhile        (`L8.elem` "\r\n")  . L8.drop 80
         -- The last line very ofthen is not completed to 80 characters
         dropLastLine = L8.dropWhile        (`L8.elem` "\r\n")
                      . L8.dropWhile (not . (`L8.elem` "\r\n"))
@@ -347,13 +347,13 @@ navGpsInsertRecord r =
 -- satellite PRN from NavMap. The navigation record with the nearest
 -- (week, toe) to the specified observation time is selected.
 navGpsSelectEphemeris
-    :: GpsTime
-    -> IMS.Key
-    -> NavMap
+    :: GpsTime                                    -- ^ observation time
+    -> Int                                        -- ^ PRN (satellite identfier)
+    -> NavMap                                     -- ^ navigation records
     -> Maybe NavRecord
-navGpsSelectEphemeris tob prn navMap = do
+navGpsSelectEphemeris tobs prn navMap = do
     subMap <- IMS.lookup prn navMap
-    let t  = gpsTimeToWeekTow tob
+    let t  = gpsTimeToWeekTow tobs
         past   = MS.lookupLE t subMap
         future = MS.lookupGE t subMap
         closest = case (past, future) of
@@ -387,7 +387,7 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
                      + s
     in (w, tow)
 
--- | Converts GPS week and time-of-week (tow) into GPS time
+-- | Converts GPS week, time-of-week into GPS time
 weekTowToGpsTime
     :: GpsWeekTow                                           -- ^ GPS week, time-of-week
     -> GpsTime                                              -- ^ GPS time
@@ -404,8 +404,8 @@ weekTowToGpsTime (w, tow) =
 
 -- | Calculates the number of seconds between two (GPS week, tow).
 diffGpsWeekTow
-    :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
-    -> GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
+    -> GpsWeekTow                                           -- ^ GPS week, time-of-week
     -> Pico                                                 -- ^ time difference [s]
 diffGpsWeekTow (w2,tow2) (w1,tow1) =
     fromInteger (dw * 604800) + dtow
