@@ -314,7 +314,7 @@ readRecordLines bs0 =
       readLine :: L8.ByteString -> (L8.ByteString, L8.ByteString)
       readLine bs =
           let (line, bs') = L8.splitAt 80 bs
-              dropLineSep  = L8.dropWhile (`L8.elem` "\r\n")
+              dropLineSep = L8.dropWhile (`L8.elem` "\r\n")
           in (line, dropLineSep bs')
 
       --   Last line can have two, three or four fields
