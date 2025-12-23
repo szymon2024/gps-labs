@@ -1,4 +1,4 @@
-2025-12-22
+2025-12-23
 
 EN:
 =====================================================================
@@ -21,7 +21,7 @@ Input
 
 Output
 ------
-- signal transmission time by GPS clock [s]
+- signal transmission time by GPS clock
 - satellite position in ECEF [m] at transmission time
 
 Print of run
@@ -58,7 +58,7 @@ Wejście
 
 Wyjście
 ------
-- czas transmisji sygnału według zegara GPS [s]
+- czas transmisji sygnału według zegara GPS
 - pozycja satelity w ECEF [m] w momencie transmisji
 
 Wydruk uruchomienia
