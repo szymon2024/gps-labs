@@ -382,7 +382,7 @@ obsGpsRecordsFromRinex bs
         | L8.isPrefixOf ">" l  =
             case  obsGpsReadRecord (l:ls) of
               Just (r, rest) -> go (r:obss) rest
-              Nothing        -> error "Cannot to read observation record"
+              Nothing        -> error "Unable to read observation record"
         | otherwise = error "Unexpected line: expected '>' at start of epoch"
 
 -- | Read  observation time (epoch) with GPS satellite observations
