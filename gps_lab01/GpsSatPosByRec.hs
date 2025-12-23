@@ -186,8 +186,8 @@ weekTowToGpsTime (w, tow) =
 
 -- | Calculates the number of seconds between two (GPS week, tow).
 diffGpsWeekTow
-    :: GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
-    -> GpsWeekTow                                           -- ^ GPS week, time-of-week [s]
+    :: GpsWeekTow                                           -- ^ GPS week, time-of-week
+    -> GpsWeekTow                                           -- ^ GPS week, time-of-week
     -> Pico                                                 -- ^ time difference [s]
 diffGpsWeekTow (w2,tow2) (w1,tow1) =
     fromInteger (dw * 604800) + dtow
