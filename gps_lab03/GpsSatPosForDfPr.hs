@@ -297,7 +297,9 @@ takeField start len = L8.take len . L8.drop start
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
 mkGpsTime y mon d h m s = LocalTime (fromGregorian y mon d) (TimeOfDay h m s)
 
--- | Read GPS satellite navigation record eight lines.
+-- | Read GPS satellite navigation record eight lines.  It is based on
+--   the knowledge that the content of a line should be 80 characters,
+--   but last line often breaks this rule.
 readRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
 readRecordLines bs0 =
     let (l1, bs1) = readLine bs0
@@ -335,7 +337,8 @@ readRecord bs =
          Nothing -> error "Unable to get GPS navigation record from record lines."
 
 -- | Get GPS navigation record from GPS record lines.  Expects 8 lines
--- as input.
+--   as input. It does not read fields one by one, as parsers do, but
+--   by position in the line.
 getRecord :: [L8.ByteString] -> Maybe NavRecord
 getRecord ls =
     case ls of
