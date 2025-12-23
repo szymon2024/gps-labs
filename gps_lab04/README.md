@@ -1,4 +1,4 @@
-2025-12-09
+2025-12-23
 
 EN:
 ======================================================================
@@ -6,8 +6,8 @@ EN:
 ======================================================================
 
 This programm creates copy of a RINEX 3.04 file, replacing the letter
-'D' or 'd' with 'E' in the data section so that scientific notation
-uses 'E' instead of Fortran-style 'D'. The header remains unchanged.
+'D' or 'd' with 'e' in the data section so that scientific notation
+uses 'e' instead of Fortran-style 'D'. The header remains unchanged.
 
 
 Input
@@ -18,7 +18,7 @@ Input
 
 Output
 ------
-- new RINEX file with E scientific notation
+- new RINEX file with e scientific notation
 
 
 PL:  
@@ -27,8 +27,8 @@ PL:
 ======================================================================
 
 Ten program tworzy kopię pliku RINEX 3.04 zastępując literę 'D'
-lub 'd' literą 'E' w sekcji danych, dzięki czemu w notacji naukowej
-używane jest 'E' zamiast 'D' w stylu Fortran. Nagłówek pozostaje
+lub 'd' literą 'e' w sekcji danych, dzięki czemu w notacji naukowej
+używane jest 'e' zamiast 'D' w stylu Fortran. Nagłówek pozostaje
 niezmieniony.
 
 
@@ -40,4 +40,4 @@ Wejście
 
 Wyjście
 -------
-- nowy plik RINEX z notacją naukową E
+- nowy plik RINEX z notacją naukową e

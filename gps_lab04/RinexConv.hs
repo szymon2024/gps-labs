@@ -1,7 +1,7 @@
--- 2025-12-09
+-- 2025-12-23
 
-{- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'E'
-     in the data section so that scientific notation uses 'E'
+{- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'e'
+     in the data section so that scientific notation uses 'e'
      instead of Fortran-style 'D'. The header remains unchanged.
 
      NOTE:
@@ -13,7 +13,7 @@
        - destination RINEX file name (to set in the code)   dn
 
      Output: 
-       - destination RINEX file with normalized scentific notation with letter 'E'
+       - destination RINEX file with normalized scentific notation with letter 'e'
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -63,21 +63,22 @@ rinexConvertNotation bs
         
 -- | Compute RINEX header length including END OF HEADER line
 headerLength :: [L8.ByteString] -> Int64
-headerLength ls = case break isEndOfHeader ls of
-                    (_   , []  )  -> error "Cannot detect rinex header."
-                    (part, l1:[]) -> sum (map ((+1) . L8.length) part) +  L8.length l1      -- +1 to count '\n'
-                    (part, l1:_)  -> sum (map ((+1) . L8.length) part) + (L8.length l1 + 1) -- +1 to count '\n'
+headerLength ls =
+    case break isEndOfHeader ls of
+      (_   , []  )  -> error "Cannot detect rinex header."
+      (part, l1:[]) -> sum (map ((+1) . L8.length) part) +  L8.length l1      -- +1 to count '\n'
+      (part, l1:_)  -> sum (map ((+1) . L8.length) part) + (L8.length l1 + 1) -- +1 to count '\n'
     where
       isEndOfHeader line = trim (L8.drop 60 line) == L8.pack "END OF HEADER"
 
--- | Replace 'D' or 'd' with 'E'.
+-- | Replace 'D' or 'd' with 'e'.
 --   In RINEX, floating-point numbers may use Fortran-style
 --   scientific notation with 'D'. This function normalizes
---   them to the standard 'E' notation.
+--   them to the standard 'e' notation.
 replaceD :: Char -> Char
 replaceD c
-  | c == 'D'  = 'E'
-  | c == 'd'  = 'E'
+  | c == 'D'  = 'e'
+  | c == 'd'  = 'e'
   | otherwise = c
 
 -- | Trim leading and trailing whitespace from a ByteString.              
