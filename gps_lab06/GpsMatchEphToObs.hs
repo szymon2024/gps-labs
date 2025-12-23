@@ -59,7 +59,7 @@ import           System.IO.Unsafe                  (unsafePerformIO)
 
 -- | GPS navigation data record from RINEX 3.04 navigation file.
 data NavRecord = NavRecord
-  { prn         :: Int               -- ^ satellite number
+  { navPrn      :: Int               -- ^ satellite number
   , toc         :: GpsTime           -- ^ clock data reference time
   , af0         :: Double            -- ^ SV clock bias correction coefficient [s]
   , af1         :: Double            -- ^ SV clock drift correction coefficient [s/s]
@@ -115,7 +115,7 @@ main = do
       obsNavRs = obsGpsAttachNav navMap obsRs               -- Output: observations with attached ephemerides
                  
       totalObs =
-        foldl' (\acc (_, obs) -> acc + length obs) 0 obsRs
+        foldl' (\acc (_, obss) -> acc + length obss) 0 obsRs
                
       obsWithoutEphemerides =
         foldl' (\acc (_, xs) ->
@@ -215,13 +215,13 @@ navGpsReadRecord :: [L8.ByteString] -> Maybe NavRecord
 navGpsReadRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
-            (prn, _)  <- L8.readInt $ trim $ getField  1 2 l1               -- trim is needed by readInt
-            (y  , _)  <- L8.readInt $ trim $ getField  4 4 l1
-            (mon, _)  <- L8.readInt $ trim $ getField  9 2 l1
-            (d  , _)  <- L8.readInt $ trim $ getField 12 2 l1
-            (h  , _)  <- L8.readInt $ trim $ getField 15 2 l1
-            (m  , _)  <- L8.readInt $ trim $ getField 18 2 l1
-            (s  , _)  <- L8.readInt $ trim $ getField 21 2 l1
+            (navPrn, _)  <- L8.readInt $ trim $ getField  1 2 l1               -- trim is needed by readInt
+            (y     , _)  <- L8.readInt $ trim $ getField  4 4 l1
+            (mon   , _)  <- L8.readInt $ trim $ getField  9 2 l1
+            (d     , _)  <- L8.readInt $ trim $ getField 12 2 l1
+            (h     , _)  <- L8.readInt $ trim $ getField 15 2 l1
+            (m     , _)  <- L8.readInt $ trim $ getField 18 2 l1
+            (s     , _)  <- L8.readInt $ trim $ getField 21 2 l1
   
             let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
@@ -292,7 +292,7 @@ navGpsInsertRecord :: NavRecord -> NavMap -> NavMap
 navGpsInsertRecord r =
   IMS.alter updatePrn key1
   where
-    key1 = prn r
+    key1 = navPrn r
     key2 = (week r, toe r)
     updatePrn Nothing =
         Just (MS.singleton key2 r)
@@ -315,9 +315,9 @@ navGpsSelectEphemeris
     -> Int
     -> NavMap
     -> Maybe NavRecord
-navGpsSelectEphemeris tob prn navMap = do
+navGpsSelectEphemeris tobs prn navMap = do
     subMap <- IMS.lookup prn navMap
-    let t  = gpsTimeToWeekTow tob
+    let t  = gpsTimeToWeekTow tobs
         past   = MS.lookupLE t subMap
         future = MS.lookupGE t subMap
         closest = case (past, future) of
@@ -376,11 +376,11 @@ obsGpsReadRecords :: [L8.ByteString] -> [ObsRecord]
 obsGpsReadRecords [] = error "Cannot find observation data in the file"
 obsGpsReadRecords ls0 = loop [] ls0
     where                       
-      loop obs [] = obs
-      loop obs (l:ls)
+      loop obss [] = obss
+      loop obss (l:ls)
           | L8.isPrefixOf ">" l  =
               case  obsGpsReadRecord (l:ls) of
-                Just (r, rest) -> loop (r:obs) rest
+                Just (r, rest) -> loop (r:obss) rest
                 Nothing        -> error "Cannot parse observation data"
           | otherwise = error "Unexpected line: expected '>' at start of epoch"
 
@@ -394,16 +394,16 @@ obsGpsReadRecord (l:ls) = do
   (h  , _) <- L8.readInt      $ getField 13  2 l
   (m  , _) <- L8.readInt      $ getField 16  2 l
   s        <- readDoubleField $ getField 19 11 l
-  let !tob = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
+  let !tobs = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
   (n  , _) <- L8.readInt $ getField 33  3 l                -- number of satellites observed in current epoch
                                                            -- (observation time)
   let (obsLines, rest) = splitAt n ls
-      gpsLines = filter (\line -> L8.head line == 'G') obsLines  -- head faster than take 1
+      gpsLines = filter (\line -> L8.take 1 line == "G") obsLines
   prns <- mapM (\line -> fst <$> L8.readInt (getField 1 2 line)) gpsLines
           
-  let obs = map Obs prns
+  let obss = map Obs prns
             
-  return ((tob, obs), rest)
+  return ((tobs, obss), rest)
                
 -- | Makes GpsTime from numbers.
 mkGpsTime :: Integer -> Int -> Int -> Int -> Int -> Pico -> GpsTime
@@ -465,12 +465,12 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
 -- | Attach navigation records with ephemerides to observations
 obsGpsAttachNav :: NavMap -> [ObsRecord] -> [ObsRecordWithNavs]
 obsGpsAttachNav navMap obsRs =
- [ (tob, [ (ob, r)
-         | ob <- obs
-         , let r = navGpsSelectEphemeris tob (obsPrn ob) navMap
-         ]
+ [ (tobs, [ (obs, r)
+          | obs <- obss
+          , let r = navGpsSelectEphemeris tobs (obsPrn obs) navMap
+          ]
    )
- | (tob, obs) <- obsRs
+ | (tobs, obss) <- obsRs
  ]
 
 
