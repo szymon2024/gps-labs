@@ -1,4 +1,4 @@
--- 2025-12-13
+-- 2025-12-23
 
 {- | A program for computing the position of a GPS satellite in the ECEF
      coordinate system based on sample orbital parameters (ephemeris),
@@ -198,17 +198,17 @@ diffGpsWeekTow (w2,tow2) (w1,tow1) =
 -- | Ephemeris validity check for given (w, tow).  Checks if (w, tow)
 --   is in half of interval since (week, toe).
 isEphemerisValid
-  :: GpsWeekTow                                             --           GPS week, time-of-week
-  -> GpsWeekTow                                             -- ephemeris GPS week, time-of-week of ephemeris
-  -> Int                                                    -- interval
+  :: GpsWeekTow                                   -- ^ GPS week, time-of-week
+  -> Int                                          -- ^ fit interval [h]
+  -> Ephemeris                                    -- ^ ephemeris GPS week, time-of-week of ephemeris
   -> Bool
-isEphemerisValid (w, tow) (week, toe) interval=
-    abs diffTime <= halfInterval
+isEphemerisValid (w, tow) fitInterval eph =
+    abs diffTime <= halfFitInterval
     where
-      diffTime = diffGpsWeekTow  (w, tow) (week, toe)
-      halfInterval = fromIntegral ((interval `div` 2) * 3600)
+      diffTime = diffGpsWeekTow  (w, tow) (week eph, toe eph)
+      halfFitInterval = fromIntegral ((fitInterval `div` 2) * 3600)
       
--- | Determining the GPS satellite position in ECEF:
+-- | Determining the GPS satellite position by receiver in ECEF:
 --   - checks possible curve fit interval values according to 20.3.4.4
 --     IS-GPS-200N.     
 --   - checks ephemeris validity to given (w, tow) and curveFitIterval
@@ -229,7 +229,7 @@ gpsSatPosByRec t eph curveFitInterval
       || curveFitInterval == 14
       || curveFitInterval == 26 =
         let (w, tow) = gpsTimeToWeekTow t
-        in if isEphemerisValid (w, tow) (week eph, toe eph) curveFitInterval
+        in if isEphemerisValid (w, tow) curveFitInterval eph
            then satPosECEF tow eph
            else error $ "Ephemeris is not valid for "
                     ++ formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t
@@ -270,13 +270,13 @@ main = do
   let 
       eph              = ephExample                              -- Input: GPS Ephemeris
       curveFitInterval = 4                                       -- Input: ephemeris validity interval
-                                                                 --        (in RINEX it is called fit interval)
+                                                                 --        (in RINEX 3.04 it is called fit interval)
       t                = mkGpsTime 2024 03 07 22 00 30.0         -- Input: GPS Time
       (x, y, z)        = gpsSatPosByRec t eph curveFitInterval   -- Output: ECEF satellite position
                   
   printf "Entered GPS time            : %s\n"
              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t)
-  -- ephemeris reference time         
+  -- ephemeris GPS reference time         
   let teph = weekTowToGpsTime (week eph, toe eph)
   printf "Ephemeris reference GPS time: %s\n"
              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" teph)
