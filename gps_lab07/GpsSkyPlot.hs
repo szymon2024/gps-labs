@@ -1,4 +1,4 @@
--- 2025-12-22
+-- 2025-12-24
 
 {- | The program creates sky plot of computed GPS satellites
    trajectories from RINEX 3.04 navigation file. A sky plot is polar
@@ -148,7 +148,7 @@ main = do
       fn = "rinex.nav"                                      -- Input: rinex navigation file name
   bs <- L8.readFile fn
   let
-      navMap    = navGpsMapFromRinex bs
+      navMap    = navMapFromRinex bs
       prnfilter = \prn _ -> prn >=1 && prn <=32             -- Input: filter by satellite prn
       step      = 90::Pico                                  -- [s] 
       skyMap    = skyPoints obsWGS84 step
@@ -158,21 +158,22 @@ main = do
   TIO.writeFile "skyplot.svg"
          (svgCreateContent title skyMap)                    -- Output: skyplot.svg file         
 
--- | The viewport (drawing) in svg file will be 800px by 800px. The
+-- | The viewport (drawing) in svg file will be 600px by 600px. The
 -- upper-left corner is (0,0).
 svgWidth, svgHeight :: Int
 svgWidth = 600
 svgHeight = 600
 
+-- | Title height in pixels
 svgTitleHeight :: Int
 svgTitleHeight = 30
 
--- | viewport center for svg file
+-- | Compute viewport center for svg file
 svgCx, svgCy :: Double
 svgCx = fromIntegral  svgWidth / 2
 svgCy = fromIntegral svgHeight / 2 + fromIntegral svgTitleHeight
 
--- | maximum radius of sky plot for svg file
+-- | Compute maximum radius of sky plot for svg file
 svgRMax :: Double
 svgRMax = svgCx - 2 * fromIntegral svgTitleHeight
 
@@ -180,7 +181,7 @@ svgRMax = svgCx - 2 * fromIntegral svgTitleHeight
 deg2rad :: Double -> Double
 deg2rad d = d * pi / 180
 
--- | Calculate x, y drawing coordinates for azimuth, elevation for svg
+-- | Compute x, y drawing coordinates for azimuth, elevation for svg
 -- file
 svgToXY :: AzEl -> (Double, Double)
 svgToXY (az,el) =
@@ -551,8 +552,8 @@ wgs84ToECEF (latDeg, lonDeg, h) = (x, y, z)
 -- | Build a navigation map from GPS navigation records of RINEX 3.04
 --   navigation body for healthy satellites and with max iode for
 --   (week, toe).
-navGpsMapFromRinex :: L8.ByteString -> NavMap  
-navGpsMapFromRinex bs0
+navMapFromRinex :: L8.ByteString -> NavMap  
+navMapFromRinex bs0
     | L8.null bs0        = error "Empty file"
     | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
     | fileType /= "N"    = error "Not navigation file"
@@ -568,13 +569,13 @@ navGpsMapFromRinex bs0
         go m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (r, bs') = navGpsReadRecord bs
+              let (r, bs') = readRecord bs
                   m' = if svHealth r == 0
-                       then navGpsInsertRecord r m
+                       then insertRecord r m
                        else m
               in go m' bs' 
           | otherwise =
-              go m (navSkipUnknownRecord bs)
+              go m (skipRecord bs)
 
 -- | Skips header of RINEX 3.04 navigation file.  Uses information
 -- about the label position and the fixed length of the header line
@@ -599,8 +600,8 @@ rnxSkipHeader bs0 = loop bs0
 -- | Read GPS satellite navigation record eight lines.  It is based on
 --   the knowledge that the content of a line should be 80 characters,
 --   but last line often breaks this rule.
-navGpsReadRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-navGpsReadRecordLines bs0 =
+readRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+readRecordLines bs0 =
     let (l1, bs1) = readLine bs0
         (l2, bs2) = readLine bs1
         (l3, bs3) = readLine bs2
@@ -628,18 +629,20 @@ navGpsReadRecordLines bs0 =
           in (part1 <> part2, dropLineSep bs2)
 
 -- | Read GPS satellite navigation record
-navGpsReadRecord :: L8.ByteString -> (NavRecord, L8.ByteString)
-navGpsReadRecord bs =
-    let (ls, bs') = navGpsReadRecordLines bs
-    in case navGpsGetRecord ls of
+readRecord :: L8.ByteString -> (NavRecord, L8.ByteString)
+readRecord bs =
+    let (ls, bs') = readRecordLines bs
+    in case getRecord ls of
          Just r  -> (r, bs')
-         Nothing -> error "Unable to get GPS navigation record from record lines."
+         Nothing ->
+             error $ L8.unpack $ "Unable to get GPS navigation record from \n:"
+                               <> L8.unlines ls
 
 -- | Get GPS navigation record from GPS record lines.  Expects 8 lines
 --   as input. It does not read fields one by one, as parsers do, but
 --   by position in the line.
-navGpsGetRecord :: [L8.ByteString] -> Maybe NavRecord
-navGpsGetRecord ls =
+getRecord :: [L8.ByteString] -> Maybe NavRecord
+getRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
             (prn, _)  <- L8.readInt $ trim $ takeField  1 2 l1              -- trim is needed by readInt
@@ -694,29 +697,28 @@ navGpsGetRecord ls =
             return NavRecord {..}
     _ -> Nothing
 
--- | Skip unknown record reading lines to begining of other record.
--- Used to skip records of constellations other than GPS.
-navSkipUnknownRecord :: L8.ByteString -> L8.ByteString
-navSkipUnknownRecord bs =
+-- | Skip record reading lines to begining of other record.  Used to
+--   skip records of constellations other than GPS.
+skipRecord :: L8.ByteString -> L8.ByteString
+skipRecord bs =
   let (_, rest) = L8.break (== '\n') bs
       rest' = L8.drop 1 rest
-      in if navIsNewRecordLine rest'
+      in if isNewRecordLine rest'
            then rest'
-           else navSkipUnknownRecord rest'
+           else skipRecord rest'
 
 -- | Returns True if the bs starts with other sign than ' '                
-navIsNewRecordLine :: L8.ByteString -> Bool
-navIsNewRecordLine bs = L8.take 1 bs /= " "
+isNewRecordLine :: L8.ByteString -> Bool
+isNewRecordLine bs = L8.take 1 bs /= " "
 
--- | Insert a navigation record into a 'NavMap'.
--- If there is no entry for the given PRN or epoch, the record is
--- inserted. If an entry already exists, the record is replaced only
--- if the new record has a greater IODE than the existing one.
---
--- This ensures that for each @(week, toe)@ only the navigation
--- record with the maximum IODE is kept.
-navGpsInsertRecord :: NavRecord -> NavMap -> NavMap
-navGpsInsertRecord r =
+-- | Insert a navigation record into a 'NavMap'. If there is no entry
+-- for the given PRN or epoch, the record is inserted. If an entry
+-- already exists, the record is replaced only if the new record has a
+-- greater IODE than the existing one.  This ensures that for each
+-- @(week, toe)@ only the navigation record with the maximum IODE is
+-- kept.
+insertRecord :: NavRecord -> NavMap -> NavMap
+insertRecord r =
   IMS.alter updatePrn key1
   where
     key1 = prn r
