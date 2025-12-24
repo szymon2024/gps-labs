@@ -1,4 +1,4 @@
-2025-12-23
+2025-12-24
 
 EN:
 =====================================================================
@@ -16,8 +16,9 @@ Input
 
 Output
 ------
-  - GPS observations with attached navigation
-    records containing ephemerides
+  -  GPS observation records with attached ephemerides
+     to observations
+    
     
 Print of run
 ------------
@@ -42,8 +43,8 @@ Wejście
 
 Wyście
 ------
-  - obserwacje GPS z dołączonymi rekordami
-    nawigacyjnymi zawierającymi efemerydy
+  - rekordy obserwacyjne GPS z dołączonymi efemerydami
+    do obserwacji
     
 Wydruk uruchomienia
 -------------------

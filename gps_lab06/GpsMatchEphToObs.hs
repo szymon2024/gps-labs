@@ -1,9 +1,9 @@
--- 2025-12-23
+-- 2025-12-24
 
 {-| The program matches navigation records from a RINEX 3.04 NAV file
     containing epehemerides to satellite observations from a RINEX
-    3.04 OBS file. Filtered navigation records with ephemerides are
-    attached to the corresponding observations.
+    3.04 OBS file. Filtered navigation records containing ephemerides
+    are attached to the corresponding observations.
 
     Main steps of the algorithm:
 
@@ -15,15 +15,15 @@
     observation file.
     
     3. Attach navigation records with GPS ephemerides from built map
-    to GPS observations using navGpsSelectEphemeris function.
+    to GPS observations using navSelectEphemeris function.
 
     Input:
       - RINEX 3.04 navigation file name                navFn     defined in the code
       - RINEX 3.04 observation file name               obsFn     defined in the code
 
     Output:
-      - GPS observations with attached navigation
-        records containing ephemerides                 obsNavRs
+    - observation records with attached
+      ephemerides to observations                      obsNavRs
         
     
     Print of run:
@@ -110,55 +110,54 @@ main = do
   navBs <- L8.readFile navFn
   obsBs <- L8.readFile obsFn
 
-  let navMap   = navGpsMapFromRinex navBs
-      obsRs    = obsGpsRecordsFromRinex obsBs
-      obsNavRs = obsGpsAttachNav navMap obsRs               -- Output: observations with attached ephemerides
-                 
-      totalObs =
-        foldl' (\acc (_, obss) -> acc + length obss) 0 obsRs
+  let navMap   = navMapFromRinex navBs
+      obsRs    = obsRecordsFromRinex obsBs
+      obsNavRs = obsAttachNavs navMap obsRs                  -- Output: observation records
+                                                            -- with attached ephemerides to observations
+      numObs =
+        foldl' (\acc (_, obss) -> acc + length obss
+               ) 0 obsRs
                
-      obsWithoutEphemerides =
-        foldl' (\acc (_, xs) ->
-                acc + foldl' count 0 xs
+      numObsWithoutEphemerides =
+        foldl' (\acc (_, xs) -> acc + foldl' count 0 xs
                ) (0::Integer) obsNavRs
           where
             count n (_, Nothing) = n + 1
             count n _            = n
                               
-  printf "Total observations: %d\n" totalObs
-  printf "Without matched ephemerides: %d\n" obsWithoutEphemerides
+  printf "Total observations: %d\n" numObs
+  printf "Without matched ephemerides: %d\n" numObsWithoutEphemerides
 
--- | Build a navigation map from GPS navigation records of RINEX 3.04
---   navigation body for healthy satellites and with max iode for
+-- | Build a navigation map from GPS navigation records of navigation
+--   RINEX 3.04 body for healthy satellites and with max iode for
 --   (week, toe).
-navGpsMapFromRinex :: L8.ByteString -> NavMap  
-navGpsMapFromRinex bs0
+navMapFromRinex :: L8.ByteString -> NavMap  
+navMapFromRinex bs0
     | L8.null bs0        = error "Empty file"
-    | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
-    | fileType /= "N"    = error "Not navigation file"
+    | rnxVer /= "3.04"   = error "Not RINEX 3.04 file"
+    | rnxFileType /= "N" = error "Not navigation file"
     | otherwise = let rnxBody = rnxSkipHeader bs0
                   in if L8.null rnxBody
                      then error "Cannot find navigation data in the file."
                      else go IMS.empty rnxBody
       where
-        rinexVer = trim $ takeField  0 9 bs0 
-        fileType = trim $ takeField 20 1 bs0
+        rnxVer      = trim $ takeField  0 9 bs0 
+        rnxFileType = trim $ takeField 20 1 bs0
                    
         go :: NavMap -> L8.ByteString -> NavMap
         go m bs
           | L8.null bs = m
           | L8.take 1 bs == "G" =
-              let (r, bs') = navGpsReadRecord bs
+              let (r, bs') = navReadRecord bs
                   m' = if svHealth r == 0
-                       then navGpsInsertRecord r m
+                       then navInsertRecord r m
                        else m
               in go m' bs' 
           | otherwise =
-              go m (navSkipUnknownRecord bs)
+              go m (navSkipRecord bs)
 
--- | Skips header of RINEX 3.04 navigation file.  Uses information
--- about the label position and the fixed length of the header line
--- content.
+-- | Skips header of RINEX 3.04 file. Uses information about the label
+--   position and the fixed length of the header line content.
 rnxSkipHeader :: L8.ByteString -> L8.ByteString
 rnxSkipHeader bs0 = loop bs0
   where
@@ -178,8 +177,8 @@ rnxSkipHeader bs0 = loop bs0
 -- | Read GPS satellite navigation record eight lines.  It is based on
 --   the knowledge that the content of a line should be 80 characters,
 --   but last line often breaks this rule.
-navGpsReadRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
-navGpsReadRecordLines bs0 =
+navReadRecordLines :: L8.ByteString -> ([L8.ByteString], L8.ByteString)
+navReadRecordLines bs0 =
     let (l1, bs1) = readLine bs0
         (l2, bs2) = readLine bs1
         (l3, bs3) = readLine bs2
@@ -207,18 +206,20 @@ navGpsReadRecordLines bs0 =
           in (part1 <> part2, dropLineSep bs2)
 
 -- | Read GPS satellite navigation record
-navGpsReadRecord :: L8.ByteString -> (NavRecord, L8.ByteString)
-navGpsReadRecord bs =
-    let (ls, bs') = navGpsReadRecordLines bs
-    in case navGpsGetRecord ls of
+navReadRecord :: L8.ByteString -> (NavRecord, L8.ByteString)
+navReadRecord bs =
+    let (ls, bs') = navReadRecordLines bs
+    in case navGetRecord ls of
          Just r  -> (r, bs')
-         Nothing -> error "Unable to get GPS navigation record from record lines."   
+         Nothing ->
+             error $ L8.unpack $ "Unable to get GPS navigation record from \n:"
+                               <> L8.unlines ls
 
 -- | Get GPS navigation record from GPS record lines.  Expects 8 lines
 --   as input. It does not read fields one by one, as parsers do, but
 --   by position in the line.
-navGpsGetRecord :: [L8.ByteString] -> Maybe NavRecord
-navGpsGetRecord ls =
+navGetRecord :: [L8.ByteString] -> Maybe NavRecord
+navGetRecord ls =
   case ls of
     [l1,l2,l3,l4,l5,l6,l7,l8] -> do
             (navPrn, _)  <- L8.readInt $ trim $ takeField  1 2 l1               -- trim is needed by readInt
@@ -273,29 +274,28 @@ navGpsGetRecord ls =
             return NavRecord {..}
     _ -> Nothing
 
--- | Skip unknown record reading lines to begining of other record.
--- Used to skip records of constellations other than GPS.
-navSkipUnknownRecord :: L8.ByteString -> L8.ByteString
-navSkipUnknownRecord bs =
+-- | Skip record reading lines to begining of other record.  Used to
+--   skip records of constellations other than GPS.
+navSkipRecord :: L8.ByteString -> L8.ByteString
+navSkipRecord bs =
   let (_, rest) = L8.break (== '\n') bs
       rest' = L8.drop 1 rest
       in if navIsNewRecordLine rest'
            then rest'
-           else navSkipUnknownRecord rest'
+           else navSkipRecord rest'
 
 -- | Returns True if the bs starts with other sign than ' '                
 navIsNewRecordLine :: L8.ByteString -> Bool
 navIsNewRecordLine bs = L8.take 1 bs /= " "
 
--- | Insert a navigation record into a 'NavMap'.
--- If there is no entry for the given PRN or epoch, the record is
--- inserted. If an entry already exists, the record is replaced only
--- if the new record has a greater IODE than the existing one.
---
--- This ensures that for each @(week, toe)@ only the navigation
--- record with the maximum IODE is kept.
-navGpsInsertRecord :: NavRecord -> NavMap -> NavMap
-navGpsInsertRecord r =
+-- | Insert a navigation record into a 'NavMap'. If there is no entry
+--   for the given PRN or epoch, the record is inserted. If an entry
+--   already exists, the record is replaced only if the new record has
+--   a greater IODE than the existing one.  This ensures that for each
+--   @(week, toe)@ only the navigation record with the maximum IODE is
+--   kept.
+navInsertRecord :: NavRecord -> NavMap -> NavMap
+navInsertRecord r =
   IMS.alter updatePrn key1
   where
     key1 = navPrn r
@@ -314,14 +314,14 @@ navGpsInsertRecord r =
 
                        
 -- | Selects a navigation record for a given observation time and
--- satellite PRN from NavMap. The navigation record with the nearest
--- (week, toe) to the specified observation time is selected.
-navGpsSelectEphemeris
+--   satellite PRN from NavMap. The navigation record with the nearest
+--   (week, toe) to the specified observation time is selected.
+navSelectEphemeris
     :: GpsTime
     -> Int
     -> NavMap
     -> Maybe NavRecord
-navGpsSelectEphemeris tobs prn navMap = do
+navSelectEphemeris tobs prn navMap = do
     subMap <- IMS.lookup prn navMap
     let t  = gpsTimeToWeekTow tobs
         past   = MS.lookupLE t subMap
@@ -365,30 +365,36 @@ isEphemerisValid (w, tow) eph =
     where
       diffTime        = diffGpsWeekTow  (w, tow) (week eph, toe eph)
       halfFitInterval = realToFrac ((fitInterval eph) `div` 2 * 3600)                  
-                   
-obsGpsRecordsFromRinex :: L8.ByteString -> [ObsRecord]
-obsGpsRecordsFromRinex bs
-  | L8.null bs         = error "Empty file"
-  | rinexVer /= "3.04" = error "Not RINEX 3.04 file"
-  | fileType /= "O"    = error "Not an observation file"
-  | otherwise = go [] bodyLines 
+
+-- | Build an observation record list from GPS observation records of
+--   observation RINEX 3.04 body.
+obsRecordsFromRinex :: L8.ByteString -> [ObsRecord]
+obsRecordsFromRinex bs
+  | L8.null bs            = error "Empty file"
+  | rnxVer      /= "3.04" = error "Not RINEX 3.04 file"
+  | rnxFileType /= "O"    = error "Not an observation file"
+  | otherwise = let rnxBody = rnxSkipHeader $ bs
+                in if L8.null rnxBody
+                   then error "Cannot find navigation data in the file."
+                   else go [] (L8.lines rnxBody)
   where
-    rinexVer = trim $ takeField  0 9 bs
-    fileType = trim $ takeField 20 1 bs
-    bodyLines = L8.lines . rnxSkipHeader $ bs
+    rnxVer      = trim $ takeField  0 9 bs
+    rnxFileType = trim $ takeField 20 1 bs
 
     go obss [] = obss
     go obss (l:ls)
         | L8.isPrefixOf ">" l  =
-            case  obsGpsReadRecord (l:ls) of
+            case  obsReadRecord (l:ls) of
               Just (r, rest) -> go (r:obss) rest
-              Nothing        -> error "Unable to read observation record"
-        | otherwise = error "Unexpected line: expected '>' at start of epoch"
+              Nothing        ->
+                  error $ L8.unpack $ "Unable to read observation record \
+                                      \from text starting with:\n" <> l
+        | otherwise = error "Unexpected line: expected '>' at start of record"
 
--- | Read  observation time (epoch) with GPS satellite observations
-obsGpsReadRecord :: [L8.ByteString] -> Maybe (ObsRecord, [L8.ByteString])
-obsGpsReadRecord [] = Nothing                         
-obsGpsReadRecord (l:ls) = do
+-- | Read observation time (epoch) with the observations of a GPS satellite
+obsReadRecord :: [L8.ByteString] -> Maybe (ObsRecord, [L8.ByteString])
+obsReadRecord [] = Nothing                         
+obsReadRecord (l:ls) = do
   (y  , _) <- L8.readInt      $ takeField  2  4 l
   (mon, _) <- L8.readInt      $ takeField  7  2 l
   (d  , _) <- L8.readInt      $ takeField 10  2 l
@@ -400,7 +406,10 @@ obsGpsReadRecord (l:ls) = do
                                                                       -- (observation time)
   let (obsLines, rest) = splitAt n ls
       gpsLines = filter (\line -> L8.take 1 line == "G") obsLines
-  prns <- mapM (\line -> fst <$> L8.readInt (takeField 1 2 line)) gpsLines
+  prns <- mapM (\line -> do
+                  (n, _) <- L8.readInt (takeField 1 2 line)
+                  return n
+               ) gpsLines
           
   let obss = map Obs prns
             
@@ -457,18 +466,19 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     let gpsStartDate = fromGregorian 1980 1 6               -- the date from which the GPS time is counted
         days         = diffDays date gpsStartDate           -- number of days since GPS start date
         (w, dow)     = days `divMod` 7                      -- GPS week, GPS day-of-week
-        tow          = fromIntegral ( dow * 86400
-                                    + toInteger (h * 3600 + m * 60)
-                                    )
-                     + s
+        tow          =
+            fromIntegral ( dow * 86400
+                         + toInteger (h * 3600 + m * 60)
+                         )
+            + s
     in (w, tow)
 
--- | Attach navigation records with ephemerides to observations
-obsGpsAttachNav :: NavMap -> [ObsRecord] -> [ObsRecordWithNavs]
-obsGpsAttachNav navMap obsRs =
+-- | Attach navigation records with ephemerides to observation records
+obsAttachNavs :: NavMap -> [ObsRecord] -> [ObsRecordWithNavs]
+obsAttachNavs navMap obsRs =
  [ (tobs, [ (obs, r)
           | obs <- obss
-          , let r = navGpsSelectEphemeris tobs (obsPrn obs) navMap
+          , let r = navSelectEphemeris tobs (obsPrn obs) navMap
           ]
    )
  | (tobs, obss) <- obsRs
