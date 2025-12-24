@@ -1,4 +1,4 @@
--- 2025-12-23
+-- 2025-12-24
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
@@ -186,12 +186,12 @@ isEphemerisValid (w, tow) fitInterval  eph=
 --     and ephemeris validity interval,
 --   - computation of the GPS satellite position in ECEF from
 --     the GPS ephemeris and for a GPS time
-gpsSatPos       
+satPos       
     :: GpsTime
     -> Ephemeris                                  -- ^ ephemeris
     -> Int                                        -- ^ ephemeris validity interval [h]
     -> (Double, Double, Double)                   -- ^ satellite position in ECEF [m]
-gpsSatPos t eph fitInterval =
+satPos t eph fitInterval =
     let (w, tow) = gpsTimeToWeekTow t
     in if isEphemerisValid (w, tow) fitInterval eph
        then satPosECEF (w, tow) eph
@@ -232,7 +232,7 @@ main = do
       eph          = ephExample                             -- Input: GPS Ephemeris
       fitInterval  = 4                                      -- Input: ephemeris validity interval
       t            = mkGpsTime 2024 03 07 22 00 30.0        -- Input: GPS Time
-      (x, y, z)    = gpsSatPos t eph fitInterval            -- Output: ECEF satellite position
+      (x, y, z)    = satPos t eph fitInterval               -- Output: ECEF satellite position
                   
   printf "Entered GPS time            : %s\n"
              (formatTime defaultTimeLocale "%Y %m %d %H %M %S%Q" t)
