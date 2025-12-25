@@ -4,7 +4,7 @@ EN:
 CONTENTS
 --------
 
-[gps_lab01](./gps_lab01) - GPS satellite position determined by the receiver for
+gps_lab01 - GPS satellite position determined by the receiver for
             given GPS time using orbital parameters in accordance with
             the IS‑GPS‑200 specification
 
