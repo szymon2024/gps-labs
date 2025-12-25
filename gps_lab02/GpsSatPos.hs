@@ -1,6 +1,6 @@
 -- 2025-12-25
 
-{- | A programm for computing the position of a GPS satellite in the
+{- | The programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
      (ephemeris), ephemeris validity interval and GPS time provided as
      input. GPS time defined as (w, tow), where w is the GPS week and

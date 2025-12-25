@@ -5,7 +5,7 @@ EN:
 GPS SATELLITE POSITION FOR GIVEN GPS TIME USING ORBITAL PARAMETERS
 ======================================================================
 
-A program for determining the position of a GPS satellite in the ECEF
+The program for determining the position of a GPS satellite in the ECEF
 system based on sample orbital parameters (ephemeris), the ephemeris
 validity interval, and a given GPS time defined as (w, tow), where w is
 the GPS week and tow is the time of week.
