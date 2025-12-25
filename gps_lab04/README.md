@@ -1,11 +1,11 @@
-2025-12-24
+2025-12-25
 
 EN:
 ======================================================================
   SCIENTIFIC NOTATION RINEX 3.04 FILE CONVERTER
 ======================================================================
 
-This programm creates copy of a RINEX 3.04 file, replacing the letter
+The program creates copy of a RINEX 3.04 file, replacing the letter
 'D' or 'd' with 'e' in the data section so that scientific notation
 uses 'e' instead of Fortran-style 'D'. The header remains unchanged.
 
@@ -26,10 +26,9 @@ PL:
   KONWERTER NOTACJI NAUKOWEJ PLIKU RINEX 3.04
 ======================================================================
 
-Ten program tworzy kopię pliku RINEX 3.04 zastępując literę 'D'
-lub 'd' literą 'e' w sekcji danych, dzięki czemu w notacji naukowej
-używane jest 'e' zamiast 'D' w stylu Fortran. Nagłówek pozostaje
-niezmieniony.
+Program tworzy kopię pliku RINEX 3.04 zastępując literę 'D' lub 'd'
+literą 'e' w sekcji danych, dzięki czemu w notacji naukowej używane
+jest 'e' zamiast 'D' w stylu Fortran. Nagłówek pozostaje niezmieniony.
 
 
 Wejście

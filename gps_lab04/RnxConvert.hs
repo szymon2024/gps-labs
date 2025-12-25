@@ -1,8 +1,8 @@
--- 2025-12-24
+-- 2025-12-25
 
-{- | Creates copy of a RINEX 3.04 file, replacing the letter 'D' with 'e'
-     in the data section so that scientific notation uses 'e'
-     instead of Fortran-style 'D'. The header remains unchanged.
+{- | The program Creates copy of a RINEX 3.04 file, replacing the letter
+     'D' with 'e' in the data section so that scientific notation uses
+     'e' instead of Fortran-style 'D'. The header remains unchanged.
 
      NOTE:
        It is important to detect END OF HEADER from column 60,
