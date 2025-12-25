@@ -1,4 +1,4 @@
--- 2025-12-24
+-- 2025-12-25
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time

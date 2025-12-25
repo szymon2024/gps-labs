@@ -1,4 +1,4 @@
-2025-12-24
+2025-12-25
 
 EN:
 ======================================================================
@@ -80,7 +80,7 @@ maksymalnym IODE, dla której czas obserwacji mieści się w fitInterval.
 Wejście
 -------
   - nazwa pliku nawigacyjnego RINEX 3.04
-  - czas GPS obserwacji (czas odbiornika odbioru sygnału  )
+  - czas GPS obserwacji (czas odbiornika odbioru sygnału)
   - numer satelity GPS
                                        
 Wyjście
