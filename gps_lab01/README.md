@@ -1,9 +1,9 @@
-2025-12-24
+2025-12-25
 
 EN:
 ======================================================================
 GPS SATELLITE POSITION DETERMINED BY THE RECEIVER FOR GIVEN GPS TIME
-USING BROADCAST ORBITAL PARAMETERS IN ACCORDANCE WITH THE IS‑GPS‑200
+USING ORBITAL PARAMETERS IN ACCORDANCE WITH THE IS‑GPS‑200
 SPECIFICATION
 ======================================================================
 
@@ -37,15 +37,14 @@ Z =  7260529.645377433
 
 PL:
 ======================================================================
-POZYCJA SATELITY GPS WYZNACZANA PRZEZ ODBIORNIK DLA DANEGO CZASU GPS Z
-WYKORZYSTANIEM ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY ZGODNIE ZE
-SPECYFIKACJĄ IS‑GPS‑200
+POZYCJA SATELITY GPS WYZNACZANA PRZEZ ODBIORNIK DLA DANEGO CZASU GPS
+Z WYKORZYSTANIEM PARAMETRÓW ORBITY ZGODNIE ZE SPECYFIKACJĄ IS‑GPS‑200
 ======================================================================
 
-Program do wyznaczania pozycji satelity GPS w układzie ECEF
-na podstawie przykładowych parametrów orbity tzw. efemerydy,
-okresu ważności efemerydy oraz podanego czasu GPS. Program nie jest
-przeznaczony do zastosowań w postprocessingu.
+Program wyznacza pozycję satelity GPS w układzie ECEF na podstawie
+przykładowych parametrów orbity tzw. efemerydy, okresu ważności
+efemerydy oraz podanego czasu GPS. Program nie jest przeznaczony do
+zastosowań w postprocessingu.
 
 
 Wejście

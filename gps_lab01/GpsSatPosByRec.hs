@@ -1,9 +1,9 @@
--- 2025-12-24
+-- 2025-12-25
 
 {- | A program for computing the position of a GPS satellite in the ECEF
      coordinate system based on sample orbital parameters (ephemeris),
-     ephemeris validity interval and GPS time provided as input.
-     The program is not intended for post‑processing applications.
+     ephemeris validity interval and GPS time provided as input. The
+     program is not intended for post‑processing applications.
      
      The algorithm follows the IS-GPS-200N specification, which
      provides ready-made formulas for satellite position. These
@@ -13,11 +13,11 @@
      crossover is a simple mechanism for real-time receivers that
      always have fresh ephemeris (valid ephemeris).
 
-     In summary, the program does not compute time differences as
-     real time difference using the formula dw*604800+dtow, where dw
-     is the week difference and dtow is time-of-week difference.
-     Instead, it applies the wrapWeekCrossover function, which has a
-     limited range of applicability.
+     In summary, the program does not compute time differences as real
+     time difference using the formula dw*604800+dtow, where dw is the
+     week difference and dtow is time-of-week difference.  Instead, it
+     applies the wrapWeekCrossover function, which has a limited range
+     of applicability.
 
      The Pico is used to represent time-of-week values, ensuring high
      precision in time calculations. Satellite position calculations,
@@ -26,10 +26,11 @@
      may slightly reduce readability but preserve accuracy.
      
      Input:
-       - GPS Ephemeris                        ephExample         defined in the code
-       - ephemeris validity interval          curveFitInteval    defined in the code
-         (in RINEX it is called fit interval)
-       - GPS Time                             t                  defined in the code
+       - GPS Ephemeris                  ephExample          defined in the code
+       - ephemeris validity interval    curveFitInteval     defined in the code
+         (in RINEX it is
+         called fit interval)
+       - GPS Time                       t                   defined in the code
 
      Output:
        - ECEF satellite position             (x, y, z)
@@ -263,7 +264,8 @@ ephExample = Ephemeris
           }
 
 -- Calculates GPS satelite position for example GPS ephemeris and GPS
--- time. Assumes the most common ephemeris validity interval (curve
+-- time. An ephemeris is a set of initial orbital parameters. The
+-- function assumes the most common ephemeris validity interval (curve
 -- fit interval) of 4h.
 main :: IO ()
 main = do
