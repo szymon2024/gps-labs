@@ -264,7 +264,7 @@ ephExample = Ephemeris
           }
 
 -- Calculates GPS satelite position for example GPS ephemeris and GPS
--- time. An ephemeris is a set of initial orbital parameters. The
+-- time. An ephemeris is a record of initial orbital parameters. The
 -- function assumes the most common ephemeris validity interval (curve
 -- fit interval) of 4h.
 main :: IO ()
