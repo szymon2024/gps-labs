@@ -1,10 +1,13 @@
--- 2025-12-24
+-- 2025-12-25
 
 {- | Estimate ECEF satellite position for dual-frequency pseudorange
-     measurement (observation) from broadcast ephemeris. The position
-     is calculated at GPS transmission time. The calculation is of low
-     precision because the code pseudorange is of low precision and
-     the orbital parameters (ephemeris) are approximate.
+     observation (measurement) from single navigation record.  The
+     navigation record is a RINEX 3.04 navigation file record
+     containing the broadcast, initial orbital parameters
+     (ephemeris). The position is computed at GPS transmission
+     time. The computation is of low precision because the code
+     pseudorange is of low precision and the orbital parameters
+     (ephemeris) are approximate.
    
      NOTE 1:
        Three different clocks must be considered:

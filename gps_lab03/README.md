@@ -1,18 +1,22 @@
-2025-12-24
+2025-12-25
 
 EN:
-=====================================================================
-GPS SATELLITE POSITION FOR DUAL-FREQUENCY PSEUDORANGE OBSERVATION
-USING BROADCAST ORBITAL PARAMETERS
-=====================================================================
+======================================================================
+GPS SATELLITE POSITION AT GPS TRANSMISSION TIME FOR DUAL-FREQUENCY
+PSEUDORANGE OBSERVATION USING SINGLE NAVIGATION RECORD
+======================================================================
 
-The calculated position is of low precision because the pseudorange
-code is of low precision and the orbital parameters (ephemeris) are
-approximate.
+The program calculates the GPS satellite position for dual-frequncy
+pseudorange observation at the time of transmission (this is not the
+time of observation). The navigation record is a RINEX 3.04 navigation
+file record containing the broadcast, initial orbital parameters
+(ephemeris). The computed position is of low precision because the
+pseudorange code is of low precision and the orbital parameters
+(ephemeris) are approximate.
 
 Input
 -----
-- observation time
+- observation GPS time
   (receiver clock time of signal reception)   (hand copied from a RINEX observation file)
 - pseudorange for f1 [m]                      (hand copied from a RINEX observation file)
 - pseudorange for f2 [m]                      (hand copied from a RINEX observation file)
@@ -38,18 +42,22 @@ Z = 19845264.366251267
 ```
 
 PL:
-=====================================================================
-POZYCJA SATELITY GPS DLA DWUCZĘSTOTLIWOŚCIOWEJ OBSERWACJI
-PSEUDOODLEGŁOŚCI Z WYKORZYSTANIEM ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
-=====================================================================
+======================================================================
+POZYCJA SATELITY GPS W CZASIE TRANSMISJI GPS DLA DWUCZĘSTOTLIWOŚCIOWEJ
+OBSERWACJI PSEUDOODLEGŁOŚCI Z WYKORZYSTANIEM REKORDU NAWIGACYJNEGO
+======================================================================
 
-Obliczona pozycja jest niskiej precyzji ponieważ pseudoodległość
-kodowa jest niskiej precyzji a parametry orbitalne (efemeryda) są
-przybliżeniem.
+Program oblicza pozycję satelity GPS dla dwuczęstotliwościowej
+obserwacji pseudoodległości w czasie transmisji (to nie jest czas
+obserwacji). Rekord nawigacyjny to rekord pliku nawigacyjnego RINEX
+3.04 zawierający rozgłoszeniowe, początkowe parametry orbitalne
+(efemerydę). Obliczona pozycja jest niskiej precyzji ponieważ
+pseudoodległość kodowa jest niskiej precyzji a parametry orbitalne
+(efemeryda) są przybliżeniem.
 
 Wejście
 -------
-- czas obserwacji
+- czas obserwacji GPS
   (czas odbiornika odbioru sygnału)           (skopiowany ręcznie z pliku obserwacyjnego RINEX)
 - pseudoodległość dla f1 [m]                  (skopiowana ręcznie z pliku obserwacyjnego RINEX)
 - pseudoodległość dla f2 [m]                  (skopiowana ręcznie z pliku obserwacyjnego RINEX)
