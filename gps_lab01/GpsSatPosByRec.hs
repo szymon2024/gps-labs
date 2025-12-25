@@ -1,9 +1,10 @@
 -- 2025-12-25
 
-{- | A program for computing the position of a GPS satellite in the ECEF
-     coordinate system based on sample orbital parameters (ephemeris),
-     ephemeris validity interval and GPS time provided as input. The
-     program is not intended for post‑processing applications.
+{- | The program for computing the position of a GPS satellite in the
+     ECEF coordinate system based on sample orbital parameters
+     (ephemeris), ephemeris validity interval and GPS time provided as
+     input. The program is not intended for post‑processing
+     applications.
      
      The algorithm follows the IS-GPS-200N specification, which
      provides ready-made formulas for satellite position. These

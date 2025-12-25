@@ -7,7 +7,7 @@ USING ORBITAL PARAMETERS IN ACCORDANCE WITH THE IS‑GPS‑200
 SPECIFICATION
 ======================================================================
 
-A program for computing the position of a GPS satellite in the ECEF
+The program for computing the position of a GPS satellite in the ECEF
 coordinate system based on sample orbital parameters (ephemeris),
 ephemeris validity interval and GPS time provided as input. The
 program is not intended for post‑processing applications.
