@@ -1,16 +1,14 @@
-2025-12-24
+2025-12-25
 
 EN:
 ======================================================================
-GPS SATELLITE POSITION FOR GIVEN GPS TIME USING BROADCAST ORBITAL
-PARAMETERS
+GPS SATELLITE POSITION FOR GIVEN GPS TIME USING ORBITAL PARAMETERS
 ======================================================================
 
-A program for computing the position of a GPS satellite in the ECEF
-coordinate system based on sample orbital parameters (ephemeris),
-ephemeris validity interval and GPS time provided as input.
-Calculations are performed for (w, tow) where w is GPS week and
-tow is time-of-week.
+A program for determining the position of a GPS satellite in the ECEF
+system based on sample orbital parameters (ephemeris), the ephemeris
+validity interval, and a given GPS time defined as (w, tow), where w is
+the GPS week and tow is the time of week.
 
 Input
 -----
@@ -37,14 +35,14 @@ Z =  7260529.645377433
 
 PL:
 =======================================================================
-POZYCJA SATELITY GPS DLA DANEGO CZASU GPS Z WYKORZYSTANIEM
-ROZGŁOSZENIOWYCH PARAMETRÓW ORBITY
+POZYCJA SATELITY GPS DLA DANEGO CZASU GPS Z WYKORZYSTANIEM PARAMETRÓW
+ORBITY
 =======================================================================
 
 Program do wyznaczania pozycji satelity GPS w układzie ECEF na
 podstawie przykładowych parametrów orbity tzw. efemerydy, okresu
-ważności efemerydy oraz podanego czasu GPS. Obliczenia są wykonywane
-dla (w, tow), gdzie w to tydzień GPS a tow to czas tygodnia.
+ważności efemerydy oraz podanego czasu GPS zdefiniowanego jako (w,tow),
+gdzie w jest tygodniem GPS a tow jest czasem tygodnia.
 
 Wejście
 -------

@@ -1,10 +1,10 @@
--- 2025-12-24
+-- 2025-12-25
 
 {- | A programm for computing the position of a GPS satellite in the
      ECEF coordinate system based on sample orbital parameters
-     (ephemeris), ephemeris validity interval and GPS time provided
-     as input. Calculations are performed for (w, tow) where w is GPS
-     week and tow is time-of-week.
+     (ephemeris), ephemeris validity interval and GPS time provided as
+     input. GPS time defined as (w, tow), where w is the GPS week and
+     tow is the time of week.
 
      To ensure ephemeris freshness, the programm uses the
      isEphemerisValid function, which limits the time interval since
@@ -17,12 +17,12 @@
      may slightly reduce readability but preserve accuracy.
      
      Input:
-       - GPS Ephemeris                       ephExample         defined in the code
-       - ephemeris validity interval         fitInterval        defined in the code              
-       - GPS Time                            t                  defined in the code
+       - GPS Ephemeris                  ephExample         defined in the code
+       - ephemeris validity interval    fitInterval        defined in the code              
+       - GPS Time                       t                  defined in the code
 
      Output:
-       - ECEF satellite position             (x, y, z)
+       - ECEF satellite position        (x, y, z)
 
      Print of run:
      Entered GPS time            : 2024 03 07 22 00 30
@@ -225,7 +225,9 @@ ephExample = Ephemeris
           }
 
 -- Calculates GPS satelite position for example GPS ephemeris and GPS
--- time. Assumes the most common ephemeris validity fit interval of 4h.
+-- time.  An ephemeris is a record of initial orbital parameters. The
+-- function assumes the most common ephemeris validity fit interval of
+-- 4h.
 main :: IO ()
 main = do
   let 
