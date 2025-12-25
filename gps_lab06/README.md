@@ -1,13 +1,13 @@
-2025-12-24
+2025-12-25
 
 EN:
 =====================================================================
-  MATCHING EPHEMERIDES TO GPS SATELLITE OBSERVATIONS
+  ATTACHING EPHEMERIDES TO GPS SATELLITE OBSERVATIONS
 =====================================================================
 
-The program matches filtered GPS ephemerides from a RINEX 3.04 NAV
-file to satellite observations from a RINEX 3.04 OBS file. It process
-only GPS satellite data.
+The program attaches filtered navigation records from a RINEX 3.04 NAV
+file to satellite observations from a RINEX 3.04 OBS file. It
+processes only GPS satellite data.
 
 Input
 -----
@@ -16,9 +16,8 @@ Input
 
 Output
 ------
-  -  GPS observation records with attached ephemerides
-     to observations
-    
+  -  GPS observation records with maybe
+     attached ephemerides to observations 
     
 Print of run
 ------------
@@ -29,11 +28,11 @@ Without matched ephemeris: 0
 
 PL:
 =====================================================================
-  DOPASOWANIE EFEMERYD DO OBSERWACJI SATELITARNYCH GPS
+  DOŁĄCZENIE REKORDÓW NAWIGACYJNYCH DO OBSERWACJI SATELITARNYCH GPS
 =====================================================================
 
-Program przypisuje wyfiltrowane efemerydy GPS z pliku RINEX 3.04 NAV
-do obserwacji satelitarnych z pliku RINEX 3.04 OBS. Program przetwarza
+Program dołącza wyfiltrowane rekordy nawigacyjne z pliku RINEX 3.04 NAV
+do obserwacji satelitarnych z pliku RINEX 3.04 OBS. Przetwarza
 tylko dane satelitów GPS.
 
 Wejście
@@ -43,8 +42,8 @@ Wejście
 
 Wyście
 ------
-  - rekordy obserwacyjne GPS z dołączonymi efemerydami
-    do obserwacji
+  - rekordy obserwacyjne GPS z być może
+    dołączonymi efemerydami do obserwacji
     
 Wydruk uruchomienia
 -------------------
