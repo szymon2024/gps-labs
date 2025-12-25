@@ -5,11 +5,11 @@ EN:
   SELECTION OF GPS BROADCAST EPHEMERIS FOR THE OBSERVATION TIME
 ======================================================================
 
-The program selects an ephemeris from a RINEX 3.04 navigation file for
-a given a GPS satellite and observation time.  The main selection
-criterion is the ephemeris of a healthy satellite with the nearest
-(week, toe) and the maximum IODE, for which the observation time lies
-within the fitInterval.
+The program selects a navigation record containing ephemeris from a
+RINEX 3.04 navigation file for a given a GPS satellite and observation
+time.  The main selection criterion is the ephemeris of a healthy
+satellite with the nearest (week, toe) and the maximum IODE, for which
+the observation time lies within the fitInterval.
 
 Input
 -----
@@ -72,10 +72,11 @@ PL:
   WYBÓR EFEMERYDY ROZGŁOSZENIOWEJ GPS DLA CZASU OBSERWACJI
 ======================================================================
 
-Program wybiera efemerydę z pliku nawigacyjnego RINEX 3.04 dla danego
-satelity GPS i czasu obserwacji. Głównym kryterium wyboru jest
-efemeryda dla sprawnego satelity z najbliższym (week, toe) i
-maksymalnym IODE, dla której czas obserwacji mieści się w fitInterval.
+Program wybiera rekord nawigacyjny zawierający efemerydę z pliku
+nawigacyjnego RINEX 3.04 dla danego satelity GPS i czasu
+obserwacji. Głównym kryterium wyboru jest efemeryda dla sprawnego
+satelity z najbliższym (week, toe) i maksymalnym IODE, dla której czas
+obserwacji mieści się w fitInterval.
 
 Wejście
 -------
