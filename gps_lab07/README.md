@@ -1,9 +1,10 @@
-2025-12-24
+2025-12-25
 
 EN:
 ======================================================================
 SKY PLOT OF GPS SATELLITE TRAJECTORIES FROM RINEX 3.04 NAVIGATION FILE
 ======================================================================
+
 This program generates a sky plot of computed GPS satellite
 trajectories using data from a RINEX 3.04 navigation file. A sky plot
 is a polar diagram showing satellite azimuth (0–360° angle from north
@@ -38,6 +39,7 @@ PL:
   WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS Z PLIKU NAWIGACYJNEGO
   RINEX 3.04
 ======================================================================
+
 Ten program generuje wykres nieba (sky plot) obliczonych trajektorii
 satelitów GPS, korzystając z danych z pliku nawigacyjnego RINEX
 3.04. Wykres nieba to diagram biegunowy przedstawiający azymut
