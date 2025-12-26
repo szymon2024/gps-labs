@@ -30,10 +30,12 @@ Output
 
 Print of run
 ------------
+```
 Total observation records:       651
 Total observations:             7161
 Number of observations
 without attached ephemerides:      0
+```
 
   ![sky plot example](navSkyplotForObs.svg)
 
@@ -68,7 +70,9 @@ Wyjście
 
 Print of run
 ------------
+```
 Total observation records:       651
 Total observations:             7161
 Number of observations
 without attached ephemerides:      0
+```
