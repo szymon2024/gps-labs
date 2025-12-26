@@ -1,4 +1,4 @@
--- 2025-12-25
+-- 2025-12-26
 
 {- | The program selects a navigation record containing ephemeris from
      the RINEX 3.04 navigation file for a given GPS observation time
@@ -291,38 +291,38 @@ getRecord ls =
   
             let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-            af0       <- readDoubleField $ takeField 23 19 l1
-            af1       <- readDoubleField $ takeField 42 19 l1
-            af2       <- readDoubleField $ takeField 61 19 l1
+            af0       <- getDouble $ takeField 23 19 l1
+            af1       <- getDouble $ takeField 42 19 l1
+            af2       <- getDouble $ takeField 61 19 l1
                  
-            iodeD     <- readDoubleField $ takeField  4 19 l2
-            crs       <- readDoubleField $ takeField 23 19 l2
-            deltaN    <- readDoubleField $ takeField 42 19 l2
-            m0        <- readDoubleField $ takeField 61 19 l2
+            iodeD     <- getDouble $ takeField  4 19 l2
+            crs       <- getDouble $ takeField 23 19 l2
+            deltaN    <- getDouble $ takeField 42 19 l2
+            m0        <- getDouble $ takeField 61 19 l2
                  
-            cuc       <- readDoubleField $ takeField  4 19 l3
-            e         <- readDoubleField $ takeField 23 19 l3
-            cus       <- readDoubleField $ takeField 42 19 l3
-            sqrtA     <- readDoubleField $ takeField 61 19 l3
+            cuc       <- getDouble $ takeField  4 19 l3
+            e         <- getDouble $ takeField 23 19 l3
+            cus       <- getDouble $ takeField 42 19 l3
+            sqrtA     <- getDouble $ takeField 61 19 l3
 
-            toeD      <- readDoubleField $ takeField  4 19 l4
-            cic       <- readDoubleField $ takeField 23 19 l4
-            omega0    <- readDoubleField $ takeField 42 19 l4
-            cis       <- readDoubleField $ takeField 61 19 l4
+            toeD      <- getDouble $ takeField  4 19 l4
+            cic       <- getDouble $ takeField 23 19 l4
+            omega0    <- getDouble $ takeField 42 19 l4
+            cis       <- getDouble $ takeField 61 19 l4
 
-            i0        <- readDoubleField $ takeField  4 19 l5
-            crc       <- readDoubleField $ takeField 23 19 l5
-            omega     <- readDoubleField $ takeField 42 19 l5
-            omegaDot  <- readDoubleField $ takeField 61 19 l5
+            i0        <- getDouble $ takeField  4 19 l5
+            crc       <- getDouble $ takeField 23 19 l5
+            omega     <- getDouble $ takeField 42 19 l5
+            omegaDot  <- getDouble $ takeField 61 19 l5
                                                                
-            iDot      <- readDoubleField $ takeField  4 19 l6
-            weekD     <- readDoubleField $ takeField 42 19 l6
+            iDot      <- getDouble $ takeField  4 19 l6
+            weekD     <- getDouble $ takeField 42 19 l6
 
-            svHealthD <- readDoubleField $ takeField 23 19 l7
-            iodcD     <- readDoubleField $ takeField 61 19 l7
+            svHealthD <- getDouble $ takeField 23 19 l7
+            iodcD     <- getDouble $ takeField 61 19 l7
                      
-            ttom      <- readDoubleField $ takeField  4 19 l8
-            fitIntervalD  <- readDoubleField $ takeField 23 19 l8
+            ttom      <- getDouble $ takeField  4 19 l8
+            fitIntervalD  <- getDouble $ takeField 23 19 l8
 
             let iode         = round      iodeD
                 toe          = realToFrac toeD
@@ -449,11 +449,11 @@ readDouble bs = unsafePerformIO $
             let rest   = L8.drop (fromIntegral offset) bs
             return (Just (realToFrac val, rest))
 
--- | Reads Double value from ByteString field.
+-- | Get Double value from ByteString field.
 --   Its purpose is to stop reading if it cannot read the entire field.
 --   After reading, the rest may be empty or consist only of spaces.
-readDoubleField :: L8.ByteString -> Maybe Double
-readDoubleField bs = do
+getDouble :: L8.ByteString -> Maybe Double
+getDouble bs = do
   (val, rest) <- readDouble bs
   case L8.uncons rest of
     Just (c, _) | c=='D' || c=='d' ->
