@@ -1,4 +1,4 @@
--- 2025-12-25
+-- 2025-12-26
 
 {-| The program attaches navigation records from a RINEX 3.04 NAV file
     containing ephemerides to corresponding observations from a RINEX
@@ -26,8 +26,8 @@
         
     
     Print of run:
-    Total observations: 7161
-    Without matched ephemeris: 0
+    Total observations:            7161
+    Without matched ephemerides:      0
   
 -}
 
@@ -110,7 +110,7 @@ main = do
   let navMap   = navMapFromRinex navBs
       obsRs    = obsRecordsFromRinex obsBs
       obsNavRs = obsAttachNavs navMap obsRs                  -- Output: observation records
-                                                            -- with attached ephemerides to observations
+                                                             -- with attached ephemerides to observations
       numObs =
         foldl' (\acc (_, obss) -> acc + length obss
                ) 0 obsRs
@@ -122,8 +122,8 @@ main = do
             count n (_, Nothing) = n + 1
             count n _            = n
                               
-  printf "Total observations: %d\n" numObs
-  printf "Without matched ephemerides: %d\n" numObsWithoutEphemerides
+  printf "Total observations:          %6d\n" numObs
+  printf "Without matched ephemerides: %6d\n" numObsWithoutEphemerides
 
 -- | Build a navigation map from GPS navigation records of navigation
 --   RINEX 3.04 body for healthy satellites and with max iode for
@@ -229,38 +229,38 @@ navGetRecord ls =
   
             let toc = mkGpsTime (toInteger y) mon d h m (fromIntegral s)
 
-            af0       <- readDoubleField $ takeField 23 19 l1
-            af1       <- readDoubleField $ takeField 42 19 l1
-            af2       <- readDoubleField $ takeField 61 19 l1
+            af0       <- getDouble $ takeField 23 19 l1
+            af1       <- getDouble $ takeField 42 19 l1
+            af2       <- getDouble $ takeField 61 19 l1
                  
-            iodeD     <- readDoubleField $ takeField  4 19 l2
-            crs       <- readDoubleField $ takeField 23 19 l2
-            deltaN    <- readDoubleField $ takeField 42 19 l2
-            m0        <- readDoubleField $ takeField 61 19 l2
+            iodeD     <- getDouble $ takeField  4 19 l2
+            crs       <- getDouble $ takeField 23 19 l2
+            deltaN    <- getDouble $ takeField 42 19 l2
+            m0        <- getDouble $ takeField 61 19 l2
                  
-            cuc       <- readDoubleField $ takeField  4 19 l3
-            e         <- readDoubleField $ takeField 23 19 l3
-            cus       <- readDoubleField $ takeField 42 19 l3
-            sqrtA     <- readDoubleField $ takeField 61 19 l3
+            cuc       <- getDouble $ takeField  4 19 l3
+            e         <- getDouble $ takeField 23 19 l3
+            cus       <- getDouble $ takeField 42 19 l3
+            sqrtA     <- getDouble $ takeField 61 19 l3
 
-            toeD      <- readDoubleField $ takeField  4 19 l4
-            cic       <- readDoubleField $ takeField 23 19 l4
-            omega0    <- readDoubleField $ takeField 42 19 l4
-            cis       <- readDoubleField $ takeField 61 19 l4
+            toeD      <- getDouble $ takeField  4 19 l4
+            cic       <- getDouble $ takeField 23 19 l4
+            omega0    <- getDouble $ takeField 42 19 l4
+            cis       <- getDouble $ takeField 61 19 l4
 
-            i0        <- readDoubleField $ takeField  4 19 l5
-            crc       <- readDoubleField $ takeField 23 19 l5
-            omega     <- readDoubleField $ takeField 42 19 l5
-            omegaDot  <- readDoubleField $ takeField 61 19 l5
+            i0        <- getDouble $ takeField  4 19 l5
+            crc       <- getDouble $ takeField 23 19 l5
+            omega     <- getDouble $ takeField 42 19 l5
+            omegaDot  <- getDouble $ takeField 61 19 l5
                                                                
-            iDot      <- readDoubleField $ takeField  4 19 l6
-            weekD     <- readDoubleField $ takeField 42 19 l6
+            iDot      <- getDouble $ takeField  4 19 l6
+            weekD     <- getDouble $ takeField 42 19 l6
 
-            svHealthD <- readDoubleField $ takeField 23 19 l7
-            iodcD     <- readDoubleField $ takeField 61 19 l7
+            svHealthD <- getDouble $ takeField 23 19 l7
+            iodcD     <- getDouble $ takeField 61 19 l7
                      
-            ttom      <- readDoubleField $ takeField  4 19 l8
-            fitIntervalD  <- readDoubleField $ takeField 23 19 l8
+            ttom      <- getDouble $ takeField  4 19 l8
+            fitIntervalD  <- getDouble $ takeField 23 19 l8
 
             let iode         = round      iodeD
                 toe          = realToFrac toeD
@@ -392,12 +392,12 @@ obsRecordsFromRinex bs
 obsReadRecord :: [L8.ByteString] -> Maybe (ObsRecord, [L8.ByteString])
 obsReadRecord [] = Nothing                         
 obsReadRecord (l:ls) = do
-  (y  , _) <- L8.readInt      $ takeField  2  4 l
-  (mon, _) <- L8.readInt      $ takeField  7  2 l
-  (d  , _) <- L8.readInt      $ takeField 10  2 l
-  (h  , _) <- L8.readInt      $ takeField 13  2 l
-  (m  , _) <- L8.readInt      $ takeField 16  2 l
-  s        <- readDoubleField $ takeField 19 11 l
+  (y  , _) <- L8.readInt $ takeField  2  4 l
+  (mon, _) <- L8.readInt $ takeField  7  2 l
+  (d  , _) <- L8.readInt $ takeField 10  2 l
+  (h  , _) <- L8.readInt $ takeField 13  2 l
+  (m  , _) <- L8.readInt $ takeField 16  2 l
+  s        <- getDouble  $ takeField 19 11 l
   let !tobs = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
   (n  , _) <- L8.readInt $ takeField 33  3 l                          -- number of satellites observed in current epoch
                                                                       -- (observation time)
@@ -437,11 +437,11 @@ readDouble bs = unsafePerformIO $
             let rest   = L8.drop (fromIntegral offset) bs
             return (Just (realToFrac val, rest))
 
--- | Reads Double value from ByteString field.
+-- | Get Double value from ByteString field.
 --   Its purpose is to stop reading if it cannot read the entire field.
 --   After reading, the rest may be empty or consist only of spaces.
-readDoubleField :: L8.ByteString -> Maybe Double
-readDoubleField bs = do
+getDouble :: L8.ByteString -> Maybe Double
+getDouble bs = do
   (val, rest) <- readDouble bs
   case L8.uncons rest of
     Just (c, _) | c=='D' || c=='d' ->

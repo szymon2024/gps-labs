@@ -1,4 +1,4 @@
-2025-12-25
+2025-12-26
 
 EN:
 =====================================================================
@@ -22,8 +22,8 @@ Output
 Print of run
 ------------
 ```
-Total observations: 7161
-Without matched ephemeris: 0
+Total observations:            7161
+Without matched ephemerides:      0
 ```
 
 PL:
@@ -48,6 +48,6 @@ Wyście
 Wydruk uruchomienia
 -------------------
 ```
-Total observations: 7161
-Without matched ephemeris: 0
+Total observations:            7161
+Without matched ephemerides:      0
 ```
