@@ -35,7 +35,7 @@ Total observations:             7161
 Number of observations
 without attached ephemerides:      0
 
-![sky plot example](navSkyplotForObs.svg)
+  ![sky plot example](navSkyplotForObs.svg)
 
 
 PL:
