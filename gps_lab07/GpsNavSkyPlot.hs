@@ -157,7 +157,7 @@ main = do
       title  = "Sky Plot of GPS Satellite \
                 \Trajectories from the " <> T.pack fn       -- Input: title of plot
   TIO.writeFile "navSkyplot.svg"
-         (svgCreateContent title skyMap)                    -- Output: skyplot.svg file         
+         (svgCreateContent title skyMap)                    -- Output: navSkyplot.svg file         
 
 -- | The viewport (drawing) in svg file will be 600px by 600px. The
 -- upper-left corner is (0,0).
@@ -171,12 +171,12 @@ svgTitleHeight = 30
 
 -- | Compute viewport center for svg file
 svgCx, svgCy :: Double
-svgCx = fromIntegral  svgWidth / 2
-svgCy = fromIntegral svgHeight / 2 + fromIntegral svgTitleHeight
+svgCx = fromIntegral (svgWidth  `div` 2)
+svgCy = fromIntegral (svgHeight `div` 2 + svgTitleHeight + 10)
 
 -- | Compute maximum radius of sky plot for svg file
 svgRMax :: Double
-svgRMax = svgCx - 2 * fromIntegral svgTitleHeight
+svgRMax = svgCx - fromIntegral (svgTitleHeight + 40)
 
 -- | Convert degrees to radians
 deg2rad :: Double -> Double
@@ -247,7 +247,7 @@ svgSatelliteMarker prns =
          "<marker id=\"sat-" <> TB.decimal prn
       <> "\" markerWidth=\"30\" markerHeight=\"30\" refX=\"23\" refY=\"15\" "
       <> "orient=\"auto\" markerUnits=\"userSpaceOnUse\">\n"
-      <> "  <text x=\"15\" y=\"13\" font-size=\"14\" text-anchor=\"middle\">"
+      <> "  <text x=\"15\" y=\"12\" font-size=\"14\" text-anchor=\"middle\">"
       <> TB.decimal prn <> "</text>\n"
       <> "</marker>\n"
 
@@ -304,7 +304,7 @@ svgGrid =
                 y = svgCy - r + 15
             in "<text x=\"" <> TB.realFloat x
                <> "\" y=\"" <> TB.realFloat y
-               <> "\" font-size=\"14\" fill=\"#666666\">" <> TB.decimal e <> "°</text>\n"
+               <> "\" font-size=\"14\" style=\"fill:#aaaaaa\">" <> TB.decimal e <> "°</text>\n"
           | e <- [15,30,60 :: Int]
           ]
   in rings <> axes <> labels <> ringLabels
@@ -313,8 +313,8 @@ svgGrid =
 svgLegend :: TB.Builder
 svgLegend =
   let x0 = 20::Int
-      y0 = svgTitleHeight + 20
-      dy = 25
+      y0 = svgTitleHeight + 40
+      dy = 20
       entry (i, color, label) =
         "<rect x=\"" <> TB.decimal x0
         <> "\" y=\"" <> TB.decimal (y0 + i*dy)
@@ -323,9 +323,9 @@ svgLegend =
         <> "\" y=\"" <> TB.decimal (y0 + i*dy + 10)
         <> "\" font-size=\"14\" fill=\"black\">" <> TB.fromText label <> "</text>\n"
       items =
-        [ (0::Int, "green",  "fitInterval = 4 h")
-        , (1, "yellow", "fitInterval = 6 h")
-        , (2, "orange", "fitInterval = 8 h")
+        [ (0::Int, "green",  "fitInterval =  4 h")
+        , (1, "yellow", "fitInterval =  6 h")
+        , (2, "orange", "fitInterval =  8 h")
         , (3, "red",    "fitInterval ≥ 10 h")
         ]
   in mconcat (map entry items)
