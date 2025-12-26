@@ -247,7 +247,6 @@ svgSatelliteMarker prns =
          "<marker id=\"sat-" <> TB.decimal prn
       <> "\" markerWidth=\"30\" markerHeight=\"30\" refX=\"23\" refY=\"15\" "
       <> "orient=\"auto\" markerUnits=\"userSpaceOnUse\">\n"
---      <> "  <circle cx=\"15\" cy=\"15\" r=\"10\" fill=\"white\" stroke=\"black\" />\n"
       <> "  <text x=\"15\" y=\"13\" font-size=\"14\" text-anchor=\"middle\">"
       <> TB.decimal prn <> "</text>\n"
       <> "</marker>\n"
