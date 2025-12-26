@@ -2,14 +2,14 @@
 
 {- | The program generates a sky plot of computed GPS satellite
    trajectories as an SVG file, using data from the RINEX navigation
-   file for times and satellites from the RINEX observation
-   file. RINEX files in version 3.04. A sky plot is a polar diagram
-   showing the satellite's azimuth (0–360° angle from north to side)
-   and elevation (0–90° angle from the horizon upwards) relative to
-   the observer's position. Each satellite trajectory is drawn as a
-   sequence of time intervals corresponding to navigation records
-   (ephemerides), with a PRN label, a direction arrow, and colors
-   derived from the fitInterval field in the RINEX file.
+   file for observation times (epochs) and satellites from the RINEX
+   observation file. RINEX files in version 3.04. A sky plot is a
+   polar diagram showing the satellite's azimuth (0–360° angle from
+   north to side) and elevation (0–90° angle from the horizon upwards)
+   relative to the observer's position. Each satellite trajectory is
+   drawn as a sequence of time intervals corresponding to navigation
+   records (ephemerides), with a PRN label, a direction arrow, and
+   colors derived from the fitInterval field in the RINEX file.
 
    Main steps of the algorithm:
                                                                         

@@ -3,7 +3,8 @@
 EN:
 ======================================================================
 SKY PLOT OF GPS SATELLITE TRAJECTORIES FROM A RINEX 3.04 NAVIGATION
-FILE FOR TIMES AND SATELLITES FROM A RINEX 3.04 OBSERVATION FILE
+FILE FOR OBSERVATION TIMES AND SATELLITES FROM A RINEX 3.04
+OBSERVATION FILE
 ======================================================================
 
 The program generates a sky plot of computed GPS satellite
@@ -42,8 +43,9 @@ without attached ephemerides:      0
 
 PL:
 ======================================================================
-  WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS Z PLIKU NAWIGACYJNEGO
-  RINEX 3.04 DLA CZASÓW I SATELITÓW Z PLIKU OBSERWACYJNEGO RINEX 3.04
+WYKRES NIEBA Z TRAJEKTORIAMI SATELITÓW GPS Z PLIKU NAWIGACYJNEGO RINEX
+3.04 DLA CZASÓW OBSERWACJI I SATELITÓW Z PLIKU OBSERWACYJNEGO RINEX
+3.04
 ======================================================================
 
 Program generuje wykres nieba obliczonych trajektorii satelitów GPS
