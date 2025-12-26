@@ -70,8 +70,8 @@ Wyjście
 -------
   wykres nieba w pliku SVG navSkyplotForObsTime.svg
 
-Print of run
-------------
+Wydruk uruchomienia
+-------------------
 ```
 Total observation records:       651
 Total observations:             7161
