@@ -148,7 +148,7 @@ type NavMap     = IntMap (Map EphWeekTow NavRecord)    -- ^ key1:  prn (satellit
 -- Entry point of the program.
 main :: IO ()
 main = do
-  let fn   = "source.nav"                                   -- Input: RINEX 3.04 navigation file name
+  let fn   = "rinex.nav"                                    -- Input: RINEX 3.04 navigation file name
       tobs = mkGpsTime 2025 08 02 01 00 01.5                -- Input: observation time (receiver time of signal reception)
       prn  = 6                                              -- Input: satellite number
   bs <- L8.readFile fn
