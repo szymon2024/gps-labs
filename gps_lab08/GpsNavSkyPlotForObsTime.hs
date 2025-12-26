@@ -59,7 +59,7 @@
      - plot title                                           title
 
    Output:
-     - sky plot SVG file                                    navSkyplotForObs.svg
+     - sky plot SVG file                                    navSkyplotForObsTime.svg
 
    Print of run:
    Total observation records:       651

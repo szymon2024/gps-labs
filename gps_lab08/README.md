@@ -26,7 +26,7 @@ Input (to modify directly in the source code)
 
 Output
 ------
-  sky plot SVG file navSkyplotForObs.svg
+  sky plot SVG file navSkyplotForObsTime.svg
 
 Print of run
 ------------
@@ -37,7 +37,7 @@ Number of observations
 without attached ephemerides:      0
 ```
 
-  ![sky plot example](navSkyplotForObs.svg)
+  ![sky plot example](navSkyplotForObsTime.svg)
 
 
 PL:
@@ -66,7 +66,7 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 
 Wyjście
 -------
-  wykres nieba w pliku SVG navSkyplotForObs.svg
+  wykres nieba w pliku SVG navSkyplotForObsTime.svg
 
 Print of run
 ------------
