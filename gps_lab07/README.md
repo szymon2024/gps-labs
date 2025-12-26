@@ -1,4 +1,4 @@
-2025-12-25
+2025-12-26
 
 EN:
 ======================================================================
@@ -29,9 +29,9 @@ Input (to modify directly in the source code)
 
 Output
 ------
-  sky plot SVG file skyplot.svg
+  sky plot SVG file navSkyplot.svg
 
-  ![sky plot example](skyplot.svg)
+  ![navigation sky plot example](navSkyplot.svg)
 
 
 PL:
@@ -65,6 +65,6 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 
 Wyjście
 -------
-  wykres nieba w pliku SVG skyplot.svg
+  wykres nieba w pliku SVG navSkyplot.svg
 
-  ![filtered sky plot example](skyplotFiltered.svg)
+  ![filtered navigation sky plot example](filteredNavSkyplot.svg)
