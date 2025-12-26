@@ -92,38 +92,38 @@ type NavMap     = IntMap (Map EphWeekTow NavRecord)       -- ^ key1:  prn (satel
                                                           --   key2:  (week, toe)
                                                           --   value2: navigation record for a healthy satellite
                                                           --           and with max iode for (week, toe)
-type ObsTime   = GpsTime                                  -- ^ observation time (epoch)
+type ObsTime     = GpsTime                                -- ^ observation time (epoch)
                                                           --   (don't confuse with observing time)
 data Observation = Obs
     { obsPrn  :: Int
     }
-type ObsRecord         = (ObsTime, [Observation])
-type ObsRecordWithNavs = (ObsTime, [(Observation, Maybe NavRecord)])
+type ObsRecord   = (ObsTime, [Observation])
 
 main :: IO ()
 main = do
-  let navFn = "source.nav"                                  -- Input: RINEX 3.04 navigation file name
-      obsFn = "source.obs"                                  -- Input: RINEX 3.04 observation file name
+  let navFn = "rinex.nav"                                  -- Input: RINEX 3.04 navigation file name
+      obsFn = "rinex.obs"                                  -- Input: RINEX 3.04 observation file name
   navBs <- L8.readFile navFn
   obsBs <- L8.readFile obsFn
 
-  let navMap   = navMapFromRinex navBs
-      obsRs    = obsRecordsFromRinex obsBs
-      obsNavRs = obsAttachNavs navMap obsRs                  -- Output: observation records
-                                                             -- with attached ephemerides to observations
-      numObs =
-        foldl' (\acc (_, obss) -> acc + length obss
+  let navMap        = navMapFromRinex navBs
+      obsRs         = obsRecordsFromRinex obsBs
+      obsMaybeNavRs = obsAttachNavs navMap obsRs             -- Output: observation records
+                                                             -- with maybe attached ephemerides to observations
+                      
+      numObs =                                               -- Count observations
+        foldl' (\acc (_, xs) -> acc + length xs
                ) 0 obsRs
                
-      numObsWithoutEphemerides =
-        foldl' (\acc (_, xs) -> acc + foldl' count 0 xs
-               ) (0::Integer) obsNavRs
+      numObsNothingNavRs =                                   -- Count observations without navigation
+        foldl' (\acc (_, xs) -> acc + foldl' count 0 xs      -- records (ephemerides)
+               ) (0::Integer) obsMaybeNavRs
           where
             count n (_, Nothing) = n + 1
             count n _            = n
                               
   printf "Total observations:          %6d\n" numObs
-  printf "Without matched ephemerides: %6d\n" numObsWithoutEphemerides
+  printf "Without matched ephemerides: %6d\n" numObsNothingNavRs
 
 -- | Build a navigation map from GPS navigation records of navigation
 --   RINEX 3.04 body for healthy satellites and with max iode for
@@ -471,7 +471,7 @@ gpsTimeToWeekTow (LocalTime date (TimeOfDay h m s)) =
     in (w, tow)
 
 -- | Attach navigation records to observations.
-obsAttachNavs :: NavMap -> [ObsRecord] -> [ObsRecordWithNavs]
+obsAttachNavs :: NavMap -> [ObsRecord] -> [(ObsTime, [(Observation, Maybe NavRecord)])]
 obsAttachNavs navMap obsRs =
  [ (tobs, [ (obs, r)
           | obs <- obss
