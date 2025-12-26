@@ -2,12 +2,12 @@
 
 EN:
 =====================================================================
-  ATTACHING EPHEMERIDES TO GPS SATELLITE OBSERVATIONS
+  ATTACHING NAVIGATION RECORDS TO GPS SATELLITE OBSERVATIONS
 =====================================================================
 
-The program attaches filtered navigation records from a RINEX 3.04 NAV
-file to satellite observations from a RINEX 3.04 OBS file. It
-processes only GPS satellite data.
+The program attaches filtered navigation records containing
+ephemerides from a RINEX 3.04 NAV file to satellite observations from
+a RINEX 3.04 OBS file. It processes only GPS satellite data.
 
 Input
 -----
@@ -31,9 +31,9 @@ PL:
   DOŁĄCZENIE REKORDÓW NAWIGACYJNYCH DO OBSERWACJI SATELITARNYCH GPS
 =====================================================================
 
-Program dołącza wyfiltrowane rekordy nawigacyjne z pliku RINEX 3.04 NAV
-do obserwacji satelitarnych z pliku RINEX 3.04 OBS. Przetwarza
-tylko dane satelitów GPS.
+Program dołącza wyfiltrowane rekordy nawigacyjne zawierające efemerydy
+z pliku RINEX 3.04 NAV do obserwacji satelitarnych z pliku RINEX 3.04
+OBS. Przetwarza tylko dane satelitów GPS.
 
 Wejście
 -------
