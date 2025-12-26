@@ -26,8 +26,10 @@
         
     
     Print of run:
-    Total observations:            7161
-    Without matched ephemerides:      0
+    Total observation records:       651
+    Total observations:             7161
+    Number of observations
+    without attached ephemerides:      0
   
 -}
 
@@ -121,9 +123,11 @@ main = do
           where
             count n (_, Nothing) = n + 1
             count n _            = n
-                              
-  printf "Total observations:          %6d\n" numObs
-  printf "Without matched ephemerides: %6d\n" numObsNothingNavRs
+
+  printf "Total observation records:    %6d\n" (length obsRs)
+  printf "Total observations:           %6d\n" numObs
+  printf "Number of observations\n\
+         \without attached ephemerides: %6d\n" numObsNothingNavRs
 
 -- | Build a navigation map from GPS navigation records of navigation
 --   RINEX 3.04 body for healthy satellites and with max iode for
