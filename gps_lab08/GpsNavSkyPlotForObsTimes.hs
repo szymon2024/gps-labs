@@ -790,7 +790,9 @@ svgColorByFitInterval fitInterval =
 --   tail-recursive because the last call on the right in each branch
 --   is a go.
 svgDownsampleByDistance :: Double -> [(Double,Double)] -> [(Double,Double)]
-svgDownsampleByDistance eps = go Nothing
+svgDownsampleByDistance eps pts
+    | length pts == 2  = pts                  -- Do not change the list if it contains only two points.
+    | otherwise        = go Nothing pts
     where
       go _ [] = []
       go Nothing (p:ps) = p : go (Just p) ps
@@ -810,20 +812,41 @@ svgPointsBuilder pts =
            | (x,y) <- pts'
            ]
 
--- | Define a polyline with a satellite marker and an arrow marker
--- from interval points for svg file. The satellite marker space is
--- created by splitting the list of points into two lists and pacing
--- the marker to the end of the first list.
-svgPolylineWithLabel :: T.Text -> Int -> [AzEl] -> TB.Builder
-svgPolylineWithLabel color prn azels=
-  let pts = [ svgToXY azel | azel <- azels ]
-  in "<polyline points=\""
-  <> svgPointsBuilder pts
-  <> "\" stroke=\"" <> TB.fromText color
-  <> "\" fill=\"none\" marker-start=\"url(#sat-"
-  <> TB.decimal prn <> ")\"\n"
-  <> "marker-end=\"url(#arrow-"
-  <> TB.fromText color <> ")\"/>\n"
+-- | Define a point symbol for a single-point trajectory and a
+-- polyline for a multi-point trajectory.
+svgTrajectoryObject :: T.Text -> Int -> [AzEl] -> TB.Builder
+svgTrajectoryObject color prn azels =
+  case map svgToXY azels of
+    [] -> mempty
+
+    [(x,y)] ->
+        let xf = TB.fromString (printf "%.2f" x)
+            yf = TB.fromString (printf "%.2f" y)
+        in  "<use href=\"#sat-" <> TB.decimal prn <> "-symbol\" "
+            <> "x=\"" <> xf <> "\" y=\"" <> yf <> "\"/>\n"
+            <> "<use href=\"#point-" <> TB.fromText color <> "-symbol\" "
+            <> "x=\"" <> xf <> "\" y=\"" <> yf <> "\"/>\n"
+
+    pts ->
+        "<polyline points=\""
+        <> svgPointsBuilder pts
+        <> "\" stroke=\"" <> TB.fromText color
+        <> "\" fill=\"none\" marker-start=\"url(#sat-"
+        <> TB.decimal prn <> ")\"\n"
+        <> "marker-end=\"url(#arrow-"
+        <> TB.fromText color <> ")\"/>\n"
+
+svgSatelliteSymbols :: [Int] -> TB.Builder
+svgSatelliteSymbols prns =
+  "<defs>\n"
+  <> mconcat (map symbol prns)
+  <> "</defs>\n"
+  where
+    symbol prn =
+      "<symbol id=\"sat-" <> TB.decimal prn <> "-symbol\" overflow=\"visible\">\n"
+      <> "  <text x=\"-8\" y=\"-5\" font-size=\"14\" text-anchor=\"midle\" >"
+      <> TB.decimal prn <> "</text>\n"
+      <> "</symbol>\n"
 
 -- | Satellite marker definition for svg file    
 svgSatelliteMarker :: [Int] -> TB.Builder
@@ -836,9 +859,26 @@ svgSatelliteMarker prns =
          "<marker id=\"sat-" <> TB.decimal prn
       <> "\" markerWidth=\"30\" markerHeight=\"30\" refX=\"23\" refY=\"15\" "
       <> "orient=\"auto\" markerUnits=\"userSpaceOnUse\">\n"
-      <> "  <text x=\"15\" y=\"12\" font-size=\"14\" text-anchor=\"middle\">"
+      <> "  <text x=\"15\" y=\"10\" font-size=\"14\" text-anchor=\"middle\">"
       <> TB.decimal prn <> "</text>\n"
       <> "</marker>\n"
+
+-- | Point symbol definition for svg file
+svgPointSymbol :: TB.Builder
+svgPointSymbol =
+  "<defs>\n"
+  <> symbol "green"
+  <> symbol "yellow"
+  <> symbol "orange"
+  <> symbol "red"
+  <> "</defs>\n"
+  where
+    symbol color =
+         "<symbol id=\"point-" <> TB.fromText color <> "-symbol\" "
+      <> "overflow=\"visible\">\n"
+      <> "<circle cx=\"0\" cy=\"0\" r=\"2\" "
+      <> "fill=\"" <> TB.fromText color <> "\" />\n"
+      <> "</symbol>\n"
 
 -- | Arrow marker definition for svg file
 svgArrowMarker :: TB.Builder
@@ -937,11 +977,13 @@ svgCreateContent title skyPts =
     <> "\" text-anchor=\"middle\" font-size=\"20\" style=\"white-space: break-spaces\">" <> TB.fromText title <> "</text>\n"
     <> svgFrame
     <> svgArrowMarker
-    <> svgSatelliteMarker [prn | (prn, _) <- skyPts]
+    <> svgPointSymbol
+    <> svgSatelliteMarker  [prn | (prn, _) <- skyPts]
+    <> svgSatelliteSymbols [prn | (prn, _) <- skyPts]
     <> svgGrid
     <> svgLegend
     <> mconcat
-           [svgPolylineWithLabel color prn azels
+           [svgTrajectoryObject color prn azels
            | (prn, xs)  <- skyPts
            , (azels, r) <- xs
            , let color  = svgColorByFitInterval $ fitInterval r
