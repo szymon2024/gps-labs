@@ -22,10 +22,10 @@ gps_lab05 - Selection of GPS navigation record from RINEX 3.04
 
 gps_lab06 - Attaching navigation records to GPS satellite observations
 
-gps_lab07 - Sky plot of gps satellite trajectories from RINEX 3.04
+gps_lab07 - Sky plot of GPS satellite trajectories from RINEX 3.04
             navigation file
 
-gps_lab08 - Sky plot of gps satellite trajectories from a RINEX 3.04
+gps_lab08 - Sky plot of GPS satellite trajectories from a RINEX 3.04
             navigation file for times and satellites from a RINEX 3.04
             observation file
 
@@ -55,6 +55,6 @@ gps_lab06 - Dołączenie rekordów nawigacyjnych do obserwacji
 gps_lab07 - Wykres nieba z trajektoriami satelitów GPS z pliku
             nawigacyjnego RINEX 3.04
 
-gps_lab08 - Wykres nieba z trajektoriami satelitów gps z pliku
+gps_lab08 - Wykres nieba z trajektoriami satelitów GPS z pliku
             nawigacyjnego RINEX 3.04 dla czasów i satelitów z pliku
             obserwacyjnego RINEX 3.04
