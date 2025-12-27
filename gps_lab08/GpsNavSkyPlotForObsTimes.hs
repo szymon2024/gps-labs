@@ -2,7 +2,7 @@
 
 {- | The program generates a sky plot of computed GPS satellite
    trajectories as an SVG file, using data from the RINEX navigation
-   file for observation times (epochs) and satellites from the RINEX
+   file for observation times and satellites from the RINEX
    observation file. RINEX files in version 3.04. A sky plot is a
    polar diagram showing the satellite's azimuth (0–360° angle from
    north to side) and elevation (0–90° angle from the horizon upwards)
@@ -40,20 +40,18 @@
    1. Compute the satellite position in ECEF coordinates (satPosECEF     
    function).                                                            
                                                                         
-   2. Transform the observer's position WGS84 coordinates into ECEF      
-   coordinates. Compute the vector from the observer to the satellite    
+   2. Compute the vector from the observer to the satellite    
    in ECEF, then rotate it into local ENU frame. (ecefVectorToENU        
-   function).                                                            
+   function). The rotation requires conversion observer ECEF
+   coordinates to WGS84 coordinates.
                                                                         
    3. Discard the point if the satellite is below the horizon u<=0.      
                                                                         
    4. Convert the ENU vector to azimuth and elevation angles (enuToAzEl  
    function).
 
-   This project was developed with assistance from Microsoft Copilot.
-
    Input (to modify directly in the source code):
-     - observer position WGS84 coordinates                  obsWGS84
+     - ECEF coordinates of observer position                obsECEF
      - rinex navigation file name                           navFn
      - rinex observation file name                          obsFn
      - plot title                                           title
@@ -155,7 +153,7 @@ type AzEl     = (Double, Double)           -- ^ Azimuth, elevation in degrees
 main :: IO ()
 main = do
   let
-      obsWGS84 = (52.40372226, 16.90915293, 84.03)          -- Input: observer position WGS84 coordinates
+      obsECEF = (3730927.8332,1134193.6047,5030402.1250)    -- Input: ECEF coordinates of observer position
       navFn = "rinex.nav"                                   -- Input: RINEX 3.04 navigation file name
       obsFn = "rinex.obs"                                   -- Input: RINEX 3.04 observation file name
   navBs <- L8.readFile navFn
@@ -173,7 +171,7 @@ main = do
       numObsNav = foldl' (\acc (_, xs) -> length xs + acc)  -- count observations matched with navigation
                           0 obsNavRs                        -- recoreds
                 
-      skyPts   = skyPoints obsWGS84 obsNavRs
+      skyPts   = skyPoints obsECEF obsNavRs
       title  = "Sky Plot of GPS Satellite \
                 \Trajectories from the " <> T.pack navFn
                 <> "\nfor Observation Times \
@@ -309,10 +307,10 @@ obsGroupByPrn xs =
 -- | Calculate (azymut, elewacja) points only when the
 -- satellite is above the horizon u > 0.
 skyPoints
-  :: WGS84
+  :: ECEF
   -> [(ObsTime, [(Observation, NavRecord)])]
   -> [(Int, [([AzEl], NavRecord)])]
-skyPoints obsWGS84 obsnavRs =
+skyPoints obsECEF obsnavRs =
   [ (prn, [ (azelsForNavRecord ts r, r) | (ts, r) <- xs ])  -- reversed order
   | (prn, xs) <- obsGroupByPrn obsnavRs
   ]
@@ -322,7 +320,7 @@ skyPoints obsWGS84 obsnavRs =
         [ enuToAzEl enu
         | tobs <- ts
         , let wtobs = gpsTimeToWeekTow tobs
-              enu   = ecefVectorToENU (satPosECEF wtobs r) obsWGS84
+              enu   = ecefVectorToENU (satPosECEF wtobs r) obsECEF
               (_,_,u) = enu
         , u > 0
         ]
@@ -338,51 +336,67 @@ enuToAzEl (e, n, u) = (azDeg, elDeg)
     azDeg = (az * 180 / pi) `mod'` 360
     elDeg =  el * 180 / pi
 
-
 -- | Calculate observer -> satellite ECEF vector and transform it to ENU
 ecefVectorToENU
     :: ECEF                             -- ^ Satellite ECEF coordinates
-    -> WGS84                            -- ^ Observer WGS84 coordinates
+    -> ECEF                             -- ^ Observer  ECEF coordinates
     -> ENU                              -- ^ Vector from observer to satellite in ENU coordinates
-ecefVectorToENU (xs, ys, zs) (latDeg, lonDeg, h) =
-    let (xo, yo, zo) = wgs84ToECEF (latDeg, lonDeg, h)
-        -- conversion to radians
-        latRad = latDeg * pi / 180
-        lonRad = lonDeg * pi / 180
+ecefVectorToENU (xs, ys, zs) (xo, yo, zo) =
+    let 
         -- vector from observer to satellite in ECEF
         dx = xs - xo
         dy = ys - yo
         dz = zs - zo
+        (lat, lon, _) = ecefToWGS84 (xo, yo, zo)
         -- rotation to local ENU
-        sinLat = sin latRad
-        cosLat = cos latRad
-        sinLon = sin lonRad
-        cosLon = cos lonRad
+        sinLat = sin lat
+        cosLat = cos lat
+        sinLon = sin lon
+        cosLon = cos lon
         e = -sinLon * dx + cosLon * dy
         n = -sinLat * cosLon * dx - sinLat * sinLon * dy + cosLat * dz
         u =  cosLat * cosLon * dx + cosLat * sinLon * dy + sinLat * dz
     in (e, n, u)
 
--- | Transform WGS84 coordinates (latitude, longtitude, height) to ECEF coordinates (X, Y, Z).
-wgs84ToECEF :: WGS84 -> ECEF
-wgs84ToECEF (latDeg, lonDeg, h) = (x, y, z)
+-- | Transform ECEF coordinates (X,Y,Z) to WGS84 coordinates
+--   (latitude, longtitude, height) where latitude, longtitude are in
+--   radians. Hoffmann‑Wellenhof, Bowring method. Works for all points
+--   except the center of the Earth.
+ecefToWGS84 :: ECEF -> WGS84
+ecefToWGS84 (x, y, z) = iterateLatLon lat0 h0
   where
     -- WGS84 constants
-    a  = 6378137.0                  -- ^ Semi-major axis [m]
-    f  = 1 / 298.257223563          -- ^ Flattening of an ellipsoid
-    e2 = f * (2 - f)                -- ^ Eccentricity squared
+    a  = 6378137.0
+    f  = 1 / 298.257223563
+    e2 = f * (2 - f)
 
-    -- Conversion to radians
-    lat = latDeg * pi / 180
-    lon = lonDeg * pi / 180
+    r   = sqrt (x*x + y*y)
+    -- Compute longtitude
+    lon = atan2 y x
 
-    -- Radius of curvature in the meridian
-    n = a / sqrt (1 - e2 * sin lat ** 2)
+    -- Latitude Przybliżenie początkowe Bowringa
+    b   = a * (1 - f)
+    ep2 = (a*a - b*b) / (b*b)
+    theta = atan2 (z * a) (r * b)
+    sT = sin theta
+    cT = cos theta
 
-    -- ECEF coordinates
-    x = (n + h) * cos lat * cos lon
-    y = (n + h) * cos lat * sin lon
-    z = ((1 - e2) * n + h) * sin lat
+    lat0 = atan2 (z + ep2 * b * sT*sT*sT)
+                 (r - e2  * a * cT*cT*cT)
+
+    n0 = a / sqrt (1 - e2 * sin lat0 ** 2)
+    h0 = r / cos lat0 - n0
+
+    iterateLatLon :: Double -> Double -> WGS84
+    iterateLatLon lat h =
+      let
+        n    = a / sqrt (1 - e2 * sin lat ** 2)
+        lat' = atan2 z (r * (1 - e2 * n / (n + h)))
+        h'   = r / cos lat' - n
+      in
+        if abs (lat' - lat) < 1e-12
+           then (lat', lon, h')
+           else iterateLatLon lat' h'
         
 
 -- | Build a navigation map from GPS navigation records of navigation

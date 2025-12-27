@@ -20,7 +20,7 @@ RINEX file.
 
 Input (to modify directly in the source code)
 -----
-  - observer position WGS84 coordinates
+  - ECEF coordinates of observer position
   - RINEX navigation file name
   - RINEX observation file name
   - plot title
@@ -61,7 +61,7 @@ wynikającymi z pola fitInterval w pliku RINEX.
 
 Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 -------
-  - współrzędne WGS84 pozycji obserwatora
+  - współrzędne ECEF pozycji obserwatora
   - nazwa pliku nawigacyjnego rinex
   - nazwa pliku obserwacyjnego rinex
   - tytuł wykresu
@@ -78,3 +78,5 @@ Total observations:             7161
 Number of observations
 without attached ephemerides:      0
 ```
+
+  ![sky plot example](navSkyplotForObsTimes.svg)
