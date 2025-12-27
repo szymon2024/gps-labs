@@ -1,4 +1,4 @@
-2025-12-26
+2025-12-27
 
 EN:
 CONTENTS
@@ -17,10 +17,10 @@ gps_lab03 - GPS satellite position at GPS transmission time for
             
 gps_lab04 - Scientific notation RINEX 3.04 file converter
 
-gps_lab05 - Selection of GPS broadcast ephemeris for the observation
-            time
+gps_lab05 - Selection of GPS navigation record from RINEX 3.04
+            navigation file for the observation time
 
-gps_lab06 - Attaching ephemerides to GPS satellite observations
+gps_lab06 - Attaching navigation records to GPS satellite observations
 
 gps_lab07 - Sky plot of gps satellite trajectories from RINEX 3.04
             navigation file
@@ -46,7 +46,8 @@ gps_lab03 - Pozycja satelity GPS w czasie transmisji GPS dla
             
 gps_lab04 - Konwerter notacji naukowej pliku RINEX 3.04
 
-gps_lab05 - Wybór efemerydy rozgłoszeniowej GPS dla czasu obserwacji
+gps_lab05 - Wybór rekordu nawigacyjnego GPS z pliku nawigacyjnego
+            RINEX 3.04 dla czasu obserwacji
 
 gps_lab06 - Dołączenie rekordów nawigacyjnych do obserwacji
             satelitarnych GPS
