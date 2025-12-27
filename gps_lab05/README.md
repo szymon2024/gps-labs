@@ -1,8 +1,9 @@
-2025-12-26
+2025-12-27
 
 EN:
 ======================================================================
-  SELECTION OF GPS BROADCAST EPHEMERIS FOR THE OBSERVATION TIME
+SELECTION OF GPS NAVIGATION RECORD FROM RINEX 3.04 NAVIGATION FILE FOR
+THE OBSERVATION TIME
 ======================================================================
 
 The program selects a navigation record containing ephemeris from a
@@ -69,7 +70,8 @@ fitInterval:     4
 
 PL:
 ======================================================================
-  WYBÓR EFEMERYDY ROZGŁOSZENIOWEJ GPS DLA CZASU OBSERWACJI
+WYBÓR REKORDU NAWIGACYJNEGO GPS Z PLIKU NAWIGACYJNEGO RINEX 3.04 DLA
+CZASU OBSERWACJI
 ======================================================================
 
 Program wybiera rekord nawigacyjny zawierający efemerydę z pliku
