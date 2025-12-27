@@ -142,7 +142,7 @@ type ObsTime   = GpsTime                               -- ^ observation time (ep
                                                        --   (don't confuse with observing time)
 data Observation = Obs
     { obsPrn  :: Int
-    }
+    } deriving Show
 type ObsRecord         = (ObsTime, [Observation])
     
 type ECEF     = (Double, Double, Double)   -- ^ Geocentric coorditantes
@@ -192,7 +192,7 @@ obsRecordsFromRinex bs
   | L8.null bs            = error "Empty file"
   | rnxVer      /= "3.04" = error "Not RINEX 3.04 file"
   | rnxFileType /= "O"    = error "Not an observation file"
-  | otherwise = let rnxBody = rnxSkipHeader $ bs
+  | otherwise = let rnxBody = rnxSkipHeader bs
                 in if L8.null rnxBody
                    then error "Cannot find navigation data in the file."
                    else go [] (L8.lines rnxBody)
@@ -214,14 +214,14 @@ obsRecordsFromRinex bs
 obsReadRecord :: [L8.ByteString] -> Maybe (ObsRecord, [L8.ByteString])
 obsReadRecord [] = Nothing                         
 obsReadRecord (l:ls) = do
-  (y  , _) <- L8.readInt $ takeField  2  4 l
-  (mon, _) <- L8.readInt $ takeField  7  2 l
-  (d  , _) <- L8.readInt $ takeField 10  2 l
-  (h  , _) <- L8.readInt $ takeField 13  2 l
-  (m  , _) <- L8.readInt $ takeField 16  2 l
+  (y  , _) <- L8.readInt $ trim $ takeField  2  4 l                   -- trim is needed by readInt
+  (mon, _) <- L8.readInt $ trim $ takeField  7  2 l
+  (d  , _) <- L8.readInt $ trim $ takeField 10  2 l
+  (h  , _) <- L8.readInt $ trim $ takeField 13  2 l
+  (m  , _) <- L8.readInt $ trim $ takeField 16  2 l
   s        <- getDouble  $ takeField 19 11 l
   let !tobs = mkGpsTime (toInteger y) mon d h m (realToFrac s)               
-  (n  , _) <- L8.readInt $ takeField 33  3 l                          -- number of satellites observed in current
+  (n  , _) <- L8.readInt $ trim $ takeField 33  3 l                   -- number of satellites observed in current
                                                                       -- observation time (epoch)
   let (obsLines, rest) = splitAt n ls
       gpsLines = filter (\line -> L8.take 1 line == "G") obsLines
