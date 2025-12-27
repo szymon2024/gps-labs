@@ -1,22 +1,23 @@
--- 2025-12-26
+-- 2025-12-27
 
 {- | The program creates sky plot of computed GPS satellites
    trajectories from RINEX 3.04 navigation file. A sky plot is polar
    representation of satellite azimuth (0-360°) and elevation (0-90°)
    from the observer position. Every satellite trajectory is drawn as
    sequence of intervals, with a satellite PRN marker and a direction
-   arrow. The color of each orbit corresponds to the fitInterval field
-   from the RINEX file.
+   arrow. The color of each orbit
+   corresponds to the fitInterval field from the RINEX file.
 
    Due to the large number of satellites or a long time span in the
    RINEX navigation file, the resulting sky plot may become
    cluttered. In such cases, the prnFilter can be adjusted to plot
    only the trajectories of selected satellites.
 
-   Before computing sky‑plot points, the program detects overlapping
-   ephemeris validity intervals and trims them to ensure consistent,
-   non‑overlapping time ranges, taking into account GPS week and TOE
-   boundaries.
+   The intervals are not ephemeris validity intervals but are
+   determined based on ephemeris validity intervals. Before computing
+   sky‑plot points, the program detects overlapping ephemeris validity
+   intervals and trims them to ensure consistent, non‑overlapping time
+   ranges, taking into account GPS week and TOE boundaries.
 
    Main steps of the algorithm:                                          
                                                                         
@@ -24,8 +25,8 @@
    map (navMapFromRinex function).                                       
                                                                         
    2. Compute (azimuth, elevation) points with a specific time step
-   (in seconds) for each ephemeris (skyPoints function). The time step
-   is determined based on the ephemeris validity interval, and
+   (in seconds) for each ephemeris (skyPoints function). The points
+   are grouped based on the ephemeris validity interval, and
    overlapping intervals are trimmed.
                                                                         
    3. Generate an SVG file containing the sky plot by transforming       
@@ -37,10 +38,11 @@
    1. Compute the satellite position in ECEF coordinates (satPosECEF     
    function).                                                            
                                                                         
-   2. Transform the observer's position WGS84 coordinates into ECEF      
-   coordinates. Compute the vector from the observer to the satellite    
-   in ECEF, then rotate it into local ENU frame. (ecefVectorToENU        
-   function).                                                            
+   2. Transform the observer's position WGS84 coordinates into ECEF
+   coordinates. Compute the vector from the observer to the satellite
+   in ECEF, then rotate it into local ENU frame. (ecefVectorToENU
+   function). The rotation requires conversion observer ECEF
+   coordinates to WGS84 coordinates.
                                                                         
    3. Discard the point if the satellite is below the horizon u<=0.      
                                                                         
@@ -54,7 +56,7 @@
    This project was developed with assistance from Microsoft Copilot.
 
    Input (to modify directly in the source code):
-     - observer position WGS84 coordinates                  obsWGS84
+     - ECEF coordinates of observer position                obsECEF
      - rinex navigation file name                           fn
      - filter by satellite prn                              prnFilter
      - plot title                                           title
@@ -145,14 +147,14 @@ type Interval = (GpsWeekTow, GpsWeekTow)   -- ^ Time interval between two (GPS w
 main :: IO ()
 main = do
   let
-      obsWGS84 = (52.40372226, 16.90915293, 84.03)          -- Input: observer position WGS84 coordinates
+      obsECEF = (3730927.8332,1134193.6047,5030402.1250)    -- Input: ECEF coordinates of observer position
       fn = "rinex.nav"                                      -- Input: rinex navigation file name
   bs <- L8.readFile fn
   let
       navMap    = navMapFromRinex bs
       prnfilter = \prn _ -> prn >=1 && prn <=32             -- Input: filter by satellite prn
       step      = 90::Pico                                  -- [s] 
-      skyMap    = skyPoints obsWGS84 step
+      skyMap    = skyPoints obsECEF step
                     (IMS.filterWithKey prnfilter navMap)
       title  = "Sky Plot of GPS Satellite \
                 \Trajectories from the " <> T.pack fn       -- Input: title of plot
@@ -459,13 +461,13 @@ genSampleTimes (a, b) step
 skyIntervalPoints
   :: (Interval, NavRecord)
   -> Pico
-  -> WGS84
+  -> ECEF
   -> [AzEl]
-skyIntervalPoints (i, r) step obsWGS84 =
+skyIntervalPoints (i, r) step obsECEF =
   [ enuToAzEl enu
   | t   <- genSampleTimes i step                             -- sample time
   , let enu@(_, _, u) =
-            ecefVectorToENU (satPosECEF t r) obsWGS84
+            ecefVectorToENU (satPosECEF t r) obsECEF
   , u > 0
   ]
 
@@ -474,25 +476,25 @@ skyIntervalPoints (i, r) step obsWGS84 =
 -- ephemeris validity range. If the ephemeris validity ranges overlap,
 -- they are trimmed to prevent overlap.
 skyPrnPoints
-  :: WGS84
+  :: ECEF
   -> Pico
   -> Map EphWeekTow NavRecord
   -> [([AzEl], NavRecord)]
-skyPrnPoints obsWGS84 step prnMap =
+skyPrnPoints obsECEF step prnMap =
   [ (pts, r)
   | (i, r) <- trimmOverlapingIntervals $ MS.elems prnMap
-  , let pts = skyIntervalPoints (i, r) step obsWGS84
+  , let pts = skyIntervalPoints (i, r) step obsECEF
   ]
 
--- | Oblicz punkty (azymut, elewacja) dla efemeryd satelitów zawartych
--- w NavMap. 
+-- | Compute points (azimuth, elevation) for satellite ephemerides
+-- data contained in NavMap.
 skyPoints
-  :: WGS84
+  :: ECEF
   -> Pico
   -> NavMap
   -> IntMap [([AzEl],NavRecord)]
-skyPoints  obsWGS84 step =
-  IMS.map (skyPrnPoints obsWGS84 step)
+skyPoints  obsECEF step =
+  IMS.map (skyPrnPoints obsECEF step)
            
 -- | Calculate azimuth and elevation from ENU vector.
 enuToAzEl :: ENU -> AzEl
@@ -509,47 +511,64 @@ enuToAzEl (e, n, u) = (azDeg, elDeg)
 -- | Calculate observer -> satellite ECEF vector and transform it to ENU
 ecefVectorToENU
     :: ECEF                             -- ^ Satellite ECEF coordinates
-    -> WGS84                            -- ^ Observer WGS84 coordinates
+    -> ECEF                             -- ^ Observer  ECEF coordinates
     -> ENU                              -- ^ Vector from observer to satellite in ENU coordinates
-ecefVectorToENU (xs, ys, zs) (latDeg, lonDeg, h) =
-    let (xo, yo, zo) = wgs84ToECEF (latDeg, lonDeg, h)
-        -- conversion to radians
-        latRad = latDeg * pi / 180
-        lonRad = lonDeg * pi / 180
+ecefVectorToENU (xs, ys, zs) (xo, yo, zo) =
+    let 
         -- vector from observer to satellite in ECEF
         dx = xs - xo
         dy = ys - yo
         dz = zs - zo
+        (lat, lon, _) = ecefToWGS84 (xo, yo, zo)
         -- rotation to local ENU
-        sinLat = sin latRad
-        cosLat = cos latRad
-        sinLon = sin lonRad
-        cosLon = cos lonRad
+        sinLat = sin lat
+        cosLat = cos lat
+        sinLon = sin lon
+        cosLon = cos lon
         e = -sinLon * dx + cosLon * dy
         n = -sinLat * cosLon * dx - sinLat * sinLon * dy + cosLat * dz
         u =  cosLat * cosLon * dx + cosLat * sinLon * dy + sinLat * dz
     in (e, n, u)
 
--- | Transform WGS84 coordinates (latitude, longtitude, height) to ECEF coordinates (X, Y, Z).
-wgs84ToECEF :: WGS84 -> ECEF
-wgs84ToECEF (latDeg, lonDeg, h) = (x, y, z)
+-- | Transform ECEF coordinates (X,Y,Z) to WGS84 coordinates
+--   (latitude, longtitude, height) where latitude, longtitude are in
+--   radians. Hoffmann‑Wellenhof, Bowring method. Works for all points
+--   except the center of the Earth.
+ecefToWGS84 :: ECEF -> WGS84
+ecefToWGS84 (x, y, z) = iterateLatLon lat0 h0
   where
     -- WGS84 constants
-    a  = 6378137.0                  -- ^ Semi-major axis [m]
-    f  = 1 / 298.257223563          -- ^ Flattening of an ellipsoid
-    e2 = f * (2 - f)                -- ^ Eccentricity squared
+    a  = 6378137.0
+    f  = 1 / 298.257223563
+    e2 = f * (2 - f)
 
-    -- Conversion to radians
-    lat = latDeg * pi / 180
-    lon = lonDeg * pi / 180
+    r   = sqrt (x*x + y*y)
+    -- Compute longtitude
+    lon = atan2 y x
 
-    -- Radius of curvature in the meridian
-    n = a / sqrt (1 - e2 * sin lat ** 2)
+    -- Latitude Przybliżenie początkowe Bowringa
+    b   = a * (1 - f)
+    ep2 = (a*a - b*b) / (b*b)
+    theta = atan2 (z * a) (r * b)
+    sT = sin theta
+    cT = cos theta
 
-    -- ECEF coordinates
-    x = (n + h) * cos lat * cos lon
-    y = (n + h) * cos lat * sin lon
-    z = ((1 - e2) * n + h) * sin lat
+    lat0 = atan2 (z + ep2 * b * sT*sT*sT)
+                 (r - e2  * a * cT*cT*cT)
+
+    n0 = a / sqrt (1 - e2 * sin lat0 ** 2)
+    h0 = r / cos lat0 - n0
+
+    iterateLatLon :: Double -> Double -> WGS84
+    iterateLatLon lat h =
+      let
+        n    = a / sqrt (1 - e2 * sin lat ** 2)
+        lat' = atan2 z (r * (1 - e2 * n / (n + h)))
+        h'   = r / cos lat' - n
+      in
+        if abs (lat' - lat) < 1e-12
+           then (lat', lon, h')
+           else iterateLatLon lat' h'
         
 
 -- | Build a navigation map from GPS navigation records of RINEX 3.04

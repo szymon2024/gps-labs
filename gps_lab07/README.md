@@ -1,4 +1,4 @@
-2025-12-26
+2025-12-27
 
 EN:
 ======================================================================
@@ -22,7 +22,7 @@ This project was developed with assistance from Microsoft Copilot.
 
 Input (to modify directly in the source code)
 -----
-  - observer position WGS84 coordinates
+  - ECEF coordinates of observer position
   - RINEX navigation file name
   - filter by satellite PRN
   - plot title
@@ -58,7 +58,7 @@ Projekt powstał przy wsparciu Microsoft Copilot.
 
 Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 -------
-  - współrzędne WGS84 pozycji obserwatora
+  - współrzędne ECEF pozycji obserwatora
   - nazwa pliku nawigacyjnego rinex
   - filtr wg PRN satelity
   - tytuł wykresu
@@ -67,4 +67,4 @@ Wyjście
 -------
   wykres nieba w pliku SVG navSkyplot.svg
 
-  ![filtered navigation sky plot example](filteredNavSkyplot.svg)
+  ![navigation sky plot example](navSkyplot.svg)
