@@ -38,7 +38,7 @@ Number of observations
 without attached ephemerides:      0
 ```
 
-  ![sky plot example](navSkyplotForObsTime.svg)
+  ![sky plot example](navSkyplotForObsTimes.svg)
 
 
 PL:
