@@ -27,7 +27,7 @@ Input (to modify directly in the source code)
 
 Output
 ------
-  sky plot SVG file navSkyplotForObsTime.svg
+  sky plot SVG file navSkyplotForObsTimes.svg
 
 Print of run
 ------------
@@ -68,7 +68,7 @@ Wejście (do zmodyfikowania bezpośrednio w kodzie programu)
 
 Wyjście
 -------
-  wykres nieba w pliku SVG navSkyplotForObsTime.svg
+  wykres nieba w pliku SVG navSkyplotForObsTimes.svg
 
 Wydruk uruchomienia
 -------------------
