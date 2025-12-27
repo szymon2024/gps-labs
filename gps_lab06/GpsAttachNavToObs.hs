@@ -1,8 +1,9 @@
--- 2025-12-26
+-- 2025-12-27
 
 {-| The program attaches navigation records from a RINEX 3.04 NAV file
     containing ephemerides to corresponding observations from a RINEX
-    3.04 OBS file.
+    3.04 OBS file. Satellite observations in the RINEX file are
+    grouped by observation time into observation records.
 
     Main steps of the algorithm:
 
